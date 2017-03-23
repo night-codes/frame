@@ -46,7 +46,7 @@ static GtkWidget* newWebkit() {
 	GtkWidget *webview = webkit_web_view_new_with_context(webkit_web_context_get_default());
 	WebKitSettings *settings = webkit_settings_new ();
 	webkit_settings_set_allow_modal_dialogs(settings, TRUE);
-	webkit_settings_set_enable_smooth_scrolling(settings, TRUE);
+	// webkit_settings_set_enable_smooth_scrolling(settings, TRUE);
 	webkit_settings_set_default_charset(settings, "utf-8");
 	webkit_settings_set_enable_webgl(settings, TRUE);
 	webkit_settings_set_javascript_can_access_clipboard(settings, TRUE);
@@ -110,6 +110,7 @@ static GtkWidget* makeWindow(char *name, int width, int height) {
 	gtk_window_set_title (GTK_WINDOW (window), name);
 	gtk_window_set_default_size (GTK_WINDOW (window), width, height);
 	preventDestroy(window);
+	gtk_widget_realize (window);
 	return window;
 }
 
@@ -117,6 +118,7 @@ static GtkWidget* makeWindow(char *name, int width, int height) {
 static GtkWidget* makeBox(GtkWidget *window) {
 	GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	gtk_container_add(GTK_CONTAINER(window), box);
+	gtk_widget_realize(box);
 	gtk_widget_show(box);
 	return box;
 }
@@ -129,6 +131,7 @@ static GtkWidget* makeWebview(GtkWidget *box) {
 			webview = webviews[i];
 			webviewUsed[i] = TRUE;
 			gtk_box_pack_start(GTK_BOX(box), webview, 1, 1, 0);
+			gtk_widget_realize(webview);
 			gtk_widget_show(webview);
 			break;
 		};
@@ -139,14 +142,15 @@ static GtkWidget* makeWebview(GtkWidget *box) {
 
 static GtkWidget* makeMenubar(GtkWidget *box) {
 	GtkWidget *menu = gtk_menu_new();
-	GtkWidget *item = gtk_menu_item_new_with_label(gcharptr("Файл"));
+	/*GtkWidget *item = gtk_menu_item_new_with_label(gcharptr("Файл"));
 	GtkWidget *item3 = gtk_menu_item_new_with_label(gcharptr("Опции"));
-	GtkWidget *item4 = gtk_menu_item_new_with_label(gcharptr("Справка"));
+	GtkWidget *item4 = gtk_menu_item_new_with_label(gcharptr("Справка"));*/
 	GtkWidget *menubar = gtk_menu_bar_new();
 	gtk_box_pack_start(GTK_BOX(box), menubar, 0, 1, 0);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item3);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item4);
+	/*	gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item);
+		gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item3);
+		gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item4);*/
+	gtk_widget_realize(menubar);
 	gtk_widget_show_all(menubar);
 	return menubar;
 }
@@ -199,10 +203,12 @@ static void windowStrut(GdkWindow * window, winPosition position, int width, int
 	GdkAtom cardinal;
 	unsigned long strut[12];
 	memset(&strut, 0, sizeof(strut));
+	gdk_window_set_group(window, window);
 
 	// strut = [ left, right, top, bottom,
 	//           left_start_y, left_end_y, right_start_y, right_end_y,
 	//           top_start_x, top_end_x, bottom_start_x, bottom_end_x ]
+
 
 	switch (position) {
 	case PANEL_WINDOW_POSITION_TOP:
@@ -219,6 +225,7 @@ static void windowStrut(GdkWindow * window, winPosition position, int width, int
 		strut[0] = width * scale;
 		strut[4] = 0;
 		strut[5] = monitorHeight * scale;
+		break;
 	case PANEL_WINDOW_POSITION_RIGHT:
 		strut[1] = width * scale;
 		strut[6] = 0;

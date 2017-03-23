@@ -18,6 +18,9 @@ type (
 		Webview    *C.GtkWidget
 		Menubar    *C.GtkWidget
 		StateEvent func(State)
+		deferMove  bool
+		deferMoveX int
+		deferMoveY int
 	}
 )
 
@@ -123,7 +126,13 @@ func (f *Frame) Resize(width, height int) *Frame {
 
 // Move the window
 func (f *Frame) Move(x, y int) *Frame {
-	Info.Println(x, y)
+	visible := C.gtk_widget_get_visible(f.Window) == 1
+	if !visible {
+		f.deferMove = true
+		f.deferMoveX = x
+		f.deferMoveY = y
+		return f
+	}
 	C.gtk_window_move(C.to_GtkWindow(f.Window), C.to_gint(C.int(x)), C.to_gint(C.int(y)))
 	return f
 }
@@ -194,6 +203,9 @@ func (f *Frame) KeepBelow(below bool) *Frame {
 // Show Frame window
 func (f *Frame) Show() *Frame {
 	C.gtk_window_present(C.to_GtkWindow(f.Window))
+	if f.deferMove {
+		f.Move(f.deferMoveX, f.deferMoveY)
+	}
 	return f
 }
 
@@ -287,6 +299,12 @@ func (f *Frame) SetMinSize(width, height int) *Frame {
 	return f
 }
 
+// SetOpacity of Frame window
+func (f *Frame) SetOpacity(opacity float64) *Frame {
+	C.gdk_window_set_opacity(C.gtk_widget_get_window(f.Window), C.gdouble(opacity))
+	return f
+}
+
 // SetLimitSizes of Frame window
 func (f *Frame) SetLimitSizes(minWidth, minHeight, maxWidth, maxHeight int) *Frame {
 	f.SetMaxSize(maxWidth, maxHeight)
@@ -339,10 +357,13 @@ func (f *Frame) Strut(strutPosition C.winPosition, size int) *Frame {
 	case StrutLeft, StrutRight:
 		width, height = size, monitorHeight
 	}
-	f.Resize(width, height).Stick().KeepAbove(true)
+	f.
+		SetDecorated(false).
+		Resize(width, height).
+		Stick().
+		SetType(TypeDock)
 
 	C.windowStrut(C.gtk_widget_get_window(f.Window), strutPosition, C.int(width), C.int(height), C.int(monitorWidth), C.int(monitorHeight), C.int(scale))
-	f.SetType(TypeDock)
 	f.SetGravity(GravityNorthWest)
 
 	switch strutPosition {
@@ -353,6 +374,7 @@ func (f *Frame) Strut(strutPosition C.winPosition, size int) *Frame {
 	case StrutRight:
 		f.Move(monitorWidth-width, 0)
 	}
+	f.Stick().SetType(TypeDock)
 	return f
 }
 
