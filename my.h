@@ -57,7 +57,6 @@ static GtkWidget* newWebkit() {
 	webkit_settings_set_enable_java(settings, FALSE);
 	webkit_settings_set_enable_resizable_text_areas(settings, FALSE);
 
-	// webkit_context_menu_new()
 	// webkit_settings_set_hardware_acceleration_policy(settings, WEBKIT_HARDWARE_ACCELERATION_POLICY_ALWAYS);
 	// webkit_settings_set_enable_developer_extras(settings, TRUE);
 	webkit_web_view_set_zoom_level(WEBKIT_WEB_VIEW(webview), 1.0);
@@ -103,16 +102,26 @@ static void preventDestroy(GtkWidget* window) {
 	g_signal_connect (window, "window-state-event", G_CALLBACK(stateEvent), NULL);
 }
 
-
+static void updateVisual (GtkWidget *window) {
+	GdkScreen *screen = gtk_widget_get_screen (window);
+	GdkVisual *visual = gdk_screen_get_rgba_visual (screen);
+	if (visual) {
+		gtk_widget_set_visual(window, visual);
+		gtk_widget_set_app_paintable (window, TRUE);
+	}
+}
 
 static GtkWidget* makeWindow(char *name, int width, int height) {
 	GtkWidget *window = gtk_application_window_new (app);
 	gtk_window_set_title (GTK_WINDOW (window), name);
 	gtk_window_set_default_size (GTK_WINDOW (window), width, height);
 	preventDestroy(window);
+	g_signal_connect(window, "screen-changed", G_CALLBACK(updateVisual), NULL);
+	updateVisual(window);
 	gtk_widget_realize (window);
 	return window;
 }
+
 
 
 static GtkWidget* makeBox(GtkWidget *window) {
@@ -131,7 +140,6 @@ static GtkWidget* makeWebview(GtkWidget *box) {
 			webview = webviews[i];
 			webviewUsed[i] = TRUE;
 			gtk_box_pack_start(GTK_BOX(box), webview, 1, 1, 0);
-			gtk_widget_realize(webview);
 			gtk_widget_show(webview);
 			break;
 		};
@@ -142,16 +150,16 @@ static GtkWidget* makeWebview(GtkWidget *box) {
 
 static GtkWidget* makeMenubar(GtkWidget *box) {
 	GtkWidget *menu = gtk_menu_new();
-	/*GtkWidget *item = gtk_menu_item_new_with_label(gcharptr("Файл"));
+	GtkWidget *item = gtk_menu_item_new_with_label(gcharptr("Файл"));
 	GtkWidget *item3 = gtk_menu_item_new_with_label(gcharptr("Опции"));
-	GtkWidget *item4 = gtk_menu_item_new_with_label(gcharptr("Справка"));*/
+	GtkWidget *item4 = gtk_menu_item_new_with_label(gcharptr("Справка"));
 	GtkWidget *menubar = gtk_menu_bar_new();
 	gtk_box_pack_start(GTK_BOX(box), menubar, 0, 1, 0);
-	/*	gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item);
-		gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item3);
-		gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item4);*/
+	gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item3);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item4);
 	gtk_widget_realize(menubar);
-	gtk_widget_show_all(menubar);
+	// gtk_widget_show_all(menubar);
 	return menubar;
 }
 
@@ -170,15 +178,6 @@ static void loadHTML(GtkWidget *widget, gchar* content, gchar* base_uri) {
 
 static void setZoom(GtkWidget *widget, gdouble zoom) {
 	webkit_web_view_set_zoom_level(WEBKIT_WEB_VIEW(widget), 2);
-}
-
-static void setBackgroundColor(GtkWidget *widget, gint r, gint g, gint b) {
-	GdkRGBA rgba;
-	rgba.red = (gdouble)r / 255;
-	rgba.green = (gdouble)g / 255;
-	rgba.blue = (gdouble)b / 255;
-	rgba.alpha = 1;
-	webkit_web_view_set_background_color(WEBKIT_WEB_VIEW(widget), &rgba);
 }
 
 static void setMaxSize(GtkWidget *window, gint width, gint height) {
@@ -208,8 +207,6 @@ static void windowStrut(GdkWindow * window, winPosition position, int width, int
 	// strut = [ left, right, top, bottom,
 	//           left_start_y, left_end_y, right_start_y, right_end_y,
 	//           top_start_x, top_end_x, bottom_start_x, bottom_end_x ]
-
-
 	switch (position) {
 	case PANEL_WINDOW_POSITION_TOP:
 		strut[2] = height * scale;
@@ -241,3 +238,14 @@ static void windowStrut(GdkWindow * window, winPosition position, int width, int
 	                    (guchar *)strut, 12);
 }
 
+
+static void setBackgroundColor (GtkWidget *window, GtkWidget *webview, gint r, gint g, gint b, gdouble alfa) {
+	GdkRGBA rgba;
+	rgba.red = (gdouble)r / 255;
+	rgba.green = (gdouble)g / 255;
+	rgba.blue = (gdouble)b / 255;
+	rgba.alpha = alfa;
+
+	updateVisual(window);
+	webkit_web_view_set_background_color (WEBKIT_WEB_VIEW(webview), &rgba);
+}

@@ -1,7 +1,7 @@
 package frame
 
 /*
-#cgo pkg-config: gtk+-3.0
+#cgo pkg-config: webkit2gtk-4.0
 #cgo linux CFLAGS: -DLINUX -Wno-deprecated-declarations
 #cgo linux LDFLAGS: -lX11
 #include <webkit2/webkit2.h>

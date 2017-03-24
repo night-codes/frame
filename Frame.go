@@ -1,7 +1,6 @@
 package frame
 
 /*
-#cgo pkg-config: webkit2gtk-4.0
 #include <webkit2/webkit2.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>
@@ -114,13 +113,13 @@ func (f *Frame) SetTitle(title string) *Frame {
 
 // SetDefaultSize of Frame window
 func (f *Frame) SetDefaultSize(width, height int) *Frame {
-	C.gtk_window_set_default_size(C.to_GtkWindow(f.Window), C.to_gint(C.int(width)), C.to_gint(C.int(height)))
+	C.gtk_window_set_default_size(C.to_GtkWindow(f.Window), C.gint(C.int(width)), C.gint(C.int(height)))
 	return f
 }
 
 // Resize the window
 func (f *Frame) Resize(width, height int) *Frame {
-	C.gtk_window_resize(C.to_GtkWindow(f.Window), C.to_gint(C.int(width)), C.to_gint(C.int(height)))
+	C.gtk_window_resize(C.to_GtkWindow(f.Window), C.gint(C.int(width)), C.gint(C.int(height)))
 	return f
 }
 
@@ -133,7 +132,7 @@ func (f *Frame) Move(x, y int) *Frame {
 		f.deferMoveY = y
 		return f
 	}
-	C.gtk_window_move(C.to_GtkWindow(f.Window), C.to_gint(C.int(x)), C.to_gint(C.int(y)))
+	C.gtk_window_move(C.to_GtkWindow(f.Window), C.gint(C.int(x)), C.gint(C.int(y)))
 	return f
 }
 
@@ -282,20 +281,20 @@ func (f *Frame) SetIconName(name string) *Frame {
 }
 
 // SetBackgroundColor of Frame
-func (f *Frame) SetBackgroundColor(r, g, b int) *Frame {
-	C.setBackgroundColor(f.Webview, C.to_gint(C.int(r)), C.to_gint(C.int(g)), C.to_gint(C.int(b)))
+func (f *Frame) SetBackgroundColor(r, g, b int, alfa float64) *Frame {
+	C.setBackgroundColor(f.Window, f.Webview, C.gint(C.int(r)), C.gint(C.int(g)), C.gint(C.int(b)), C.gdouble(alfa))
 	return f
 }
 
 // SetMaxSize of Frame window
 func (f *Frame) SetMaxSize(width, height int) *Frame {
-	C.setMaxSize(f.Window, C.to_gint(C.int(width)), C.to_gint(C.int(height)))
+	C.setMaxSize(f.Window, C.gint(C.int(width)), C.gint(C.int(height)))
 	return f
 }
 
 // SetMinSize of Frame window
 func (f *Frame) SetMinSize(width, height int) *Frame {
-	C.setMinSize(f.Window, C.to_gint(C.int(width)), C.to_gint(C.int(height)))
+	C.setMinSize(f.Window, C.gint(C.int(width)), C.gint(C.int(height)))
 	return f
 }
 
