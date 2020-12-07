@@ -1,10 +1,6 @@
 package frame
 
 /*
-#cgo pkg-config: gtk+-3.0
-#include <webkit2/webkit2.h>
-#include <stdlib.h>
-#include <X11/Xlib.h>
 #include "my.h"
 */
 import "C"
@@ -18,6 +14,7 @@ type (
 	}
 )
 
+// Size of monitor
 func (s *Screen) Size() (width, height int) {
 	geometry := C.GdkRectangle{}
 	C.gdk_monitor_get_geometry(s.monitor, &geometry)
@@ -25,7 +22,8 @@ func (s *Screen) Size() (width, height int) {
 	return
 }
 
-func (s *Screen) GetScale() int {
+// Scale factor of monitor
+func (s *Screen) Scale() int {
 	return int(C.gdk_monitor_get_scale_factor(s.monitor))
 }
 

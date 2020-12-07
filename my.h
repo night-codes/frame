@@ -1,5 +1,7 @@
-
 #include <string.h>
+#include <X11/Xlib.h>
+#include <webkit2/webkit2.h>
+#include <stdlib.h>
 
 extern void goAppActivated();
 extern void goPrint(char* text);

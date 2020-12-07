@@ -1,15 +1,13 @@
 package frame
 
 /*
-#cgo pkg-config: webkit2gtk-4.0 gtk+-3.0
-#include <webkit2/webkit2.h>
-#include <stdlib.h>
-#include <X11/Xlib.h>
+#cgo pkg-config: webkit2gtk-4.0
 #include "my.h"
 */
 import "C"
 
 type (
+	// App is main application object
 	App struct {
 		count uint
 	}

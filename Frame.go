@@ -1,10 +1,6 @@
 package frame
 
 /*
-#include <webkit2/webkit2.h>
-#include <stdlib.h>
-#include <X11/Xlib.h>
-#include <string.h>
 #include "my.h"
 */
 import "C"
@@ -347,7 +343,7 @@ func (f *Frame) GetSize() (width, height int) {
 // Strut reserves frame space on the screen
 func (f *Frame) Strut(strutPosition C.winPosition, size int) *Frame {
 	monitorWidth, monitorHeight := f.GetScreen().Size()
-	scale := f.GetScreen().GetScale()
+	scale := f.GetScreen().Scale()
 	var width, height int
 
 	switch strutPosition {
