@@ -1,7 +1,11 @@
+// +build freebsd,cgo linux,cgo netbsd,cgo openbsd,cgo solaris,cgo
 package frame
 
 /*
-#include "my.h"
+#cgo pkg-config: gtk+-3.0 webkit2gtk-4.0
+#cgo linux CFLAGS: -DLINUX -Wno-deprecated-declarations
+#cgo linux LDFLAGS: -lX11
+#include "unix.h"
 */
 import "C"
 
@@ -22,8 +26,8 @@ func (s *Screen) Size() (width, height int) {
 	return
 }
 
-// Scale factor of monitor
-func (s *Screen) Scale() int {
+// ScaleFactor of monitor
+func (s *Screen) ScaleFactor() int {
 	return int(C.gdk_monitor_get_scale_factor(s.monitor))
 }
 

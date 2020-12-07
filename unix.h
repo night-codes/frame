@@ -98,12 +98,6 @@ static void makeApp(int count) {
 	g_application_run (G_APPLICATION (app), 0, NULL);
 }
 
-
-static void preventDestroy(GtkWidget* window) {
-	g_signal_connect (window, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), NULL);
-	g_signal_connect (window, "window-state-event", G_CALLBACK(stateEvent), NULL);
-}
-
 static void updateVisual (GtkWidget *window) {
 	GdkScreen *screen = gtk_widget_get_screen (window);
 	GdkVisual *visual = gdk_screen_get_rgba_visual (screen);
@@ -117,8 +111,9 @@ static GtkWidget* makeWindow(char *name, int width, int height) {
 	GtkWidget *window = gtk_application_window_new (app);
 	gtk_window_set_title (GTK_WINDOW (window), name);
 	gtk_window_set_default_size (GTK_WINDOW (window), width, height);
-	preventDestroy(window);
-	g_signal_connect(window, "screen-changed", G_CALLBACK(updateVisual), NULL);
+	g_signal_connect (window, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), window);
+	g_signal_connect (window, "window-state-event", G_CALLBACK(stateEvent), window);
+	g_signal_connect(window, "screen-changed", G_CALLBACK(updateVisual), window);
 	updateVisual(window);
 	gtk_widget_realize (window);
 	return window;
@@ -186,14 +181,14 @@ static void setMaxSize(GtkWidget *window, gint width, gint height) {
 	GdkGeometry geometry;
 	geometry.max_width = width;
 	geometry.max_height = height;
-	gtk_window_set_geometry_hints(GTK_WINDOW(window), NULL, &geometry,  GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE);
+	gtk_window_set_geometry_hints(GTK_WINDOW(window), NULL, &geometry, GDK_HINT_MAX_SIZE);
 }
 
 static void setMinSize(GtkWidget *window, gint width, gint height) {
 	GdkGeometry geometry;
 	geometry.min_width = width;
 	geometry.min_height = height;
-	gtk_window_set_geometry_hints(GTK_WINDOW(window), NULL, &geometry,  GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE);
+	gtk_window_set_geometry_hints(GTK_WINDOW(window), NULL, &geometry, GDK_HINT_MIN_SIZE);
 }
 
 

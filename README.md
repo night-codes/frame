@@ -1,7 +1,7 @@
 # frame - simple golang GUI toolkit (gtk-webkit)
 ## Install
 
-**Attention! This is an experiment! Do not use on production!** 
+**Attention! This is an experiment! Do not use on production!**
 
 You will need to install gtk-webkit.
 
@@ -19,7 +19,7 @@ import (
 
 func main() {
 	app := frame.MakeApp(1) // max webviews count
-	app.New("Simple program!", 450, 300).
+	app.NewFrame("Simple program!", 450, 300).
 		KeepAbove(false).
 		SkipTaskbar(false).
 		SkipPager(false).
@@ -31,7 +31,8 @@ func main() {
 				</body>`, "http://localhost").
 		SetBackgroundColor(50, 50, 50, 0.8).
 		Show()
-	select {}
+
+	select {} //
 }
 
 ```
