@@ -1,4 +1,4 @@
-// +build freebsd,cgo linux,cgo netbsd,cgo openbsd,cgo solaris,cgo
+// +build freebsd linux netbsd openbsd solaris
 package frame
 
 /*
@@ -18,9 +18,15 @@ type (
 		deferMoveX int
 		deferMoveY int
 	}
-	WindowType     int
+
+	// WindowType struct
+	WindowType int
+
+	// WindowPosition struct
 	WindowPosition int
-	StrutPosition  int
+
+	// StrutPosition struct
+	StrutPosition int
 )
 
 const (

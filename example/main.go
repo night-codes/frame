@@ -56,8 +56,8 @@ func main() {
 		}).
 		Show()
 
-	w, h := wv.GetScreen().Size()
-	fmt.Println("Screen size:", w, h)
+	// w, h := wv.GetScreen().Size()
+	// fmt.Println("Screen size:", w, h)
 
 	<-ch
 	fmt.Println("Application terminated")

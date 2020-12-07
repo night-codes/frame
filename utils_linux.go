@@ -1,4 +1,4 @@
-// +build freebsd,cgo linux,cgo netbsd,cgo openbsd,cgo solaris,cgo
+// +build freebsd linux netbsd openbsd solaris
 package frame
 
 /*
