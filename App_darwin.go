@@ -1,15 +1,17 @@
 // +build darwin
+
 package frame
 
 /*
-#cgo CFLAGS: -DWEBVIEW_COCOA=1 -x objective-c
+#cgo CFLAGS:  -DWEBVIEW_COCOA=1 -x objective-c
 #cgo LDFLAGS: -framework Cocoa -framework WebKit
 
 #import <Cocoa/Cocoa.h>
-#include "darwin.h"
+#import  "darwin.h"
 */
 import "C"
 import (
+	"fmt"
 	"runtime"
 	"sync"
 )
@@ -41,7 +43,9 @@ func MakeApp(count ...uint) *App {
 		C.makeApp(C.int(c))
 		runtime.UnlockOSThread()
 	}()
-	return <-appChan
+	app := <-appChan
+	fmt.Println("App started")
+	return app
 }
 
 // SetDefaultIconFromFile for application windows
@@ -55,7 +59,7 @@ func (a *App) SetDefaultIconName(name string) {
 }
 
 // NewFrame returns window with webview
-func (app *App) NewFrame(title string, sizes ...int) *Frame {
+func (a *App) NewFrame(title string, sizes ...int) *Frame {
 	mutexNew.Lock()
 	defer mutexNew.Unlock()
 	width := 400
@@ -69,14 +73,12 @@ func (app *App) NewFrame(title string, sizes ...int) *Frame {
 		height = sizes[1]
 	}
 
-	id := len(frames)
-	window := C.makeWindow(C.int(id), C.CString(title), C.int(width), C.int(height))
+	window := C.makeWindow(C.CString(title), C.int(width), C.int(height))
 	// box := C.makeBox(window)
 	// menubar := C.makeMenubar(box)
 	// webview := C.makeWebview(box)
 	frame := &Frame{
-		id:     id,
-		window: window,
+		window: int(window),
 		/* box:     box,
 		webview: webview,
 		menubar: menubar, */

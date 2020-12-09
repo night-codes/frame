@@ -1,8 +1,9 @@
 // +build darwin
+
 package frame
 
 /*
-#include "darwin.h"
+#import  "darwin.h"
 */
 import "C"
 
@@ -54,7 +55,7 @@ func goPrintInt(t C.int) {
 
 //export onWindowEvent
 func onWindowEvent(id C.int, eventID C.int, x C.int, y C.int, w C.int, h C.int) {
-	windowID := int(id)
+	// windowID := int(id)
 	/* event := WindowEvent(eventID)
 	if windowID < len(windows) && windows[windowID].callbacks[event] != nil {
 		wnd := windows[windowID]
@@ -66,7 +67,7 @@ func onWindowEvent(id C.int, eventID C.int, x C.int, y C.int, w C.int, h C.int) 
 			h:      int(h),
 			winPtr: wnd.winPtr})
 	} */
-	fmt.Println(windowID)
+	// fmt.Println(windowID)
 }
 
 //e xport goWindowState

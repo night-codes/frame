@@ -1,15 +1,17 @@
 // +build freebsd linux netbsd openbsd solaris
+
 package frame
 
 /*
-#include "unix.h"
+#include "linux.h"
 */
 import "C"
+import "unsafe"
 
 type (
 	// Frame struct
 	Frame struct {
-		window     *C.GtkWidget
+		window     unsafe.Pointer
 		box        *C.GtkWidget
 		webview    *C.GtkWidget
 		menubar    *C.GtkWidget

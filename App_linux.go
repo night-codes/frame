@@ -1,11 +1,12 @@
 // +build freebsd linux netbsd openbsd solaris
+
 package frame
 
 /*
 #cgo pkg-config: gtk+-3.0 webkit2gtk-4.0
-#cgo linux CFLAGS: -DLINUX -Wno-deprecated-declarations -DWEBVIEW_GTK=1
+#cgo linux CFLAGS: -DLINUX -DWEBVIEW_GTK=1 -Wno-deprecated-declarations
 #cgo linux LDFLAGS: -lX11
-#include "unix.h"
+#include "linux.h"
 */
 import "C"
 import (

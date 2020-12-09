@@ -1,16 +1,16 @@
 // +build darwin
+
 package frame
 
 /*
-#include "darwin.h"
+#import  "darwin.h"
 */
 import "C"
 
 type (
 	// Frame struct
 	Frame struct {
-		id         int
-		window     *C.NSWindow
+		window     int
 		StateEvent func(State)
 		deferMove  bool
 		deferMoveX int
@@ -82,7 +82,7 @@ func (f *Frame) SkipPager(skip bool) *Frame {
 
 // SetResizeble of window
 func (f *Frame) SetResizeble(resizeble bool) *Frame {
-	// C.gtk_window_set_resizable(C.to_GtkWindow(f.window), gboolean(resizeble))
+	C.setWindowResizeble(C.int(f.window), C.bool(resizeble))
 	return f
 }
 
@@ -106,7 +106,7 @@ func (f *Frame) SetDefaultSize(width, height int) *Frame {
 
 // Resize the window
 func (f *Frame) Resize(width, height int) *Frame {
-	// C.gtk_window_resize(C.to_GtkWindow(f.window), C.gint(C.int(width)), C.gint(C.int(height)))
+	C.resizeWindow(C.int(f.window), C.int(width), C.int(height))
 	return f
 }
 
@@ -173,7 +173,7 @@ func (f *Frame) KeepBelow(below bool) *Frame {
 
 // Show window
 func (f *Frame) Show() *Frame {
-	// C.gtk_window_present(C.to_GtkWindow(f.window))
+	C.showWindow(C.int(f.window))
 	if f.deferMove {
 		f.Move(f.deferMoveX, f.deferMoveY)
 	}
@@ -240,19 +240,19 @@ func (f *Frame) SetIconName(name string) *Frame {
 
 // SetBackgroundColor of Frame
 func (f *Frame) SetBackgroundColor(r, g, b int, alfa float64) *Frame {
-	// C.setBackgroundColor(f.window, f.webview, C.gint(C.int(r)), C.gint(C.int(g)), C.gint(C.int(b)), C.gdouble(alfa))
+	C.setBackgroundColor(C.int(f.window), C.int8_t(r), C.int8_t(g), C.int8_t(b), C.double(alfa), C.bool(false))
 	return f
 }
 
 // SetMaxSize of window
 func (f *Frame) SetMaxSize(width, height int) *Frame {
-	// C.setMaxSize(f.window, C.gint(C.int(width)), C.gint(C.int(height)))
+	C.setMaxWindowSize(C.int(f.window), C.int(width), C.int(height))
 	return f
 }
 
 // SetMinSize of window
 func (f *Frame) SetMinSize(width, height int) *Frame {
-	// C.setMinSize(f.window, C.gint(C.int(width)), C.gint(C.int(height)))
+	C.setMinWindowSize(C.int(f.window), C.int(width), C.int(height))
 	return f
 }
 
