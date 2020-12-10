@@ -11,8 +11,12 @@ type (
 	// Frame struct
 	Frame struct {
 		window     int
+		modal      int
+		modalFor   int
 		StateEvent func(State)
+		state      State
 		deferMove  bool
+		resizeble  bool
 		deferMoveX int
 		deferMoveY int
 	}
@@ -57,14 +61,14 @@ StrutRight  = StrutPosition(C.PANEL_WINDOW_POSITION_RIGHT) */
 
 // Load URL to Frame webview
 func (f *Frame) Load(uri string) *Frame {
-	//C.loadUri(f.webview, C.gcharptr(C.CString(uri)))
+	C.loadUri(C.int(f.window), C.CString(uri))
 	//// C.webkit_web_inspector_attach(C.webkit_web_view_get_inspector(C.to_WebKitWebView(f.webview)))
 	return f
 }
 
 // LoadHTML to Frame webview
 func (f *Frame) LoadHTML(html string, baseURI string) *Frame {
-	// C.loadHTML(f.webview, C.gcharptr(C.CString(html)), C.gcharptr(C.CString(baseURI)))
+	C.loadHTML(C.int(f.window), C.CString(html), C.CString(baseURI))
 	return f
 }
 
@@ -82,6 +86,7 @@ func (f *Frame) SkipPager(skip bool) *Frame {
 
 // SetResizeble of window
 func (f *Frame) SetResizeble(resizeble bool) *Frame {
+	f.resizeble = resizeble
 	C.setWindowResizeble(C.int(f.window), C.bool(resizeble))
 	return f
 }
@@ -131,19 +136,19 @@ func (f *Frame) SetPosition(position WindowPosition) *Frame {
 
 // SetModal makes current Frame attached as modal window to parent
 func (f *Frame) SetModal(parent *Frame) *Frame {
-	// C.gtk_window_set_transient_for(C.to_GtkWindow(f.window), C.to_GtkWindow(parent.window))
-	// C.gtk_window_set_destroy_with_parent(C.to_GtkWindow(f.window), C.TRUE)
-	// C.gtk_window_set_attached_to(C.to_GtkWindow(f.window), parent.window)
-	// C.gtk_window_set_modal(C.to_GtkWindow(f.window), C.TRUE)
+	f.modalFor = parent.window
+	parent.modal = f.window
+	C.setModal(C.int(f.window), C.int(parent.window))
 	return f
 }
 
 // UnsetModal unset current Frame as modal window from another Frames
 func (f *Frame) UnsetModal() *Frame {
-	// C.gtk_window_set_transient_for(C.to_GtkWindow(f.window), nil)
-	// C.gtk_window_set_destroy_with_parent(C.to_GtkWindow(f.window), C.FALSE)
-	// C.gtk_window_set_attached_to(C.to_GtkWindow(f.window), nil)
-	// C.gtk_window_set_modal(C.to_GtkWindow(f.window), C.FALSE)
+	if f.modalFor != -1 {
+		frames[f.modalFor].modal = -1
+		f.modalFor = -1
+	}
+	C.unsetModal(C.int(f.window))
 	return f
 }
 

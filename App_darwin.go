@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"runtime"
 	"sync"
+	"time"
 )
 
 type (
@@ -62,6 +63,7 @@ func (a *App) SetDefaultIconName(name string) {
 func (a *App) NewFrame(title string, sizes ...int) *Frame {
 	mutexNew.Lock()
 	defer mutexNew.Unlock()
+	C.lock()
 	width := 400
 	height := 300
 
@@ -78,11 +80,40 @@ func (a *App) NewFrame(title string, sizes ...int) *Frame {
 	// menubar := C.makeMenubar(box)
 	// webview := C.makeWebview(box)
 	frame := &Frame{
-		window: int(window),
-		/* box:     box,
-		webview: webview,
-		menubar: menubar, */
+		resizeble: true,
+		modal:     -1,
+		modalFor:  -1,
+		window:    int(window),
+		state: State{
+			Hidden:     false,
+			Iconified:  false,
+			Maximized:  false,
+			Sticky:     false,
+			Fullscreen: false,
+			Focused:    false,
+			Tiled:      false,
+		},
 	}
+
+	go func() {
+		time.Sleep(time.Second / 2)
+		for {
+			time.Sleep(time.Second / 100)
+			C.lock()
+			state := frame.state
+			frame.state.Focused = goBool(C.isFocused(C.int(frame.window)))
+			frame.state.Iconified = goBool(C.isMiniaturized(C.int(frame.window)))
+			frame.state.Maximized = goBool(C.isZoomed(C.int(frame.window))) && frame.resizeble
+			frame.state.Hidden = !goBool(C.isVisible(C.int(frame.window))) && !goBool(C.isMiniaturized(C.int(frame.window)))
+			frame.state.Fullscreen = goBool(C.isFullscreen(C.int(frame.window)))
+
+			// C.unsetModal(C.int(f.window))
+			if state.Focused != frame.state.Focused || state.Iconified != frame.state.Iconified || state.Maximized != frame.state.Maximized || state.Hidden != frame.state.Hidden || state.Fullscreen != frame.state.Fullscreen {
+				frame.StateEvent(frame.state)
+			}
+		}
+	}()
+
 	// frame.SetPosition(PosCenter)
 	frames = append(frames, frame)
 	return frame

@@ -15,7 +15,6 @@ static int windowsUsed;
 
 void makeApp(int);
 void runApp();
-void* getApp();
 int makeWindow(char* name, int width, int height);
 void showWindow(int);
 void setBackgroundColor(int, int8_t r, int8_t g, int8_t b, double a, bool titlebarTransparent);
@@ -23,6 +22,16 @@ void resizeWindow(int id, int width, int height);
 void setMaxWindowSize(int id, int width, int height);
 void setMinWindowSize(int id, int width, int height);
 void setWindowResizeble(int id, bool resizeble);
+void loadUri(int id, char* uri);
+void loadHTML(int id, char* content, char* baseUrl);
+BOOL isFocused(int id);
+BOOL isVisible(int id);
+BOOL isZoomed(int id);
+BOOL isMiniaturized(int id);
+BOOL isFullscreen(int id);
+void setModal(int id, int id2);
+void unsetModal(int id);
+void lock();
 
 @interface WindowDelegate : NSObject <NSWindowDelegate>
 @property (assign) int goWindowID;
@@ -31,7 +40,6 @@ void setWindowResizeble(int id, bool resizeble);
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 @end
 
-void triggerEvent(int goWindowID, NSWindow* movedWindow, NSString* eventTitle, const int eventId);
-// void triggerEvent(int goAppID, NSWindow *movedWindow, NSString *eventTitle, const int eventId);
+void triggerEvent(int goWindowID, NSWindow* movedWindow, NSString* eventTitle);
 
 #endif /* WEBVIEW_COCOA */

@@ -32,8 +32,6 @@ type State struct {
 	Maximized  bool
 	Sticky     bool
 	Fullscreen bool
-	Above      bool
-	Below      bool
 	Focused    bool
 	Tiled      bool
 }
@@ -63,8 +61,6 @@ func goWindowState(c *C.GtkWidget, e C.int) {
 				Maximized:  uint32(e)&cMaximized != 0,
 				Sticky:     uint32(e)&cSticky != 0,
 				Fullscreen: uint32(e)&cFullscreen != 0,
-				Above:      uint32(e)&cAbove != 0,
-				Below:      uint32(e)&cBelow != 0,
 				Focused:    uint32(e)&cFocused != 0,
 				Tiled:      uint32(e)&cTiled != 0,
 			})

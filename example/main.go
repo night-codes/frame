@@ -20,7 +20,8 @@ func main() {
 
 	app.SetDefaultIconFromFile(basepath + "/moon.png")
 	wv := app.NewFrame("Simple program!", 400, 300).
-		SetMinSize(400, 300).
+		SetMinSize(300, 200).
+		SetMaxSize(500, 400).
 		SetBackgroundColor(50, 50, 50, 0.8).
 		LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Hello world</h1>
@@ -34,7 +35,7 @@ func main() {
 		}).
 		Show()
 
-	app.NewFrame("Modal window", 350, 150).
+	wv2 := app.NewFrame("Modal window", 350, 150).
 		SetBackgroundColor(80, 50, 50, 0.9).
 		LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Some Dialog</h1>
@@ -44,7 +45,7 @@ func main() {
 		SetResizeble(false).
 		SetStateEvent(func(state frame.State) {
 			if state.Hidden {
-				fmt.Println("Modal window closed")
+				fmt.Println("Modal window 1 closed")
 			}
 		}).
 		Show()
@@ -58,16 +59,17 @@ func main() {
       <h1>Some Dialog</h1>
       <p>Modal window...</p>
       </body>`, "").
-			SetModal(wv).
+			SetModal(wv2).
 			SetResizeble(false).
 			SetStateEvent(func(state frame.State) {
 				if state.Hidden {
-					fmt.Println("Modal window closed")
+					fmt.Println("Modal window 2 closed")
 				}
 			})
 
 		go func() {
 			wv3.Show()
+			wv.Load("https://github.com/mojbro/gocoa/blob/master/window.m")
 		}()
 	}()
 	// w, h := wv.GetScreen().Size()

@@ -32,8 +32,6 @@ type State struct {
 	Maximized  bool
 	Sticky     bool
 	Fullscreen bool
-	Above      bool
-	Below      bool
 	Focused    bool
 	Tiled      bool
 }
@@ -53,50 +51,52 @@ func goPrintInt(t C.int) {
 	fmt.Println(int(t))
 }
 
-//export onWindowEvent
-func onWindowEvent(id C.int, eventID C.int, x C.int, y C.int, w C.int, h C.int) {
-	// windowID := int(id)
-	/* event := WindowEvent(eventID)
-	if windowID < len(windows) && windows[windowID].callbacks[event] != nil {
-		wnd := windows[windowID]
-		windows[windowID].callbacks[event](&Window{
-			title:  wnd.title,
-			x:      int(x),
-			y:      int(y),
-			w:      int(w),
-			h:      int(h),
-			winPtr: wnd.winPtr})
-	} */
-	// fmt.Println(windowID)
+func goBool(b C.BOOL) bool {
+	if b != 0 {
+		return true
+	}
+	return false
 }
 
-//e xport goWindowState
-// func goWindowState(c *C.GtkWidget, e C.int) {
-/* for i := range frames {
-	if frames[i].StateEvent != nil && reflect.DeepEqual(frames[i].window, c) && (uint32(e)&cWithdrawn == 0 || uint32(e)&cFocused == 0) {
-		frames[i].StateEvent(State{
-			Hidden:     uint32(e)&cWithdrawn != 0,
-			Iconified:  uint32(e)&cIconified != 0,
-			Maximized:  uint32(e)&cMaximized != 0,
-			Sticky:     uint32(e)&cSticky != 0,
-			Fullscreen: uint32(e)&cFullscreen != 0,
-			Above:      uint32(e)&cAbove != 0,
-			Below:      uint32(e)&cBelow != 0,
-			Focused:    uint32(e)&cFocused != 0,
-			Tiled:      uint32(e)&cTiled != 0,
-		})
+//export goWindowEvent
+func goWindowEvent(windowID C.int, eventTitle *C.char, x C.int, y C.int, w C.int, h C.int) {
+	id := int(windowID)
+	title := C.GoString(eventTitle)
+	if frames[id].StateEvent != nil {
+		state := frames[id].state
+		switch title {
+		case "windowDidDeminiaturize":
+			frames[id].state.Iconified = false
+		case "windowWillMiniaturize":
+			frames[id].state.Iconified = true
+		case "windowDidBecomeKey":
+			for i := range frames {
+				frames[i].state.Focused = false
+			}
+			frames[id].state.Focused = true
+		case "windowWillClose":
+			frames[id].state.Hidden = true
+		case "windowShouldClose":
+			frames[id].state.Hidden = true
+		}
+
+		if state.Focused != frames[id].state.Focused || state.Iconified != frames[id].state.Iconified || state.Hidden != frames[id].state.Hidden {
+			frames[id].StateEvent(frames[id].state)
+		}
+		if !state.Hidden && frames[id].state.Hidden {
+			if frames[id].modalFor != -1 && frames[id].modal == -1 {
+				modalFor := frames[id].modalFor
+				frames[id].UnsetModal()
+				frames[modalFor].Show()
+				if frames[modalFor].modalFor != -1 {
+					frames[modalFor].SetModal(frames[frames[modalFor].modalFor])
+				}
+			}
+		}
 	}
-} */
-// }
+}
 
 //export goScriptEvent
 func goScriptEvent() {
 	fmt.Println("js...")
 }
-
-// func goBool(b C.gboolean) bool {
-// 	if b != 0 {
-// 		return true
-// 	}
-// 	return false
-// }
