@@ -15,8 +15,10 @@ static int windowsUsed;
 
 void makeApp(int);
 void runApp();
-int makeWindow(char* name, int width, int height);
+int makeWindow(char* title, int width, int height);
 void showWindow(int);
+void hideWindow(int);
+void setTitle(int, char* title);
 void setBackgroundColor(int, int8_t r, int8_t g, int8_t b, double a, bool titlebarTransparent);
 void resizeWindow(int id, int width, int height);
 void setMaxWindowSize(int id, int width, int height);

@@ -62,7 +62,6 @@ StrutRight  = StrutPosition(C.PANEL_WINDOW_POSITION_RIGHT) */
 // Load URL to Frame webview
 func (f *Frame) Load(uri string) *Frame {
 	C.loadUri(C.int(f.window), C.CString(uri))
-	//// C.webkit_web_inspector_attach(C.webkit_web_view_get_inspector(C.to_WebKitWebView(f.webview)))
 	return f
 }
 
@@ -99,7 +98,7 @@ func (f *Frame) SetStateEvent(fn func(State)) *Frame {
 
 // SetTitle of window
 func (f *Frame) SetTitle(title string) *Frame {
-	// C.gtk_window_set_title(C.to_GtkWindow(f.window), C.gcharptr(C.CString(title)))
+	C.setTitle(C.int(f.window), C.CString(title))
 	return f
 }
 
@@ -187,7 +186,7 @@ func (f *Frame) Show() *Frame {
 
 // Hide window
 func (f *Frame) Hide() *Frame {
-	// C.gtk_window_close(C.to_GtkWindow(f.window))
+	C.hideWindow(C.int(f.window))
 	return f
 }
 

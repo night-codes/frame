@@ -40,9 +40,10 @@ AppDelegate* appDelegate = nil;
     NSWindow* window = notification.object;
     triggerEvent([self goWindowID], window, @"windowDidDeminiaturize");
 }
-- (BOOL)windowShouldClose:(NSWindow*)window {
+- (BOOL)windowShouldClose:(NSWindow*)window
+{
     triggerEvent([self goWindowID], window, @"windowShouldClose");
-	return YES;
+    return YES;
 }
 - (void)windowDidBecomeKey:(NSNotification*)notification
 {
@@ -100,7 +101,7 @@ void makeApp(int count)
         [app setActivationPolicy:NSApplicationActivationPolicyRegular];
         appDelegate = [[AppDelegate alloc] init];
         [app setDelegate:appDelegate];
-		[app activateIgnoringOtherApps:YES];
+        [app activateIgnoringOtherApps:YES];
         windows = malloc(sizeof(NSWindow*) * webCount); // create windows pool
         webviews = malloc(sizeof(WKWebView*) * webCount); // create webviews pool
         windowsUsed = 0;
@@ -115,7 +116,7 @@ void makeApp(int count)
             windowDelegate = [[WindowDelegate alloc] init];
             [windowDelegate setGoWindowID:id];
             [window setDelegate:windowDelegate];
-			[window center];
+            [window center];
 
             // Webwiew
             WKWebViewConfiguration* conf = [[WKWebViewConfiguration alloc] init];
@@ -133,15 +134,15 @@ void makeApp(int count)
     appInitialized = true;
 }
 
-int makeWindow(char* name, int width, int height)
+int makeWindow(char* title, int width, int height)
 {
     __block int id = windowsUsed;
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         NSWindow* window = windows[id];
-        [window setTitle:[NSString stringWithUTF8String:name]];
-		NSRect old = [window frame];
-		NSRect r = NSMakeRect(old.origin.x - (width - old.size.width) / 2, old.origin.y - (height - old.size.height) / 2, width, height);
-		[window setFrame:r display:YES animate:YES];
+        [window setTitle:[NSString stringWithUTF8String:title]];
+        NSRect old = [window frame];
+        NSRect r = NSMakeRect(old.origin.x - (width - old.size.width) / 2, old.origin.y - (height - old.size.height) / 2, width, height);
+        [window setFrame:r display:YES animate:YES];
     });
 
     windowsUsed++;
@@ -152,40 +153,46 @@ void showWindow(int id)
 {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         NSWindow* window = windows[id];
-        // [window makeKeyAndOrderFront:app];
-		[window makeKeyAndOrderFront:app];
-        // [window center];
+        [window makeKeyAndOrderFront:app];
+    });
+}
+
+void hideWindow(int id)
+{
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        NSWindow* window = windows[id];
+        [window orderOut:window];
     });
 }
 
 BOOL isFocused(int id)
 {
-	NSWindow* window = windows[id];
-	return [window isKeyWindow];
+    NSWindow* window = windows[id];
+    return [window isKeyWindow];
 }
 
 BOOL isVisible(int id)
 {
-	NSWindow* window = windows[id];
-	return [window isVisible];
+    NSWindow* window = windows[id];
+    return [window isVisible];
 }
 
 BOOL isZoomed(int id)
 {
-	NSWindow* window = windows[id];
-	return [window isZoomed];
+    NSWindow* window = windows[id];
+    return [window isZoomed];
 }
 
 BOOL isMiniaturized(int id)
 {
-	NSWindow* window = windows[id];
-	return [window isMiniaturized];
+    NSWindow* window = windows[id];
+    return [window isMiniaturized];
 }
 
 BOOL isFullscreen(int id)
 {
-	NSWindow* window = windows[id];
-	return ([window styleMask] & NSWindowStyleMaskFullScreen) == NSWindowStyleMaskFullScreen;
+    NSWindow* window = windows[id];
+    return ([window styleMask] & NSWindowStyleMaskFullScreen) == NSWindowStyleMaskFullScreen;
 }
 
 void resizeWindow(int id, int width, int height)
@@ -193,35 +200,45 @@ void resizeWindow(int id, int width, int height)
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         NSWindow* window = windows[id];
 
-		NSRect old = [window frame];
-		NSRect r = NSMakeRect(old.origin.x - (width - old.size.width) / 2, old.origin.y - (height - old.size.height) / 2, width, height);
-		[window setFrame:r display:YES animate:YES];
+        NSRect old = [window frame];
+        NSRect r = NSMakeRect(old.origin.x - (width - old.size.width) / 2, old.origin.y - (height - old.size.height) / 2, width, height);
+        [window setFrame:r display:YES animate:YES];
     });
 }
 
 void setModal(int id, int id2)
 {
-	// dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{//TODO
+    // dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{//TODO
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         NSWindow* modalWindow = windows[id];
         NSWindow* window = windows[id2];
-		modalWindow.level= NSModalPanelWindowLevel;
-		// [window setIgnoresMouseEvents:YES];
-		// [modalWindow setIgnoresMouseEvents:NO];
-		// window.level= NSMainMenuWindowLevel;
-	});
+        modalWindow.level = NSModalPanelWindowLevel;
+        // [window setIgnoresMouseEvents:YES];
+        // [modalWindow setIgnoresMouseEvents:NO];
+        // window.level= NSMainMenuWindowLevel;
+    });
 }
 
-void lock(){
-	dispatch_async(dispatch_get_main_queue(), ^(void) {});
+void lock()
+{
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+                   });
 }
 
 void unsetModal(int id)
 {
-    // dispatch_async(dispatch_get_main_queue(), ^(void) {
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
         NSWindow* window = windows[id];
-		window.level= NSNormalWindowLevel;
-	// });
+        window.level = NSNormalWindowLevel;
+    });
+}
+
+void setTitle(int id, char* title)
+{
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        NSWindow* window = windows[id];
+        [window setTitle:[NSString stringWithUTF8String:title]];
+    });
 }
 
 void setMaxWindowSize(int id, int width, int height)
@@ -240,24 +257,25 @@ void setMinWindowSize(int id, int width, int height)
     });
 }
 
-
-void loadUri(int id, char* uri){
+void loadUri(int id, char* uri)
+{
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         NSWindow* window = windows[id];
-		WKWebView* webview = webviews[id];
-		NSURL *url = [NSURL URLWithString:[NSString stringWithUTF8String:uri]];
-		NSURLRequest *request = [NSURLRequest requestWithURL:url];
-		[webview loadRequest:request];
+        WKWebView* webview = webviews[id];
+        NSURL* url = [NSURL URLWithString:[NSString stringWithUTF8String:uri]];
+        NSURLRequest* request = [NSURLRequest requestWithURL:url];
+        [webview loadRequest:request];
     });
 }
 
-void loadHTML(int id, char* content, char* baseUrl){
+void loadHTML(int id, char* content, char* baseUrl)
+{
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         NSWindow* window = windows[id];
-		WKWebView* webview = webviews[id];
-		NSString *htmlString = [NSString stringWithUTF8String:content];
-		NSURL *baseURL = [NSURL URLWithString:[NSString stringWithUTF8String:baseUrl]];
-		[webview loadHTMLString:htmlString baseURL:baseURL];
+        WKWebView* webview = webviews[id];
+        NSString* htmlString = [NSString stringWithUTF8String:content];
+        NSURL* baseURL = [NSURL URLWithString:[NSString stringWithUTF8String:baseUrl]];
+        [webview loadHTMLString:htmlString baseURL:baseURL];
     });
 }
 

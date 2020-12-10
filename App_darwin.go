@@ -63,7 +63,6 @@ func (a *App) SetDefaultIconName(name string) {
 func (a *App) NewFrame(title string, sizes ...int) *Frame {
 	mutexNew.Lock()
 	defer mutexNew.Unlock()
-	C.lock()
 	width := 400
 	height := 300
 
@@ -99,7 +98,6 @@ func (a *App) NewFrame(title string, sizes ...int) *Frame {
 		time.Sleep(time.Second / 2)
 		for {
 			time.Sleep(time.Second / 100)
-			C.lock()
 			state := frame.state
 			frame.state.Focused = goBool(C.isFocused(C.int(frame.window)))
 			frame.state.Iconified = goBool(C.isMiniaturized(C.int(frame.window)))
