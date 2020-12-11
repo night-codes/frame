@@ -300,9 +300,10 @@ func (f *Frame) Strut(position StrutPosition, size int) *Frame {
 	}
 	f.
 		SetDecorated(false).
-		Resize(width, height).
+		SetSize(width, height).
 		Stick(true).
-		SetType(TypeDock)
+		SetType(TypeDock).
+		UnsetModal()
 
 	C.windowStrut(C.gtk_widget_get_window(f.window), C.winPosition(position), C.int(width), C.int(height), C.int(monitorWidth), C.int(monitorHeight), C.int(scale))
 	C.gtk_window_set_gravity(C.to_GtkWindow(f.window), C.GDK_GRAVITY_NORTH_WEST)
@@ -318,28 +319,3 @@ func (f *Frame) Strut(position StrutPosition, size int) *Frame {
 	f.Stick(true).SetType(TypeDock)
 	return f
 }
-
-//		gtk_window_begin_resize_drag ()
-//		gtk_window_begin_move_drag ()
-//		gtk_window_set_urgency_hint ()
-//		gtk_window_set_accept_focus ()
-//		gtk_window_set_focus_on_map ()
-//		gtk_window_set_startup_id ()
-//		gtk_window_reshow_with_initial_size ()
-//		gtk_window_set_focus_visible ()
-//		gtk_window_set_has_user_ref_count ()
-//		gtk_window_set_auto_startup_notification ()
-//		gtk_window_set_titlebar
-//		gtk_window_add_accel_group ()
-//		gtk_window_remove_accel_group ()
-//		gtk_window_set_geometry_hints ()
-//		gtk_window_set_gravity ()
-//		gtk_window_set_hide_titlebar_when_maximized ()
-//		gtk_window_set_screen ()
-//		gtk_window_add_mnemonic ()
-//		gtk_window_remove_mnemonic ()
-//		gtk_window_set_focus ()
-//		gtk_window_set_default_icon_list ()
-//		gtk_window_set_default_icon ()
-//		gtk_window_set_icon ()
-//		gtk_window_set_icon_list ()
