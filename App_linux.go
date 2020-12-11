@@ -79,7 +79,7 @@ func (app *App) NewFrame(title string, sizes ...int) *Frame {
 		webview: webview,
 		menubar: menubar,
 	}
-	frame.SetPosition(PosCenter)
+	frame.SetCenter()
 	frames = append(frames, frame)
 	return frame
 }

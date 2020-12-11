@@ -7,6 +7,7 @@ extern void goAppActivated();
 extern void goPrint(char* text);
 extern void goPrintInt(int num);
 extern void goScriptEvent();
+extern void goEvalRet(long long unsigned int reqid, char* err);
 // extern void goWindowState(GtkWidget *c, int e);
 
 static WKWebView** webviews;
@@ -33,9 +34,11 @@ BOOL isMiniaturized(int id);
 BOOL isFullscreen(int id);
 void setModal(int id, int id2);
 void unsetModal(int id);
+void setWindowCenter(int id);
+void evalJS(int id, const char* js, long long unsigned int reqid);
 void lock();
 
-@interface WindowDelegate : NSObject <NSWindowDelegate>
+@interface WindowDelegate : NSObject <NSWindowDelegate, WKScriptMessageHandler>
 @property (assign) int goWindowID;
 @end
 

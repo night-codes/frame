@@ -112,7 +112,6 @@ func (a *App) NewFrame(title string, sizes ...int) *Frame {
 		}
 	}()
 
-	// frame.SetPosition(PosCenter)
 	frames = append(frames, frame)
 	return frame
 }

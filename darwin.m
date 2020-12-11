@@ -60,19 +60,21 @@ AppDelegate* appDelegate = nil;
     NSWindow* window = notification.object;
     triggerEvent([self goWindowID], window, @"windowWillClose");
 }
+- (void)userContentController:(WKUserContentController*)userContentController didReceiveScriptMessage:(WKScriptMessage*)message
+{
+    int id = [self goWindowID];
+    triggerEvent(id, windows[id], [NSString stringWithFormat:@"invoke:%@", [message body]]);
+}
 @end
 
-void triggerEvent(int goWindowID, NSWindow* movedWindow, NSString* eventTitle)
+void triggerEvent(int goWindowID, NSWindow* window, NSString* eventTitle)
 {
-    if ([movedWindow isKeyWindow]) {
-        NSRect rect = movedWindow.frame;
-        int x = (int)(rect.origin.x);
-        int y = (int)(rect.origin.y);
-        int w = (int)(rect.size.width);
-        int h = (int)(rect.size.height);
-        // NSLog(@"%@ %@", eventTitle, movedWindow);
-        goWindowEvent(goWindowID, strdup([eventTitle UTF8String]), x, y, w, h);
-    }
+    NSRect rect = window.frame;
+    int x = (int)(rect.origin.x);
+    int y = (int)(rect.origin.y);
+    int w = (int)(rect.size.width);
+    int h = (int)(rect.size.height);
+    goWindowEvent(goWindowID, strdup([eventTitle UTF8String]), x, y, w, h);
 }
 
 @implementation AppDelegate
@@ -106,22 +108,32 @@ void makeApp(int count)
         webviews = malloc(sizeof(WKWebView*) * webCount); // create webviews pool
         windowsUsed = 0;
         NSWindow.allowsAutomaticWindowTabbing = NO;
-        for (int id = 0; id < webCount; id++) {
+        for (int winID = 0; winID < webCount; winID++) {
             NSRect r = NSMakeRect(0, 0, 100, 100);
             NSUInteger mask = NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable;
-            windows[id] = [[[NSWindow alloc] initWithContentRect:r styleMask:mask backing:NSBackingStoreBuffered defer:NO] autorelease];
+            windows[winID] = [[[NSWindow alloc] initWithContentRect:r styleMask:mask backing:NSBackingStoreBuffered defer:NO] autorelease];
 
             // Window
-            NSWindow* window = windows[id];
+            NSWindow* window = windows[winID];
             windowDelegate = [[WindowDelegate alloc] init];
-            [windowDelegate setGoWindowID:id];
+            [windowDelegate setGoWindowID:winID];
             [window setDelegate:windowDelegate];
             [window center];
 
             // Webwiew
             WKWebViewConfiguration* conf = [[WKWebViewConfiguration alloc] init];
+            WKUserContentController* ucc = [[WKUserContentController alloc] init];
+            WKUserScript* us = [[WKUserScript alloc] initWithSource:
+                                                         @"window.external={invoke:function(v){window.webkit.messageHandlers.invoke.postMessage(v)}};"
+                                                      injectionTime:WKUserScriptInjectionTimeAtDocumentStart
+                                                   forMainFrameOnly:NO];
+            [ucc addUserScript:us];
+            [ucc addScriptMessageHandler:windowDelegate name:@"invoke"];
+            [conf setUserContentController:ucc];
+            [[conf preferences] setValue:[NSNumber numberWithBool:YES] forKey:@"developerExtrasEnabled"];
+
             WKWebView* webview = [[WKWebView alloc] initWithFrame:r configuration:conf];
-            webviews[id] = webview;
+            webviews[winID] = webview;
             [webview setAutoresizesSubviews:YES];
             [webview setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
             // NSURL* nsURL = [NSURL URLWithString:[NSString stringWithUTF8String:webview_check_url(w->url)]];
@@ -147,6 +159,22 @@ int makeWindow(char* title, int width, int height)
 
     windowsUsed++;
     return id;
+}
+
+void evalJS(int winid, const char* js, long long unsigned int reqid)
+{
+    WKWebView* webview = webviews[winid];
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        [webview evaluateJavaScript:[NSString stringWithUTF8String:js]
+                  completionHandler:^(id self, NSError* error) {
+                      if (error != NULL) {
+                          goEvalRet(reqid, strdup([[NSString stringWithFormat:@"%@", error.userInfo] UTF8String]));
+                      } else {
+                          goEvalRet(reqid, strdup(""));
+                      }
+                  }];
+    });
+    // goEvalRet(reqid, strdup("ttttttttttttt"));
 }
 
 void showWindow(int id)
@@ -210,12 +238,13 @@ void setModal(int id, int id2)
 {
     // dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{//TODO
     dispatch_async(dispatch_get_main_queue(), ^(void) {
-        NSWindow* modalWindow = windows[id];
-        NSWindow* window = windows[id2];
-        modalWindow.level = NSModalPanelWindowLevel;
-        // [window setIgnoresMouseEvents:YES];
-        // [modalWindow setIgnoresMouseEvents:NO];
-        // window.level= NSMainMenuWindowLevel;
+        NSWindow* window = windows[id];
+        NSWindow* parentWindow = windows[id2];
+        window.level = NSModalPanelWindowLevel;
+        window.styleMask &= ~NSWindowStyleMaskMiniaturizable;
+
+        // boxes[id].isUserInteractionEnabled = NO;
+        // [parentWindow setIgnoresMouseEvents:YES];
     });
 }
 
@@ -229,7 +258,16 @@ void unsetModal(int id)
 {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         NSWindow* window = windows[id];
+        window.styleMask |= NSWindowStyleMaskMiniaturizable;
         window.level = NSNormalWindowLevel;
+    });
+}
+
+void setWindowCenter(int id)
+{
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        NSWindow* window = windows[id];
+        [window center];
     });
 }
 

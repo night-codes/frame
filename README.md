@@ -23,7 +23,7 @@ func main() {
 		KeepAbove(false).
 		SkipTaskbar(false).
 		SkipPager(false).
-		Resize(500, 360).
+		SetSize(500, 360).
 		SetLimitSizes(400, 360, 600, 360).
 		LoadHTML(`<body style="color:#dddddd; background: transparent">
 					<h1>Hello world</h1>

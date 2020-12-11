@@ -19,18 +19,20 @@ func main() {
 	app := frame.MakeApp(10) // max webviews count
 
 	app.SetDefaultIconFromFile(basepath + "/moon.png")
-	wv := app.NewFrame("Simple program!", 400, 300).
-		SetMinSize(400, 300).
+	wv := app.NewFrame("Simple program!", 400, 400).
 		SetBackgroundColor(50, 50, 50, 0.8).
 		LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Hello world</h1>
       <p>Test test test...</p>
-      </body>`, "").
+      </body>`, "http://localhost:1015/panel/").
 		SetStateEvent(func(state frame.State) {
 			if state.Hidden {
 				fmt.Println("Main window closed")
 				ch <- true
 			}
+		}).
+		SetInvoke(func(msg string) {
+			fmt.Println(":::", msg)
 		}).
 		Show()
 
@@ -44,14 +46,20 @@ func main() {
 		SetResizeble(false).
 		SetStateEvent(func(state frame.State) {
 			if state.Hidden {
-				fmt.Println("Modal window closed")
+				fmt.Println("Modal window 1 closed")
 			}
 		}).
+		SetCenter().
 		Show()
 
 	go func() {
-		time.Sleep(5 * time.Second)
-		wv.SetTitle("TTTTTTTTTTTTTTTTTT")
+		time.Sleep(1 * time.Second)
+		fmt.Println("~", wv.Eval("document.body.style.background = '#449977'; thisIsError1"), "~")
+		fmt.Println("~", wv.Eval("window.external.invoke('Wow! This is external invoke!')"), "~")
+		time.Sleep(1 * time.Second)
+		wv.SetTitle("New title")
+		fmt.Println("~", wv.Eval("thisIsError2"), "~")
+		fmt.Println("~", wv.Eval("document.body.style.background = '#994477'"), "~")
 		wv2.Hide()
 		wv3 := app.NewFrame("Modal window", 330, 130).
 			SetBackgroundColor(40, 80, 50, 0.9).
@@ -63,7 +71,7 @@ func main() {
 			SetResizeble(false).
 			SetStateEvent(func(state frame.State) {
 				if state.Hidden {
-					fmt.Println("Modal window closed")
+					fmt.Println("Modal window 2 closed")
 				}
 			})
 

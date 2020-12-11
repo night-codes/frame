@@ -16,6 +16,7 @@ type (
 		webview    *C.GtkWidget
 		menubar    *C.GtkWidget
 		StateEvent func(State)
+		Invoke     func(string)
 		deferMove  bool
 		deferMoveX int
 		deferMoveY int
@@ -32,12 +33,6 @@ type (
 )
 
 const (
-	PosNone           = WindowPosition(C.GTK_WIN_POS_NONE)
-	PosCenter         = WindowPosition(C.GTK_WIN_POS_CENTER)
-	PosMouse          = WindowPosition(C.GTK_WIN_POS_MOUSE)
-	PosCenterAlways   = WindowPosition(C.GTK_WIN_POS_CENTER_ALWAYS)
-	PosCenterOnParent = WindowPosition(C.GTK_WIN_POS_CENTER_ON_PARENT)
-
 	TypeNormal       = WindowType(C.GDK_WINDOW_TYPE_HINT_NORMAL)        // Normal toplevel window.
 	TypeDialog       = WindowType(C.GDK_WINDOW_TYPE_HINT_DIALOG)        // Dialog window.
 	TypeMenu         = WindowType(C.GDK_WINDOW_TYPE_HINT_MENU)          // Window used to implement a menu; GTK+ uses this hint only for torn-off menus, see GtkTearoffMenuItem.
@@ -96,20 +91,20 @@ func (f *Frame) SetStateEvent(fn func(State)) *Frame {
 	return f
 }
 
+// SetInvoke set handler function for window state event
+func (f *Frame) SetInvoke(fn func(string)) *Frame {
+	f.Invoke = fn
+	return f
+}
+
 // SetTitle of window
 func (f *Frame) SetTitle(title string) *Frame {
 	C.gtk_window_set_title(C.to_GtkWindow(f.window), C.gcharptr(C.CString(title)))
 	return f
 }
 
-// SetDefaultSize of window
-func (f *Frame) SetDefaultSize(width, height int) *Frame {
-	C.gtk_window_set_default_size(C.to_GtkWindow(f.window), C.gint(C.int(width)), C.gint(C.int(height)))
-	return f
-}
-
-// Resize the window
-func (f *Frame) Resize(width, height int) *Frame {
+// SetSize of the window
+func (f *Frame) SetSize(width, height int) *Frame {
 	C.gtk_window_resize(C.to_GtkWindow(f.window), C.gint(C.int(width)), C.gint(C.int(height)))
 	return f
 }
@@ -127,9 +122,9 @@ func (f *Frame) Move(x, y int) *Frame {
 	return f
 }
 
-// SetPosition of window
-func (f *Frame) SetPosition(position WindowPosition) *Frame {
-	C.gtk_window_set_position(C.to_GtkWindow(f.window), C.GtkWindowPosition(position))
+// SetCenter of the window
+func (f *Frame) SetCenter() *Frame {
+	C.gtk_window_set_position(C.to_GtkWindow(f.window), C.GTK_WIN_POS_CENTER)
 	return f
 }
 

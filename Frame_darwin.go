@@ -6,6 +6,10 @@ package frame
 #import  "darwin.h"
 */
 import "C"
+import (
+	"sync"
+	"sync/atomic"
+)
 
 type (
 	// Frame struct
@@ -14,6 +18,7 @@ type (
 		modal      int
 		modalFor   int
 		StateEvent func(State)
+		Invoke     func(string)
 		state      State
 		deferMove  bool
 		resizeble  bool
@@ -31,13 +36,13 @@ type (
 	StrutPosition int
 )
 
-const (
-/* PosNone           = WindowPosition(C.GTK_WIN_POS_NONE)
-PosCenter         = WindowPosition(C.GTK_WIN_POS_CENTER)
-PosMouse          = WindowPosition(C.GTK_WIN_POS_MOUSE)
-PosCenterAlways   = WindowPosition(C.GTK_WIN_POS_CENTER_ALWAYS)
-PosCenterOnParent = WindowPosition(C.GTK_WIN_POS_CENTER_ON_PARENT)
+var (
+	jsRequestID uint64
+	jsRequests  sync.Map
+)
 
+const (
+/*
 TypeNormal       = WindowType(C.GDK_WINDOW_TYPE_HINT_NORMAL)        // Normal toplevel window.
 TypeDialog       = WindowType(C.GDK_WINDOW_TYPE_HINT_DIALOG)        // Dialog window.
 TypeMenu         = WindowType(C.GDK_WINDOW_TYPE_HINT_MENU)          // Window used to implement a menu; GTK+ uses this hint only for torn-off menus, see GtkTearoffMenuItem.
@@ -96,20 +101,20 @@ func (f *Frame) SetStateEvent(fn func(State)) *Frame {
 	return f
 }
 
+// SetInvoke set handler function for window state event
+func (f *Frame) SetInvoke(fn func(string)) *Frame {
+	f.Invoke = fn
+	return f
+}
+
 // SetTitle of window
 func (f *Frame) SetTitle(title string) *Frame {
 	C.setTitle(C.int(f.window), C.CString(title))
 	return f
 }
 
-// SetDefaultSize of window
-func (f *Frame) SetDefaultSize(width, height int) *Frame {
-	// C.gtk_window_set_default_size(C.to_GtkWindow(f.window), C.gint(C.int(width)), C.gint(C.int(height)))
-	return f
-}
-
-// Resize the window
-func (f *Frame) Resize(width, height int) *Frame {
+// SetSize of the window
+func (f *Frame) SetSize(width, height int) *Frame {
 	C.resizeWindow(C.int(f.window), C.int(width), C.int(height))
 	return f
 }
@@ -127,10 +132,33 @@ func (f *Frame) Move(x, y int) *Frame {
 	return f
 }
 
-// SetPosition of window
-func (f *Frame) SetPosition(position WindowPosition) *Frame {
-	// C.gtk_window_set_position(C.to_GtkWindow(f.window), C.GtkWindowPosition(position))
+// SetCenter of window
+func (f *Frame) SetCenter() *Frame {
+	C.setWindowCenter(C.int(f.window))
 	return f
+}
+
+// Eval JS
+func (f *Frame) Eval(js string) string {
+	id := atomic.AddUint64(&jsRequestID, 1)
+	ch := make(chan string)
+
+	jsRequests.Store(id, ch)
+	C.evalJS(C.int(f.window), C.CString(js), C.ulonglong(id))
+	ret := <-ch
+	jsRequests.Delete(id)
+	return ret
+}
+
+//export goEvalRet
+func goEvalRet(reqid C.ulonglong, err *C.char) {
+	go func() {
+		chi, ok := jsRequests.Load(uint64(reqid))
+		ch := chi.(chan string)
+		if ok {
+			ch <- C.GoString(err)
+		}
+	}()
 }
 
 // SetModal makes current Frame attached as modal window to parent
