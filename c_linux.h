@@ -5,12 +5,6 @@
 #include <string.h>
 #include <webkit2/webkit2.h>
 
-extern void goAppActivated();
-extern void goPrint(char* text);
-extern void goPrintInt(int num);
-extern void goScriptEvent();
-extern void goWindowState(GtkWidget* c, int e);
-
 typedef enum {
     PANEL_WINDOW_POSITION_TOP,
     PANEL_WINDOW_POSITION_BOTTOM,

@@ -3,13 +3,6 @@
 #import <WebKit/WebKit.h>
 #import <objc/runtime.h>
 
-extern void goAppActivated();
-extern void goPrint(char* text);
-extern void goPrintInt(int num);
-extern void goScriptEvent();
-extern void goEvalRet(long long unsigned int reqid, char* err);
-// extern void goWindowState(GtkWidget *c, int e);
-
 static WKWebView** webviews;
 static NSWindow** windows;
 static int windowsUsed;

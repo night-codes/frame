@@ -3,7 +3,7 @@
 package frame
 
 /*
-#include "linux.h"
+#include "c_linux.h"
 */
 import "C"
 

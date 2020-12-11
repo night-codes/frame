@@ -1,4 +1,5 @@
 #if defined(WEBVIEW_GTK)
+#import "_cgo_export.h"
 #import "linux.h"
 
 static void stateEvent(GtkWidget* c, GdkEventWindowState* event)

@@ -6,7 +6,7 @@ package frame
 #cgo pkg-config: gtk+-3.0 webkit2gtk-4.0
 #cgo linux CFLAGS: -DLINUX -DWEBVIEW_GTK=1 -Wno-deprecated-declarations
 #cgo linux LDFLAGS: -lX11
-#include "linux.h"
+#include "c_linux.h"
 */
 import "C"
 import (

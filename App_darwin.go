@@ -7,7 +7,7 @@ package frame
 #cgo LDFLAGS: -framework Cocoa -framework WebKit
 
 #import <Cocoa/Cocoa.h>
-#import  "darwin.h"
+#import  "c_darwin.h"
 */
 import "C"
 import (

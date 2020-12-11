@@ -3,15 +3,14 @@
 package frame
 
 /*
-#include "linux.h"
+#include "c_linux.h"
 */
 import "C"
-import "unsafe"
 
 type (
 	// Frame struct
 	Frame struct {
-		window     unsafe.Pointer
+		window     *C.GtkWidget
 		box        *C.GtkWidget
 		webview    *C.GtkWidget
 		menubar    *C.GtkWidget

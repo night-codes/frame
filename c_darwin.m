@@ -1,7 +1,7 @@
 #if defined(WEBVIEW_COCOA)
 
-#import "darwin.h"
-#include "_cgo_export.h"
+#import "_cgo_export.h"
+#import "c_darwin.h"
 
 static int webCount = 1;
 static bool appInitialized = false; // false first time function is called
