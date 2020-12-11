@@ -3,6 +3,10 @@
 package frame
 
 /*
+#ifndef WEBVIEW_GTK
+#define WEBVIEW_GTK
+#endif
+
 #include "c_linux.h"
 */
 import "C"
@@ -10,6 +14,9 @@ import "C"
 import (
 	"fmt"
 	"reflect"
+	"sync"
+	"sync/atomic"
+	"unsafe"
 )
 
 const (
@@ -36,9 +43,20 @@ type State struct {
 	Tiled      bool
 }
 
+var (
+	goRequestID uint64
+	goRequests  sync.Map
+)
+
 //export goAppActivated
 func goAppActivated() {
 	appChan <- &App{}
+}
+
+//export callTest
+func callTest(p C.gpointer) C.gboolean {
+	fmt.Println(p)
+	return gboolean(false)
 }
 
 //export goPrint
@@ -55,7 +73,7 @@ func goPrintInt(t C.int) {
 func goWindowState(c *C.GtkWidget, e C.int) {
 	for i := range frames {
 		if frames[i].StateEvent != nil && reflect.DeepEqual(frames[i].window, c) && (uint32(e)&cWithdrawn == 0 || uint32(e)&cFocused == 0) {
-			frames[i].StateEvent(State{
+			go frames[i].StateEvent(State{
 				Hidden:     uint32(e)&cWithdrawn != 0,
 				Iconified:  uint32(e)&cIconified != 0,
 				Maximized:  uint32(e)&cMaximized != 0,
@@ -66,6 +84,37 @@ func goWindowState(c *C.GtkWidget, e C.int) {
 			})
 		}
 	}
+}
+
+//export goInvokeCallback
+func goInvokeCallback(webview *C.GtkWidget, data *C.char) {
+	for i := range frames {
+		if frames[i].Invoke != nil && reflect.DeepEqual(frames[i].webview, webview) {
+			go frames[i].Invoke(C.GoString(data))
+		}
+	}
+}
+
+//export goEvalRet
+func goEvalRet(reqid C.ulonglong, err *C.char) {
+	go func() {
+		if chi, ok := goRequests.Load(uint64(reqid)); ok {
+			if ch, ok := chi.(chan interface{}); ok {
+				ch <- C.GoString(err)
+			}
+		}
+	}()
+}
+
+//export goWinRet
+func goWinRet(reqid C.ulonglong, win *C.WindowObj) {
+	go func() {
+		if chi, ok := goRequests.Load(uint64(reqid)); ok {
+			if ch, ok := chi.(chan interface{}); ok {
+				ch <- win
+			}
+		}
+	}()
 }
 
 //export goScriptEvent
@@ -85,4 +134,22 @@ func goBool(b C.gboolean) bool {
 		return true
 	}
 	return false
+}
+
+func threadsAddIdle(function C.GSourceFunc, data unsafe.Pointer) bool {
+	var ret C.guint
+	ret = C.gdk_threads_add_idle(function, (C.gpointer)(data))
+	if uint(ret) != 0 {
+		return false
+	}
+	return true
+}
+
+func cRequest(fn func(id uint64)) interface{} {
+	id := atomic.AddUint64(&goRequestID, 1)
+	ch := make(chan interface{})
+	goRequests.Store(id, ch)
+	defer goRequests.Delete(id)
+	go fn(id)
+	return <-ch
 }

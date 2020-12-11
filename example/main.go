@@ -19,7 +19,7 @@ func main() {
 	app := frame.MakeApp(10) // max webviews count
 
 	app.SetDefaultIconFromFile(basepath + "/moon.png")
-	wv := app.NewFrame("Simple program!", 400, 400).
+	wv := app.NewFrame("Simple program!", 500, 400).
 		SetBackgroundColor(50, 50, 50, 0.8).
 		LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Hello world</h1>
@@ -36,7 +36,7 @@ func main() {
 		}).
 		Show()
 
-	wv2 := app.NewFrame("Modal window", 350, 150).
+	wv2 := app.NewFrame("Modal window", 400, 300).
 		SetBackgroundColor(80, 50, 50, 0.9).
 		LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Some Dialog</h1>
@@ -54,23 +54,28 @@ func main() {
 
 	go func() {
 		time.Sleep(1 * time.Second)
-		fmt.Println("~", wv.Eval("document.body.style.background = '#449977'; thisIsError1"), "~")
-		fmt.Println("~", wv.Eval("window.external.invoke('Wow! This is external invoke!')"), "~")
+		wv.Eval("document.body.style.background = '#449977'; thisIsError1")
+		wv.Eval("window.external.invoke('Wow! This is external invoke!')")
 		time.Sleep(1 * time.Second)
 		wv.SetTitle("New title")
-		fmt.Println("~", wv.Eval("thisIsError2"), "~")
-		fmt.Println("~", wv.Eval("document.body.style.background = '#994477'"), "~")
-		wv2.Hide()
-		wv3 := app.NewFrame("Modal window", 330, 130).
+		wv.Eval("thisIsError2")
+		wv.Eval("document.body.style.background = '#994477'")
+		// wv2.Hide()
+		wv3 := app.NewFrame("Modal window", 300, 200).
 			SetBackgroundColor(40, 80, 50, 0.9).
 			LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Some Dialog</h1>
       <p>Modal window...</p>
-      </body>`, "").
-			SetModal(wv).
+      </body>`, "").SetModal(wv).
 			SetResizeble(false).
 			SetStateEvent(func(state frame.State) {
 				if state.Hidden {
+					wv2.LoadHTML(`<body style="color:#dddddd; background: yellow">
+							<h1>Super Dialog</h1>
+							<p>Super modal window...</p>
+							</body>`, "")
+
+					wv2.Eval("window.external.invoke('message:1111111111111111');")
 					fmt.Println("Modal window 2 closed")
 				}
 			})

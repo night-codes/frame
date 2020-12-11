@@ -6,6 +6,11 @@ package frame
 #cgo pkg-config: gtk+-3.0 webkit2gtk-4.0
 #cgo linux CFLAGS: -DLINUX -DWEBVIEW_GTK=1 -Wno-deprecated-declarations
 #cgo linux LDFLAGS: -lX11
+
+#ifndef WEBVIEW_GTK
+#define WEBVIEW_GTK
+#endif
+
 #include "c_linux.h"
 */
 import "C"
@@ -55,7 +60,7 @@ func (a *App) SetDefaultIconName(name string) {
 }
 
 // NewFrame returns window with webview
-func (app *App) NewFrame(title string, sizes ...int) *Frame {
+func (a *App) NewFrame(title string, sizes ...int) *Frame {
 	mutexNew.Lock()
 	defer mutexNew.Unlock()
 	width := 400
@@ -69,15 +74,20 @@ func (app *App) NewFrame(title string, sizes ...int) *Frame {
 		height = sizes[1]
 	}
 
-	window := C.makeWindow(C.CString(title), C.int(width), C.int(height))
-	box := C.makeBox(window)
-	menubar := C.makeMenubar(box)
-	webview := C.makeWebview(box)
+	cRet := cRequest(func(id uint64) {
+		C.makeWindow(&C.idleData{
+			content: C.gcharptr(C.CString(title)),
+			width:   C.int(width),
+			height:  C.int(height),
+			req_id:  C.ulonglong(id),
+		})
+	})
+	ret, _ := cRet.(*C.WindowObj)
 	frame := &Frame{
-		window:  window,
-		box:     box,
-		webview: webview,
-		menubar: menubar,
+		window:  ret.window,
+		box:     ret.box,
+		webview: ret.webview,
+		menubar: ret.menubar,
 	}
 	frame.SetCenter()
 	frames = append(frames, frame)

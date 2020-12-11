@@ -3,6 +3,10 @@
 package frame
 
 /*
+#ifndef WEBVIEW_GTK
+#define WEBVIEW_GTK
+#endif
+
 #include "c_linux.h"
 */
 import "C"
@@ -32,6 +36,7 @@ type (
 )
 
 const (
+	// Window types
 	TypeNormal       = WindowType(C.GDK_WINDOW_TYPE_HINT_NORMAL)        // Normal toplevel window.
 	TypeDialog       = WindowType(C.GDK_WINDOW_TYPE_HINT_DIALOG)        // Dialog window.
 	TypeMenu         = WindowType(C.GDK_WINDOW_TYPE_HINT_MENU)          // Window used to implement a menu; GTK+ uses this hint only for torn-off menus, see GtkTearoffMenuItem.
@@ -53,16 +58,41 @@ const (
 	StrutRight  = StrutPosition(C.PANEL_WINDOW_POSITION_RIGHT)
 )
 
+// Eval JS
+func (f *Frame) Eval(js string) string {
+	cRet := cRequest(func(id uint64) {
+		C.evalJS(&C.idleData{
+			widget:  f.webview,
+			content: C.gcharptr(C.CString(js)),
+			req_id:  C.ulonglong(id),
+		})
+	})
+	ret, _ := cRet.(string)
+	return ret
+}
+
 // Load URL to Frame webview
 func (f *Frame) Load(uri string) *Frame {
-	C.loadUri(f.webview, C.gcharptr(C.CString(uri)))
-	// C.webkit_web_inspector_attach(C.webkit_web_view_get_inspector(C.to_WebKitWebView(f.webview)))
+	C.loadUri(&C.idleData{
+		widget: f.webview,
+		uri:    C.gcharptr(C.CString(uri)),
+	})
 	return f
 }
 
 // LoadHTML to Frame webview
 func (f *Frame) LoadHTML(html string, baseURI string) *Frame {
-	C.loadHTML(f.webview, C.gcharptr(C.CString(html)), C.gcharptr(C.CString(baseURI)))
+	C.loadHTML(&C.idleData{
+		widget:  f.webview,
+		content: C.gcharptr(C.CString(html)),
+		uri:     C.gcharptr(C.CString(baseURI)),
+	})
+	return f
+}
+
+// SetBackgroundColor of Frame
+func (f *Frame) SetBackgroundColor(r, g, b int, alfa float64) *Frame {
+	C.setBackgroundColor(f.window, f.webview, C.gint(C.int(r)), C.gint(C.int(g)), C.gint(C.int(b)), C.gdouble(alfa))
 	return f
 }
 
@@ -171,7 +201,9 @@ func (f *Frame) KeepBelow(below bool) *Frame {
 
 // Show window
 func (f *Frame) Show() *Frame {
+	// C.gtk_widget_show_all(f.window)
 	C.gtk_window_present(C.to_GtkWindow(f.window))
+
 	if f.deferMove {
 		f.Move(f.deferMoveX, f.deferMoveY)
 	}
@@ -233,12 +265,6 @@ func (f *Frame) SetIconFromFile(filename string) *Frame {
 // SetIconName for Frame
 func (f *Frame) SetIconName(name string) *Frame {
 	C.gtk_window_set_icon_name(C.to_GtkWindow(f.window), C.gcharptr(C.CString(name)))
-	return f
-}
-
-// SetBackgroundColor of Frame
-func (f *Frame) SetBackgroundColor(r, g, b int, alfa float64) *Frame {
-	C.setBackgroundColor(f.window, f.webview, C.gint(C.int(r)), C.gint(C.int(g)), C.gint(C.int(b)), C.gdouble(alfa))
 	return f
 }
 
