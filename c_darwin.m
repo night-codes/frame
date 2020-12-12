@@ -103,7 +103,7 @@ void makeApp(int count)
         [app setActivationPolicy:NSApplicationActivationPolicyRegular];
         appDelegate = [[AppDelegate alloc] init];
         [app setDelegate:appDelegate];
-        [app activateIgnoringOtherApps:YES];
+        // [app activateIgnoringOtherApps:YES];
         windows = malloc(sizeof(NSWindow*) * webCount); // create windows pool
         webviews = malloc(sizeof(WKWebView*) * webCount); // create webviews pool
         windowsUsed = 0;
@@ -181,7 +181,8 @@ void showWindow(int id)
 {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         NSWindow* window = windows[id];
-        [window makeKeyAndOrderFront:app];
+        [window orderFrontRegardless];
+        // [window makeKeyAndOrderFront:app];
     });
 }
 
@@ -241,6 +242,8 @@ void setModal(int id, int id2)
         NSWindow* window = windows[id];
         NSWindow* parentWindow = windows[id2];
         window.level = NSModalPanelWindowLevel;
+		[parentWindow makeMainWindow];
+		[parentWindow addChildWindow:window ordered:NSWindowAbove];
         window.styleMask &= ~NSWindowStyleMaskMiniaturizable;
 
         // boxes[id].isUserInteractionEnabled = NO;
@@ -260,6 +263,10 @@ void unsetModal(int id)
         NSWindow* window = windows[id];
         window.styleMask |= NSWindowStyleMaskMiniaturizable;
         window.level = NSNormalWindowLevel;
+		NSWindow* parentWindow = [window parentWindow];
+		if (parentWindow != NULL) {
+			[parentWindow removeChildWindow:window];
+		}
     });
 }
 

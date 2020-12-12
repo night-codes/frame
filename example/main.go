@@ -36,7 +36,7 @@ func main() {
 		}).
 		Show()
 
-	wv2 := app.NewFrame("Modal window", 350, 150).
+	app.NewFrame("Modal window", 450, 250).
 		SetBackgroundColor(80, 50, 50, 0.9).
 		LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Some Dialog</h1>
@@ -60,7 +60,7 @@ func main() {
 		wv.SetTitle("New title")
 		fmt.Println("~", wv.Eval("thisIsError2"), "~")
 		fmt.Println("~", wv.Eval("document.body.style.background = '#994477'"), "~")
-		wv2.Hide()
+		// wv2.Hide()
 		wv3 := app.NewFrame("Modal window", 330, 130).
 			SetBackgroundColor(40, 80, 50, 0.9).
 			LoadHTML(`<body style="color:#dddddd; background: transparent">
