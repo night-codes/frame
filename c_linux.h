@@ -90,6 +90,7 @@ static void webview_load_changed_cb(WebKitWebView* web_view, WebKitLoadEvent loa
     WindowObj* data = (WindowObj*)arg;
     switch (load_event) {
     case WEBKIT_LOAD_FINISHED:
+        webkit_web_view_run_javascript(WEBKIT_WEB_VIEW(data->webview), "window.external={invoke:function(x){window.webkit.messageHandlers.external.postMessage(x);}}", NULL, NULL, NULL);
         if (data->created == FALSE) {
             data->created = TRUE;
             goWinRet(data->req_id, data);
@@ -266,11 +267,6 @@ static gboolean contextMenuEvent(WebKitWebView* web_view, WebKitContextMenu* con
     return TRUE;
 }
 
-static gboolean readyToShowEvent(WebKitWebView* web_view, gpointer user_data)
-{
-    return TRUE;
-}
-
 static gboolean makeWindow_idle(gpointer arg)
 {
     idleData* data = (idleData*)arg;
@@ -322,7 +318,6 @@ static gboolean makeWindow_idle(gpointer arg)
 
     WebKitSettings* settings = webkit_settings_new();
     webkit_settings_set_allow_modal_dialogs(settings, TRUE);
-    // webkit_settings_set_enable_smooth_scrolling(settings, TRUE);
     webkit_settings_set_default_charset(settings, "utf-8");
     webkit_settings_set_enable_webgl(settings, TRUE);
     webkit_settings_set_javascript_can_access_clipboard(settings, TRUE);
