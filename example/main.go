@@ -42,7 +42,7 @@ func main() {
       <h1>Some Dialog</h1>
       <p>Modal window...</p>
       </body>`, "").
-		SetModal(wv).
+		// SetModal(wv).
 		SetResizeble(false).
 		SetStateEvent(func(state frame.State) {
 			if state.Hidden {
@@ -66,7 +66,8 @@ func main() {
 			LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Some Dialog</h1>
       <p>Modal window...</p>
-      </body>`, "").SetModal(wv).
+	  </body>`, "").
+			//   SetModal(wv).
 			SetResizeble(false).
 			SetStateEvent(func(state frame.State) {
 				if state.Hidden {

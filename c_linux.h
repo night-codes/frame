@@ -250,6 +250,13 @@ static void windowStrut(GdkWindow* window, winPosition position, int width, int 
 static gboolean contextMenuEvent(WebKitWebView* web_view, WebKitContextMenu* context_menu,
     GdkEvent* event, WebKitHitTestResult* hit_test_result, gpointer user_data)
 {
+    goPrint("contextMenuEvent");
+    return TRUE;
+}
+static gboolean readyToShowEvent(WebKitWebView* web_view, WebKitContextMenu* context_menu,
+    GdkEvent* event, WebKitHitTestResult* hit_test_result, gpointer user_data)
+{
+    goPrint("readyToShow");
     return TRUE;
 }
 
@@ -324,9 +331,13 @@ static gboolean makeWindow_idle(gpointer arg)
     webkit_web_view_set_settings(WEBKIT_WEB_VIEW(webview), settings);
     g_signal_connect(webview, "send-script", G_CALLBACK(scriptEvent), NULL);
     g_signal_connect(webview, "context-menu", G_CALLBACK(contextMenuEvent), NULL);
+    g_signal_connect(webview, "ready-to-show", G_CALLBACK(readyToShowEvent), NULL);
     gtk_box_pack_end(GTK_BOX(box), webview, 1, 1, 0);
     // gtk_box_set_center_widget(GTK_BOX(box), webview);
+    goPrint("beforeshow");
     gtk_widget_show(webview);
+
+    goPrint("show");
 
     WindowObj* ret = (WindowObj*)malloc(sizeof(WindowObj));
     ret->window = window;

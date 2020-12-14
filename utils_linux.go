@@ -16,7 +16,7 @@ import (
 	"reflect"
 	"sync"
 	"sync/atomic"
-	"unsafe"
+	"time"
 )
 
 const (
@@ -108,6 +108,7 @@ func goEvalRet(reqid C.ulonglong, err *C.char) {
 
 //export goWinRet
 func goWinRet(reqid C.ulonglong, win *C.WindowObj) {
+	time.Sleep(time.Second)
 	go func() {
 		if chi, ok := goRequests.Load(uint64(reqid)); ok {
 			if ch, ok := chi.(chan interface{}); ok {
@@ -136,20 +137,11 @@ func goBool(b C.gboolean) bool {
 	return false
 }
 
-func threadsAddIdle(function C.GSourceFunc, data unsafe.Pointer) bool {
-	var ret C.guint
-	ret = C.gdk_threads_add_idle(function, (C.gpointer)(data))
-	if uint(ret) != 0 {
-		return false
-	}
-	return true
-}
-
 func cRequest(fn func(id uint64)) interface{} {
 	id := atomic.AddUint64(&goRequestID, 1)
 	ch := make(chan interface{})
 	goRequests.Store(id, ch)
 	defer goRequests.Delete(id)
-	go fn(id)
+	fn(id)
 	return <-ch
 }

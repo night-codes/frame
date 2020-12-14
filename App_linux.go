@@ -15,8 +15,11 @@ package frame
 */
 import "C"
 import (
+	"fmt"
 	"runtime"
 	"sync"
+	"sync/atomic"
+	"time"
 )
 
 type (
@@ -32,6 +35,7 @@ var (
 	frames   = []*Frame{}
 	lock     sync.Mutex
 	appChan  = make(chan *App)
+	idItr    uint64
 )
 
 // MakeApp is make and run one instance of application (At the moment, it is possible to create only one instance)
@@ -61,8 +65,16 @@ func (a *App) SetDefaultIconName(name string) {
 
 // NewFrame returns window with webview
 func (a *App) NewFrame(title string, sizes ...int) *Frame {
+	id := atomic.AddUint64(&idItr, 1)
 	mutexNew.Lock()
-	defer mutexNew.Unlock()
+	defer func() {
+		time.Sleep(time.Second / 100)
+		fmt.Println(id, "|NewFrame - END|")
+		mutexNew.Unlock()
+	}()
+
+	fmt.Println(id, "|NewFrame|")
+
 	width := 400
 	height := 300
 
@@ -84,6 +96,7 @@ func (a *App) NewFrame(title string, sizes ...int) *Frame {
 	})
 	ret, _ := cRet.(*C.WindowObj)
 	frame := &Frame{
+		id:      id,
 		window:  ret.window,
 		box:     ret.box,
 		webview: ret.webview,
@@ -91,5 +104,6 @@ func (a *App) NewFrame(title string, sizes ...int) *Frame {
 	}
 	frame.SetCenter()
 	frames = append(frames, frame)
+
 	return frame
 }

@@ -10,10 +10,12 @@ package frame
 #include "c_linux.h"
 */
 import "C"
+import "fmt"
 
 type (
 	// Frame struct
 	Frame struct {
+		id         uint64
 		window     *C.GtkWidget
 		box        *C.GtkWidget
 		webview    *C.GtkWidget
@@ -60,20 +62,24 @@ const (
 
 // Eval JS
 func (f *Frame) Eval(js string) string {
+	fmt.Println(f.id, "|Eval|")
 	cRet := cRequest(func(id uint64) {
-		C.evalJS(&C.idleData{
+		go C.evalJS(&C.idleData{
 			widget:  f.webview,
 			content: C.gcharptr(C.CString(js)),
 			req_id:  C.ulonglong(id),
 		})
 	})
 	ret, _ := cRet.(string)
+
+	fmt.Println(f.id, "|Eval - END|")
 	return ret
 }
 
 // Load URL to Frame webview
 func (f *Frame) Load(uri string) *Frame {
-	C.loadUri(&C.idleData{
+	fmt.Println(f.id, "|Load|")
+	go C.loadUri(&C.idleData{
 		widget: f.webview,
 		uri:    C.gcharptr(C.CString(uri)),
 	})
@@ -82,7 +88,8 @@ func (f *Frame) Load(uri string) *Frame {
 
 // LoadHTML to Frame webview
 func (f *Frame) LoadHTML(html string, baseURI string) *Frame {
-	C.loadHTML(&C.idleData{
+	fmt.Println(f.id, "|LoadHTML|")
+	go C.loadHTML(&C.idleData{
 		widget:  f.webview,
 		content: C.gcharptr(C.CString(html)),
 		uri:     C.gcharptr(C.CString(baseURI)),
@@ -92,54 +99,63 @@ func (f *Frame) LoadHTML(html string, baseURI string) *Frame {
 
 // SetBackgroundColor of Frame
 func (f *Frame) SetBackgroundColor(r, g, b int, alfa float64) *Frame {
+	fmt.Println(f.id, "|SetBackgroundColor|")
 	C.setBackgroundColor(f.window, f.webview, C.gint(C.int(r)), C.gint(C.int(g)), C.gint(C.int(b)), C.gdouble(alfa))
 	return f
 }
 
 // SkipTaskbar of window
 func (f *Frame) SkipTaskbar(skip bool) *Frame {
+	fmt.Println(f.id, "|SkipTaskbar|")
 	C.gtk_window_set_skip_taskbar_hint(C.to_GtkWindow(f.window), gboolean(skip))
 	return f
 }
 
 // SkipPager of window
 func (f *Frame) SkipPager(skip bool) *Frame {
+	fmt.Println(f.id, "|SkipPager|")
 	C.gtk_window_set_skip_pager_hint(C.to_GtkWindow(f.window), gboolean(skip))
 	return f
 }
 
 // SetResizeble of window
 func (f *Frame) SetResizeble(resizeble bool) *Frame {
+	fmt.Println(f.id, "|SetResizeble|")
 	C.gtk_window_set_resizable(C.to_GtkWindow(f.window), gboolean(resizeble))
 	return f
 }
 
 // SetStateEvent set handler function for window state event
 func (f *Frame) SetStateEvent(fn func(State)) *Frame {
+	fmt.Println(f.id, "|SetStateEvent|")
 	f.StateEvent = fn
 	return f
 }
 
 // SetInvoke set handler function for window state event
 func (f *Frame) SetInvoke(fn func(string)) *Frame {
+	fmt.Println(f.id, "|SetInvoke|")
 	f.Invoke = fn
 	return f
 }
 
 // SetTitle of window
 func (f *Frame) SetTitle(title string) *Frame {
+	fmt.Println(f.id, "|SetTitle|")
 	C.gtk_window_set_title(C.to_GtkWindow(f.window), C.gcharptr(C.CString(title)))
 	return f
 }
 
 // SetSize of the window
 func (f *Frame) SetSize(width, height int) *Frame {
+	fmt.Println(f.id, "|SetSize|")
 	C.gtk_window_resize(C.to_GtkWindow(f.window), C.gint(C.int(width)), C.gint(C.int(height)))
 	return f
 }
 
 // Move the window
 func (f *Frame) Move(x, y int) *Frame {
+	fmt.Println(f.id, "|Move|")
 	visible := C.gtk_widget_get_visible(f.window) == 1
 	if !visible {
 		f.deferMove = true
@@ -153,12 +169,14 @@ func (f *Frame) Move(x, y int) *Frame {
 
 // SetCenter of the window
 func (f *Frame) SetCenter() *Frame {
+	fmt.Println(f.id, "|SetCenter|")
 	C.gtk_window_set_position(C.to_GtkWindow(f.window), C.GTK_WIN_POS_CENTER)
 	return f
 }
 
 // SetModal makes current Frame attached as modal window to parent
 func (f *Frame) SetModal(parent *Frame) *Frame {
+	fmt.Println(f.id, "|SetModal|", parent.id)
 	C.gtk_window_set_transient_for(C.to_GtkWindow(f.window), C.to_GtkWindow(parent.window))
 	C.gtk_window_set_destroy_with_parent(C.to_GtkWindow(f.window), C.TRUE)
 	C.gtk_window_set_attached_to(C.to_GtkWindow(f.window), parent.window)
@@ -168,6 +186,7 @@ func (f *Frame) SetModal(parent *Frame) *Frame {
 
 // UnsetModal unset current Frame as modal window from another Frames
 func (f *Frame) UnsetModal() *Frame {
+	fmt.Println(f.id, "|UnsetModal|")
 	C.gtk_window_set_transient_for(C.to_GtkWindow(f.window), nil)
 	C.gtk_window_set_destroy_with_parent(C.to_GtkWindow(f.window), C.FALSE)
 	C.gtk_window_set_attached_to(C.to_GtkWindow(f.window), nil)
@@ -177,30 +196,35 @@ func (f *Frame) UnsetModal() *Frame {
 
 // SetDecorated of window
 func (f *Frame) SetDecorated(decorated bool) *Frame {
+	fmt.Println(f.id, "|SetDecorated|")
 	C.gtk_window_set_decorated(C.to_GtkWindow(f.window), gboolean(decorated))
 	return f
 }
 
 // SetDeletable of window
 func (f *Frame) SetDeletable(deletable bool) *Frame {
+	fmt.Println(f.id, "|SetDeletable|")
 	C.gtk_window_set_deletable(C.to_GtkWindow(f.window), gboolean(deletable))
 	return f
 }
 
 // KeepAbove the window
 func (f *Frame) KeepAbove(above bool) *Frame {
+	fmt.Println(f.id, "|KeepAbove|")
 	C.gtk_window_set_keep_above(C.to_GtkWindow(f.window), gboolean(above))
 	return f
 }
 
 // KeepBelow of window
 func (f *Frame) KeepBelow(below bool) *Frame {
+	fmt.Println(f.id, "|KeepBelow|")
 	C.gtk_window_set_keep_below(C.to_GtkWindow(f.window), gboolean(below))
 	return f
 }
 
 // Show window
 func (f *Frame) Show() *Frame {
+	fmt.Println(f.id, "|Show|")
 	// C.gtk_widget_show_all(f.window)
 	C.gtk_window_present(C.to_GtkWindow(f.window))
 
@@ -212,12 +236,14 @@ func (f *Frame) Show() *Frame {
 
 // Hide window
 func (f *Frame) Hide() *Frame {
+	fmt.Println(f.id, "|Hide|")
 	C.gtk_window_close(C.to_GtkWindow(f.window))
 	return f
 }
 
 // Iconify window
 func (f *Frame) Iconify(iconify bool) *Frame {
+	fmt.Println(f.id, "|Iconify|")
 	if iconify {
 		C.gtk_window_iconify(C.to_GtkWindow(f.window))
 	} else {
@@ -228,6 +254,7 @@ func (f *Frame) Iconify(iconify bool) *Frame {
 
 // Stick window
 func (f *Frame) Stick(stick bool) *Frame {
+	fmt.Println(f.id, "|Stick|")
 	if stick {
 		C.gtk_window_stick(C.to_GtkWindow(f.window))
 	} else {
@@ -238,6 +265,7 @@ func (f *Frame) Stick(stick bool) *Frame {
 
 // Maximize window
 func (f *Frame) Maximize(maximize bool) *Frame {
+	fmt.Println(f.id, "|Maximize|")
 	if maximize {
 		C.gtk_window_maximize(C.to_GtkWindow(f.window))
 	} else {
@@ -248,6 +276,7 @@ func (f *Frame) Maximize(maximize bool) *Frame {
 
 // Fullscreen window
 func (f *Frame) Fullscreen(fullscreen bool) *Frame {
+	fmt.Println(f.id, "|Fullscreen|")
 	if fullscreen {
 		C.gtk_window_fullscreen(C.to_GtkWindow(f.window))
 	} else {
@@ -258,42 +287,49 @@ func (f *Frame) Fullscreen(fullscreen bool) *Frame {
 
 // SetIconFromFile for Frame
 func (f *Frame) SetIconFromFile(filename string) *Frame {
+	fmt.Println(f.id, "|SetIconFromFile|")
 	C.gtk_window_set_icon_from_file(C.to_GtkWindow(f.window), C.gcharptr(C.CString(filename)), nil)
 	return f
 }
 
 // SetIconName for Frame
 func (f *Frame) SetIconName(name string) *Frame {
+	fmt.Println(f.id, "|SetIconName|")
 	C.gtk_window_set_icon_name(C.to_GtkWindow(f.window), C.gcharptr(C.CString(name)))
 	return f
 }
 
 // SetMaxSize of window
 func (f *Frame) SetMaxSize(width, height int) *Frame {
+	fmt.Println(f.id, "|SetMaxSize|")
 	C.setMaxSize(f.window, C.gint(C.int(width)), C.gint(C.int(height)))
 	return f
 }
 
 // SetMinSize of window
 func (f *Frame) SetMinSize(width, height int) *Frame {
+	fmt.Println(f.id, "|SetMinSize|")
 	C.setMinSize(f.window, C.gint(C.int(width)), C.gint(C.int(height)))
 	return f
 }
 
 // SetOpacity of window
 func (f *Frame) SetOpacity(opacity float64) *Frame {
+	fmt.Println(f.id, "|SetOpacity|")
 	C.gdk_window_set_opacity(C.gtk_widget_get_window(f.window), C.gdouble(opacity))
 	return f
 }
 
 // SetType of window
 func (f *Frame) SetType(hint WindowType) *Frame {
+	fmt.Println(f.id, "|SetType|")
 	C.gtk_window_set_type_hint(C.to_GtkWindow(f.window), C.GdkWindowTypeHint(int(hint)))
 	return f
 }
 
 // GetScreen where the window placed
 func (f *Frame) GetScreen() *Screen {
+	fmt.Println(f.id, "|GetScreen|")
 	screen := C.gtk_widget_get_screen(f.window)
 	display := C.gdk_screen_get_display(screen)
 	monitor := C.gdk_display_get_monitor_at_window(display, C.gtk_widget_get_window(f.window))
@@ -306,6 +342,7 @@ func (f *Frame) GetScreen() *Screen {
 
 // GetSize returns width and height of window
 func (f *Frame) GetSize() (width, height int) {
+	fmt.Println(f.id, "|GetSize|")
 	var cWidth, cHeight C.gint
 	C.gtk_window_get_size(C.to_GtkWindow(f.window), &cWidth, &cHeight)
 	width, height = int(cWidth), int(cHeight)
@@ -314,6 +351,7 @@ func (f *Frame) GetSize() (width, height int) {
 
 // Strut reserves frame space on the screen
 func (f *Frame) Strut(position StrutPosition, size int) *Frame {
+	fmt.Println(f.id, "|Strut|")
 	monitorWidth, monitorHeight := f.GetScreen().Size()
 	scale := f.GetScreen().ScaleFactor()
 	var width, height int
