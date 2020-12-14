@@ -10,6 +10,8 @@
 #include <webkit2/webkit2.h>
 
 typedef struct WindowObj {
+    long long unsigned int req_id;
+    gboolean created;
     GtkWidget* window;
     GtkWidget* box;
     GtkWidget* webview;
@@ -22,8 +24,8 @@ extern void goPrintInt(int num);
 extern void goScriptEvent();
 extern void goWindowState(GtkWidget* c, int e);
 extern void goInvokeCallback(GtkWidget* webview, char* data);
-extern void goWinRet(long long unsigned reqid, WindowObj* win);
-extern void goEvalRet(long long unsigned reqid, char* err);
+extern void goWinRet(long long unsigned int reqid, WindowObj* win);
+extern void goEvalRet(long long unsigned int reqid, char* err);
 
 typedef enum {
     PANEL_WINDOW_POSITION_TOP,
@@ -69,9 +71,7 @@ static void scriptEvent(GtkWidget* ww, char* n)
     webkit_web_view_run_javascript(WEBKIT_WEB_VIEW(ww), "GetEvents();", NULL, NULL, NULL);
 }
 
-static void external_message_received_cb(WebKitUserContentManager* contentManager,
-    WebKitJavascriptResult* r,
-    gpointer arg)
+static void external_message_received_cb(WebKitUserContentManager* contentManager, WebKitJavascriptResult* r, gpointer arg)
 {
     (void)contentManager;
     GtkWidget* w = (GtkWidget*)arg;
@@ -83,7 +83,19 @@ static void external_message_received_cb(WebKitUserContentManager* contentManage
     JSStringGetUTF8CString(js, s, n);
     goInvokeCallback(w, s);
     JSStringRelease(js);
-    g_free(s);
+}
+
+static void webview_load_changed_cb(WebKitWebView* web_view, WebKitLoadEvent load_event, gpointer arg)
+{
+    WindowObj* data = (WindowObj*)arg;
+    switch (load_event) {
+    case WEBKIT_LOAD_FINISHED:
+        if (data->created == FALSE) {
+            data->created = TRUE;
+            goWinRet(data->req_id, data);
+        }
+        break;
+    }
 }
 
 // The application is started.
@@ -250,12 +262,19 @@ static void windowStrut(GdkWindow* window, winPosition position, int width, int 
 static gboolean contextMenuEvent(WebKitWebView* web_view, WebKitContextMenu* context_menu,
     GdkEvent* event, WebKitHitTestResult* hit_test_result, gpointer user_data)
 {
+    goPrint("contextMenuEvent");
+    return TRUE;
+}
+
+static gboolean readyToShowEvent(WebKitWebView* web_view, gpointer user_data)
+{
     return TRUE;
 }
 
 static gboolean makeWindow_idle(gpointer arg)
 {
     idleData* data = (idleData*)arg;
+    WindowObj* ret = (WindowObj*)malloc(sizeof(WindowObj));
 
     /** WINDOW  */
     GtkWidget* window = gtk_application_window_new(app);
@@ -284,10 +303,7 @@ static gboolean makeWindow_idle(gpointer arg)
     GtkWidget* fileMenu = gtk_menu_new();
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), fileMenu);
 
-    /*  GtkWidget* child = gtk_bin_get_child(GTK_BIN(item));
-    gtk_label_set_markup(GTK_LABEL(child), "<i>new label</i> with <b>markup</b>");
-    gtk_accel_label_set_accel(GTK_ACCEL_LABEL(child), GDK_KEY_1, 0);
- */
+    /*  gtk_accel_label_set_accel(GTK_ACCEL_LABEL(child), GDK_KEY_1, 0); */
     GtkWidget* menubar = gtk_menu_bar_new();
     gtk_box_pack_start(GTK_BOX(box), menubar, 0, 1, 0);
     gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item);
@@ -318,22 +334,29 @@ static gboolean makeWindow_idle(gpointer arg)
     webkit_settings_set_enable_resizable_text_areas(settings, FALSE);
     webkit_web_view_run_javascript(WEBKIT_WEB_VIEW(webview), "window.external={invoke:function(x){window.webkit.messageHandlers.external.postMessage(x);}}", NULL, NULL, NULL);
     // webkit_settings_set_hardware_acceleration_policy(settings, WEBKIT_HARDWARE_ACCELERATION_POLICY_ALWAYS);
-    // webkit_settings_set_enable_write_console_messages_to_stdout(settings, TRUE);
+    // webkit_settings_set_enable_writes_console_messages_to_stdout(settings, TRUE);
     // webkit_settings_set_enable_developer_extras(settings, TRUE);
     webkit_web_view_set_zoom_level(WEBKIT_WEB_VIEW(webview), 1.0);
     webkit_web_view_set_settings(WEBKIT_WEB_VIEW(webview), settings);
-    g_signal_connect(webview, "send-script", G_CALLBACK(scriptEvent), NULL);
-    g_signal_connect(webview, "context-menu", G_CALLBACK(contextMenuEvent), NULL);
-    gtk_box_pack_end(GTK_BOX(box), webview, 1, 1, 0);
-    // gtk_box_set_center_widget(GTK_BOX(box), webview);
+    g_signal_connect(webview, "send-script", G_CALLBACK(scriptEvent), ret);
+    g_signal_connect(webview, "context-menu", G_CALLBACK(contextMenuEvent), ret);
+
+    GtkWidget* scroller = gtk_scrolled_window_new(NULL, NULL);
+    gtk_box_pack_end(GTK_BOX(box), scroller, 1, 1, 0);
+    gtk_container_add(GTK_CONTAINER(scroller), webview);
+
+    gtk_widget_grab_focus(webview);
+    gtk_widget_show(scroller);
     gtk_widget_show(webview);
 
-    WindowObj* ret = (WindowObj*)malloc(sizeof(WindowObj));
+    ret->req_id = data->req_id;
     ret->window = window;
     ret->box = box;
     ret->webview = webview;
     ret->menubar = menubar;
-    goWinRet(data->req_id, ret);
+    ret->created = FALSE;
+    g_signal_connect(G_OBJECT(webview), "load-changed", G_CALLBACK(webview_load_changed_cb), ret);
+    webkit_web_view_load_html(WEBKIT_WEB_VIEW(webview), "<body></body>", "about:blank");
     return FALSE;
 }
 

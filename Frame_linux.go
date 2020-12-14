@@ -14,6 +14,7 @@ import "C"
 type (
 	// Frame struct
 	Frame struct {
+		id         uint64
 		window     *C.GtkWidget
 		box        *C.GtkWidget
 		webview    *C.GtkWidget
@@ -61,7 +62,7 @@ const (
 // Eval JS
 func (f *Frame) Eval(js string) string {
 	cRet := cRequest(func(id uint64) {
-		C.evalJS(&C.idleData{
+		go C.evalJS(&C.idleData{
 			widget:  f.webview,
 			content: C.gcharptr(C.CString(js)),
 			req_id:  C.ulonglong(id),
@@ -73,7 +74,7 @@ func (f *Frame) Eval(js string) string {
 
 // Load URL to Frame webview
 func (f *Frame) Load(uri string) *Frame {
-	C.loadUri(&C.idleData{
+	go C.loadUri(&C.idleData{
 		widget: f.webview,
 		uri:    C.gcharptr(C.CString(uri)),
 	})
@@ -82,7 +83,7 @@ func (f *Frame) Load(uri string) *Frame {
 
 // LoadHTML to Frame webview
 func (f *Frame) LoadHTML(html string, baseURI string) *Frame {
-	C.loadHTML(&C.idleData{
+	go C.loadHTML(&C.idleData{
 		widget:  f.webview,
 		content: C.gcharptr(C.CString(html)),
 		uri:     C.gcharptr(C.CString(baseURI)),

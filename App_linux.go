@@ -4,7 +4,7 @@ package frame
 
 /*
 #cgo pkg-config: gtk+-3.0 webkit2gtk-4.0
-#cgo linux CFLAGS: -DLINUX -DWEBVIEW_GTK=1 -Wno-deprecated-declarations
+#cgo linux CFLAGS: -DWEBVIEW_GTK=1 -Wno-deprecated-declarations
 #cgo linux LDFLAGS: -lX11
 
 #ifndef WEBVIEW_GTK
@@ -17,6 +17,7 @@ import "C"
 import (
 	"runtime"
 	"sync"
+	"sync/atomic"
 )
 
 type (
@@ -32,6 +33,7 @@ var (
 	frames   = []*Frame{}
 	lock     sync.Mutex
 	appChan  = make(chan *App)
+	idItr    uint64
 )
 
 // MakeApp is make and run one instance of application (At the moment, it is possible to create only one instance)
@@ -61,8 +63,12 @@ func (a *App) SetDefaultIconName(name string) {
 
 // NewFrame returns window with webview
 func (a *App) NewFrame(title string, sizes ...int) *Frame {
+	id := atomic.AddUint64(&idItr, 1)
 	mutexNew.Lock()
-	defer mutexNew.Unlock()
+	defer func() {
+		mutexNew.Unlock()
+	}()
+
 	width := 400
 	height := 300
 
@@ -84,6 +90,7 @@ func (a *App) NewFrame(title string, sizes ...int) *Frame {
 	})
 	ret, _ := cRet.(*C.WindowObj)
 	frame := &Frame{
+		id:      id,
 		window:  ret.window,
 		box:     ret.box,
 		webview: ret.webview,

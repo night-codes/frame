@@ -26,7 +26,7 @@ type (
 	}
 )
 
-// NewFrame returns window with webview
+// NewIem returns window with webview
 func (m *Menu) NewIem(title string) MenuItem {
 	menuitem := MenuItem{
 		//
