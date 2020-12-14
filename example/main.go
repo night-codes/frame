@@ -50,6 +50,9 @@ func main() {
 			}
 		}).
 		SetCenter().
+		SetInvoke(func(msg string) {
+			fmt.Println(":::", msg)
+		}).
 		Show()
 
 	go func() {
@@ -66,7 +69,11 @@ func main() {
 			LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Some Dialog</h1>
       <p>Modal window...</p>
-      </body>`, "").SetModal(wv2).
+	  </body>`, "").
+			SetInvoke(func(msg string) {
+				fmt.Println(":::", msg)
+			}).
+			SetModal(wv2).
 			SetResizeble(false).
 			SetStateEvent(func(state frame.State) {
 				if state.Hidden {
@@ -82,6 +89,11 @@ func main() {
 
 		go func() {
 			wv3.Show()
+			time.Sleep(1 * time.Second)
+			wv.Eval("window.external.invoke('Window 1: This is external invoke')")
+			wv2.Eval("window.external.invoke('Window 2: This is external invoke')")
+			wv3.Eval("window.external.invoke('Window 3: This is external invoke')")
+
 		}()
 	}()
 	// w, h := wv.GetScreen().Size()

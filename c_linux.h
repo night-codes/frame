@@ -85,12 +85,12 @@ static void external_message_received_cb(WebKitUserContentManager* contentManage
     JSStringRelease(js);
 }
 
-static void webview_load_changed_cb(WebKitWebView* web_view, WebKitLoadEvent load_event, gpointer arg)
+static void webview_load_changed_cb(WebKitWebView* webview, WebKitLoadEvent load_event, gpointer arg)
 {
     WindowObj* data = (WindowObj*)arg;
     switch (load_event) {
     case WEBKIT_LOAD_FINISHED:
-        webkit_web_view_run_javascript(WEBKIT_WEB_VIEW(data->webview), "window.external={invoke:function(x){window.webkit.messageHandlers.external.postMessage(x);}}", NULL, NULL, NULL);
+        webkit_web_view_run_javascript(WEBKIT_WEB_VIEW(webview), "window.external={invoke:function(x){window.webkit.messageHandlers.external.postMessage(x);}}", NULL, NULL, NULL);
         if (data->created == FALSE) {
             data->created = TRUE;
             goWinRet(data->req_id, data);
