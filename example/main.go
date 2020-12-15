@@ -15,12 +15,10 @@ var (
 )
 
 func main() {
-	ch := make(chan bool)
-	app := frame.MakeApp(10) // max webviews count
-
-	app.SetDefaultIconFromFile(basepath + "/moon.png")
-	wv := app.NewFrame("Simple program!", 500, 400).
+	wv := frame.NewWindow("Simple program!", 500, 400).
+		SetIconFromFile(basepath+"/moon.png").
 		SetBackgroundColor(50, 50, 50, 0.8).
+		Move(20, 100).
 		LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Hello world</h1>
       <p>Test test test...</p>
@@ -28,7 +26,6 @@ func main() {
 		SetStateEvent(func(state frame.State) {
 			if state.Hidden {
 				fmt.Println("Main window closed")
-				ch <- true
 			}
 		}).
 		SetInvoke(func(msg string) {
@@ -36,13 +33,15 @@ func main() {
 		}).
 		Show()
 
-	wv2 := app.NewFrame("Modal window", 400, 300).
+	wv2 := frame.NewWindow("Modal window", 400, 300).
 		SetBackgroundColor(80, 50, 50, 0.9).
+		SetIconFromFile(basepath+"/moon.png").
 		LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Some Dialog</h1>
       <p>Modal window...</p>
       </body>`, "").
-		SetModal(wv).
+		// KeepAbove(true).
+		Move(540, 100).
 		SetResizeble(false).
 		SetStateEvent(func(state frame.State) {
 			if state.Hidden {
@@ -56,15 +55,14 @@ func main() {
 		Show()
 
 	go func() {
-		time.Sleep(1 * time.Second)
 		wv.Eval("document.body.style.background = '#449977'; thisIsError1")
 		wv.Eval("window.external.invoke('Wow! This is external invoke!')")
-		time.Sleep(1 * time.Second)
 		wv.SetTitle("New title")
 		wv.Eval("thisIsError2")
 		wv.Eval("document.body.style.background = '#994477'")
 		// wv2.Hide()
-		wv3 := app.NewFrame("Modal window", 300, 200).
+		wv3 := frame.NewWindow("Modal window", 300, 200).
+			SetIconFromFile(basepath+"/moon.png").
 			SetBackgroundColor(40, 80, 50, 0.9).
 			LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Some Dialog</h1>
@@ -72,24 +70,37 @@ func main() {
 	  </body>`, "").
 			SetInvoke(func(msg string) {
 				fmt.Println(":::", msg)
-			}).
-			SetModal(wv2).
+			})
+		t := false
+		wv3.
+			Move(960, 100).
 			SetResizeble(false).
 			SetStateEvent(func(state frame.State) {
 				if state.Hidden {
-					wv2.LoadHTML(`<body style="color:#dddddd; background: yellow">
+					wv2.LoadHTML(`
+							<head><script type="text/javascript">window.webkit.messageHandlers.external.postMessage('postMessage invoke');</script></head>
+							<body style="color:#dddddd; background: #995500">
 							<h1>Super Dialog</h1>
 							<p>Super modal window...</p>
 							</body>`, "")
 
-					wv2.Eval("window.external.invoke('message:1111111111111111');")
+					wv2.Eval("window.external.invoke('message:Some message');")
 					fmt.Println("Modal window 2 closed")
+					if !t {
+						time.Sleep(time.Second / 2)
+						wv3.Show()
+						t = true
+					}
 				}
 			})
 
 		go func() {
 			wv3.Show()
-			time.Sleep(1 * time.Second)
+			time.Sleep(time.Second)
+			wv2.Iconify(true)
+			time.Sleep(2 * time.Second)
+			wv2.Iconify(false)
+
 			wv.Eval("window.external.invoke('Window 1: This is external invoke')")
 			wv2.Eval("window.external.invoke('Window 2: This is external invoke')")
 			wv3.Eval("window.external.invoke('Window 3: This is external invoke')")
@@ -99,6 +110,6 @@ func main() {
 	// w, h := wv.GetScreen().Size()
 	// fmt.Println("Screen size:", w, h)
 
-	<-ch
+	frame.WaitWindowClose(wv2) // lock main
 	fmt.Println("Application terminated")
 }

@@ -12,15 +12,14 @@ import (
 )
 
 type (
-	// Frame struct
-	Frame struct {
+	// Window struct
+	Window struct {
 		window     int
 		modal      int
 		modalFor   int
 		StateEvent func(State)
 		Invoke     func(string)
 		state      State
-		deferMove  bool
 		resizeble  bool
 		deferMoveX int
 		deferMoveY int
@@ -64,82 +63,78 @@ StrutLeft   = StrutPosition(C.PANEL_WINDOW_POSITION_LEFT)
 StrutRight  = StrutPosition(C.PANEL_WINDOW_POSITION_RIGHT) */
 )
 
-// Load URL to Frame webview
-func (f *Frame) Load(uri string) *Frame {
+// Load URL to Window webview
+func (f *Window) Load(uri string) *Window {
 	C.loadUri(C.int(f.window), C.CString(uri))
 	return f
 }
 
-// LoadHTML to Frame webview
-func (f *Frame) LoadHTML(html string, baseURI string) *Frame {
+// LoadHTML to Window webview
+func (f *Window) LoadHTML(html string, baseURI string) *Window {
 	C.loadHTML(C.int(f.window), C.CString(html), C.CString(baseURI))
 	return f
 }
 
 // SkipTaskbar of window
-func (f *Frame) SkipTaskbar(skip bool) *Frame {
+func (f *Window) SkipTaskbar(skip bool) *Window {
 	// C.gtk_window_set_skip_taskbar_hint(C.to_GtkWindow(f.window), gboolean(skip))
 	return f
 }
 
 // SkipPager of window
-func (f *Frame) SkipPager(skip bool) *Frame {
+func (f *Window) SkipPager(skip bool) *Window {
 	// C.gtk_window_set_skip_pager_hint(C.to_GtkWindow(f.window), gboolean(skip))
 	return f
 }
 
 // SetResizeble of window
-func (f *Frame) SetResizeble(resizeble bool) *Frame {
+func (f *Window) SetResizeble(resizeble bool) *Window {
 	f.resizeble = resizeble
 	C.setWindowResizeble(C.int(f.window), C.bool(resizeble))
 	return f
 }
 
 // SetStateEvent set handler function for window state event
-func (f *Frame) SetStateEvent(fn func(State)) *Frame {
+func (f *Window) SetStateEvent(fn func(State)) *Window {
 	f.StateEvent = fn
 	return f
 }
 
 // SetInvoke set handler function for window state event
-func (f *Frame) SetInvoke(fn func(string)) *Frame {
+func (f *Window) SetInvoke(fn func(string)) *Window {
 	f.Invoke = fn
 	return f
 }
 
 // SetTitle of window
-func (f *Frame) SetTitle(title string) *Frame {
+func (f *Window) SetTitle(title string) *Window {
 	C.setTitle(C.int(f.window), C.CString(title))
 	return f
 }
 
 // SetSize of the window
-func (f *Frame) SetSize(width, height int) *Frame {
+func (f *Window) SetSize(width, height int) *Window {
 	C.resizeWindow(C.int(f.window), C.int(width), C.int(height))
 	return f
 }
 
 // Move the window
-func (f *Frame) Move(x, y int) *Frame {
-	/* visible := C.gtk_widget_get_visible(f.window) == 1
-	if !visible {
-		f.deferMove = true
-		f.deferMoveX = x
-		f.deferMoveY = y
-		return f
-	}
-	C.gtk_window_move(C.to_GtkWindow(f.window), C.gint(C.int(x)), C.gint(C.int(y))) */
+func (f *Window) Move(x, y int) *Window {
+	/*
+		// visible := C.gtk_widget_get_visible(f.window) == 1
+		C.gtk_window_move(C.to_GtkWindow(f.window), C.gint(C.int(x)), C.gint(C.int(y)))
+	*/
 	return f
 }
 
 // SetCenter of window
-func (f *Frame) SetCenter() *Frame {
+func (f *Window) SetCenter() *Window {
 	C.setWindowCenter(C.int(f.window))
 	return f
 }
 
 // Eval JS
-func (f *Frame) Eval(js string) string {
+func (f *Window) Eval(js string) string {
 	id := atomic.AddUint64(&jsRequestID, 1)
 	ch := make(chan string)
 
@@ -161,16 +156,16 @@ func goEvalRet(reqid C.ulonglong, err *C.char) {
 	}()
 }
 
-// SetModal makes current Frame attached as modal window to parent
-func (f *Frame) SetModal(parent *Frame) *Frame {
+// SetModal makes current Window attached as modal window to parent
+func (f *Window) SetModal(parent *Window) *Window {
 	f.modalFor = parent.window
 	parent.modal = f.window
 	C.setModal(C.int(f.window), C.int(parent.window))
 	return f
 }
 
-// UnsetModal unset current Frame as modal window from another Frames
-func (f *Frame) UnsetModal() *Frame {
+// UnsetModal unset current Window as modal window from another Frames
+func (f *Window) UnsetModal() *Window {
 	if f.modalFor != -1 {
 		frames[f.modalFor].modal = -1
 		f.modalFor = -1
@@ -180,46 +175,43 @@ func (f *Frame) UnsetModal() *Frame {
 }
 
 // SetDecorated of window
-func (f *Frame) SetDecorated(decorated bool) *Frame {
+func (f *Window) SetDecorated(decorated bool) *Window {
 	// C.gtk_window_set_decorated(C.to_GtkWindow(f.window), gboolean(decorated))
 	return f
 }
 
 // SetDeletable of window
-func (f *Frame) SetDeletable(deletable bool) *Frame {
+func (f *Window) SetDeletable(deletable bool) *Window {
 	// C.gtk_window_set_deletable(C.to_GtkWindow(f.window), gboolean(deletable))
 	return f
 }
 
 // KeepAbove the window
-func (f *Frame) KeepAbove(above bool) *Frame {
+func (f *Window) KeepAbove(above bool) *Window {
 	// C.gtk_window_set_keep_above(C.to_GtkWindow(f.window), gboolean(above))
 	return f
 }
 
 // KeepBelow of window
-func (f *Frame) KeepBelow(below bool) *Frame {
+func (f *Window) KeepBelow(below bool) *Window {
 	// C.gtk_window_set_keep_below(C.to_GtkWindow(f.window), gboolean(below))
 	return f
 }
 
 // Show window
-func (f *Frame) Show() *Frame {
+func (f *Window) Show() *Window {
 	C.showWindow(C.int(f.window))
-	if f.deferMove {
-		f.Move(f.deferMoveX, f.deferMoveY)
-	}
 	return f
 }
 
 // Hide window
-func (f *Frame) Hide() *Frame {
+func (f *Window) Hide() *Window {
 	C.hideWindow(C.int(f.window))
 	return f
 }
 
 // Iconify window
-func (f *Frame) Iconify(iconify bool) *Frame {
+func (f *Window) Iconify(iconify bool) *Window {
 	if iconify {
 		// C.gtk_window_iconify(C.to_GtkWindow(f.window))
 	} else {
@@ -229,7 +221,7 @@ func (f *Frame) Iconify(iconify bool) *Frame {
 }
 
 // Stick window
-func (f *Frame) Stick(stick bool) *Frame {
+func (f *Window) Stick(stick bool) *Window {
 	if stick {
 		// C.gtk_window_stick(C.to_GtkWindow(f.window))
 	} else {
@@ -239,7 +231,7 @@ func (f *Frame) Stick(stick bool) *Frame {
 }
 
 // Maximize window
-func (f *Frame) Maximize(maximize bool) *Frame {
+func (f *Window) Maximize(maximize bool) *Window {
 	if maximize {
 		// C.gtk_window_maximize(C.to_GtkWindow(f.window))
 	} else {
@@ -249,7 +241,7 @@ func (f *Frame) Maximize(maximize bool) *Frame {
 }
 
 // Fullscreen window
-func (f *Frame) Fullscreen(fullscreen bool) *Frame {
+func (f *Window) Fullscreen(fullscreen bool) *Window {
 	if fullscreen {
 		// C.gtk_window_fullscreen(C.to_GtkWindow(f.window))
 	} else {
@@ -258,62 +250,50 @@ func (f *Frame) Fullscreen(fullscreen bool) *Frame {
 	return f
 }
 
-// SetIconFromFile for Frame
-func (f *Frame) SetIconFromFile(filename string) *Frame {
+// SetIconFromFile for Window
+func (f *Window) SetIconFromFile(filename string) *Window {
 	// C.gtk_window_set_icon_from_file(C.to_GtkWindow(f.window), C.gcharptr(C.CString(filename)), nil)
 	return f
 }
 
-// SetIconName for Frame
-func (f *Frame) SetIconName(name string) *Frame {
+// SetIconName for Window
+func (f *Window) SetIconName(name string) *Window {
 	// C.gtk_window_set_icon_name(C.to_GtkWindow(f.window), C.gcharptr(C.CString(name)))
 	return f
 }
 
-// SetBackgroundColor of Frame
-func (f *Frame) SetBackgroundColor(r, g, b int, alfa float64) *Frame {
+// SetBackgroundColor of Window
+func (f *Window) SetBackgroundColor(r, g, b int, alfa float64) *Window {
 	C.setBackgroundColor(C.int(f.window), C.int8_t(r), C.int8_t(g), C.int8_t(b), C.double(alfa), C.bool(false))
 	return f
 }
 
 // SetMaxSize of window
-func (f *Frame) SetMaxSize(width, height int) *Frame {
+func (f *Window) SetMaxSize(width, height int) *Window {
 	C.setMaxWindowSize(C.int(f.window), C.int(width), C.int(height))
 	return f
 }
 
 // SetMinSize of window
-func (f *Frame) SetMinSize(width, height int) *Frame {
+func (f *Window) SetMinSize(width, height int) *Window {
 	C.setMinWindowSize(C.int(f.window), C.int(width), C.int(height))
 	return f
 }
 
 // SetOpacity of window
-func (f *Frame) SetOpacity(opacity float64) *Frame {
+func (f *Window) SetOpacity(opacity float64) *Window {
 	// C.gdk_window_set_opacity(C.gtk_widget_get_window(f.window), C.gdouble(opacity))
 	return f
 }
 
 // SetType of window
-func (f *Frame) SetType(hint WindowType) *Frame {
+func (f *Window) SetType(hint WindowType) *Window {
 	// C.gtk_window_set_type_hint(C.to_GtkWindow(f.window), C.GdkWindowTypeHint(int(hint)))
 	return f
 }
 
-// GetScreen where the window placed
-// func (f *Frame) GetScreen() *Screen {
-// 	screen := C.gtk_widget_get_screen(f.window)
-// 	display := C.gdk_screen_get_display(screen)
-// 	monitor := C.gdk_display_get_monitor_at_window(display, C.gtk_widget_get_window(f.window))
-// 	return &Screen{
-// 		screen:  screen,
-// 		display: display,
-// 		monitor: monitor,
-// 	}
-// }
-
 // GetSize returns width and height of window
-func (f *Frame) GetSize() (width, height int) {
+func (f *Window) GetSize() (width, height int) {
 	var cWidth, cHeight C.int
 	// C.gtk_window_get_size(C.to_GtkWindow(f.window), &cWidth, &cHeight)
 	width, height = int(cWidth), int(cHeight)
@@ -321,7 +301,7 @@ func (f *Frame) GetSize() (width, height int) {
 }
 
 // Strut reserves frame space on the screen
-func (f *Frame) Strut(position StrutPosition, size int) *Frame {
+func (f *Window) Strut(position StrutPosition, size int) *Window {
 	/* monitorWidth, monitorHeight := f.GetScreen().Size()
 	scale := f.GetScreen().ScaleFactor()
 	var width, height int

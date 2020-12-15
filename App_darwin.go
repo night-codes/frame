@@ -21,13 +21,13 @@ type (
 	// App is main application object
 	App struct {
 		count  uint
-		frames []*Frame
+		frames []*Window
 	}
 )
 
 var (
 	mutexNew sync.Mutex
-	frames   = []*Frame{}
+	frames   = []*Window{}
 	lock     sync.Mutex
 	appChan  = make(chan *App)
 )
@@ -59,8 +59,8 @@ func (a *App) SetDefaultIconName(name string) {
 	// C.gtk_window_set_default_icon_name(C.gcharptr(C.CString(name)))
 }
 
-// NewFrame returns window with webview
-func (a *App) NewFrame(title string, sizes ...int) *Frame {
+// NewWindow returns window with webview
+func (a *App) NewWindow(title string, sizes ...int) *Window {
 	mutexNew.Lock()
 	defer mutexNew.Unlock()
 	width := 400
@@ -78,7 +78,7 @@ func (a *App) NewFrame(title string, sizes ...int) *Frame {
 	// box := C.makeBox(window)
 	// menubar := C.makeMenubar(box)
 	// webview := C.makeWebview(box)
-	frame := &Frame{
+	frame := &Window{
 		resizeble: true,
 		modal:     -1,
 		modalFor:  -1,
