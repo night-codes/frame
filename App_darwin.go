@@ -14,34 +14,65 @@ import (
 	"fmt"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
 type (
 	// App is main application object
 	App struct {
-		count  uint
-		frames []*Window
+		count uint
+		winds []*Window
 	}
 )
 
 var (
-	mutexNew sync.Mutex
-	frames   = []*Window{}
-	lock     sync.Mutex
-	appChan  = make(chan *App)
+	mutexNew   sync.Mutex
+	winds      = []*Window{}
+	lock       sync.Mutex
+	appChan    = make(chan *App)
+	defaultApp *App
+	idItr      int64
 )
 
-// MakeApp is make and run one instance of application (At the moment, it is possible to create only one instance)
-func MakeApp(count ...uint) *App {
-	var c uint
-	if len(count) > 0 {
-		c = count[0]
+// NewWindow returns window with webview
+func NewWindow(title string, sizes ...int) *Window {
+	if defaultApp == nil {
+		defaultApp = makeApp()
 	}
+	return defaultApp.NewWindow(title, sizes...)
+}
+
+// WaitAllWindowClose locker
+func WaitAllWindowClose() {
+	if defaultApp != nil {
+		defaultApp.WaitAllWindowClose()
+	}
+}
+
+// WaitWindowClose locker
+func WaitWindowClose(win *Window) {
+	if defaultApp != nil && win != nil {
+		defaultApp.WaitWindowClose(win)
+	}
+}
+
+// WaitAllWindowClose locker
+func (a *App) WaitAllWindowClose() {
+	select {}
+}
+
+// WaitWindowClose locker
+func (a *App) WaitWindowClose(win *Window) {
+	select {}
+}
+
+// makeApp is make and run one instance of application (At the moment, it is possible to create only one instance)
+func makeApp() *App {
 	lock.Lock()
 	go func() {
 		runtime.LockOSThread()
-		C.makeApp(C.int(c))
+		C.makeApp()
 		runtime.UnlockOSThread()
 	}()
 	app := <-appChan
@@ -49,22 +80,14 @@ func MakeApp(count ...uint) *App {
 	return app
 }
 
-// SetDefaultIconFromFile for application windows
-func (a *App) SetDefaultIconFromFile(filename string) {
-	// C.gtk_window_set_default_icon_from_file(C.gcharptr(C.CString(filename)), nil)
-}
-
-// SetDefaultIconName for application windows
-func (a *App) SetDefaultIconName(name string) {
-	// C.gtk_window_set_default_icon_name(C.gcharptr(C.CString(name)))
-}
-
 // NewWindow returns window with webview
 func (a *App) NewWindow(title string, sizes ...int) *Window {
 	mutexNew.Lock()
 	defer mutexNew.Unlock()
-	width := 400
-	height := 300
+	id := atomic.AddInt64(&idItr, 1)
+
+	width := 500
+	height := 400
 
 	if len(sizes) > 0 {
 		width = sizes[0]
@@ -74,44 +97,36 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 		height = sizes[1]
 	}
 
-	window := C.makeWindow(C.CString(title), C.int(width), C.int(height))
-	// box := C.makeBox(window)
-	// menubar := C.makeMenubar(box)
-	// webview := C.makeWebview(box)
-	frame := &Window{
+	cRet := cRequest(func(reqid uint64) {
+		C.makeWindow(C.CString(title), C.int(width), C.int(height), C.ulonglong(reqid), C.int(int(id)))
+	})
+	ret, ok := cRet.(C.WindowObj)
+	if !ok {
+		panic("Object is not C.WindowObj!")
+	}
+	win := &Window{
+		id:        id,
 		resizeble: true,
-		modal:     -1,
-		modalFor:  -1,
-		window:    int(window),
-		state: State{
-			Hidden:     false,
-			Iconified:  false,
-			Maximized:  false,
-			Sticky:     false,
-			Fullscreen: false,
-			Focused:    false,
-			Tiled:      false,
-		},
+		window:    ret,
+		state:     State{Hidden: false},
+		app:       a,
 	}
 
 	go func() {
 		time.Sleep(time.Second / 2)
 		for {
-			time.Sleep(time.Second / 100)
-			state := frame.state
-			frame.state.Focused = goBool(C.isFocused(C.int(frame.window)))
-			frame.state.Iconified = goBool(C.isMiniaturized(C.int(frame.window)))
-			frame.state.Maximized = goBool(C.isZoomed(C.int(frame.window))) && frame.resizeble
-			frame.state.Hidden = !goBool(C.isVisible(C.int(frame.window))) && !goBool(C.isMiniaturized(C.int(frame.window)))
-			frame.state.Fullscreen = goBool(C.isFullscreen(C.int(frame.window)))
+			time.Sleep(time.Second / 10)
+			state := win.state
+			state.Maximized = goBool(C.isZoomed(C.WindowObj(win.window))) && win.resizeble
+			state.Hidden = !goBool(C.isVisible(C.WindowObj(win.window))) && !goBool(C.isMiniaturized(C.WindowObj(win.window)))
+			state.Fullscreen = goBool(C.isFullscreen(C.WindowObj(win.window)))
 
-			// C.unsetModal(C.int(f.window))
-			if state.Focused != frame.state.Focused || state.Iconified != frame.state.Iconified || state.Maximized != frame.state.Maximized || state.Hidden != frame.state.Hidden || state.Fullscreen != frame.state.Fullscreen {
-				frame.StateEvent(frame.state)
+			if win.StateEvent != nil && (state.Maximized != win.state.Maximized || state.Fullscreen != win.state.Fullscreen || state.Hidden != win.state.Hidden) {
+				go stateSender(win, state)
 			}
 		}
 	}()
 
-	frames = append(frames, frame)
-	return frame
+	winds = append(winds, win)
+	return win
 }

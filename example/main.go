@@ -76,6 +76,7 @@ func main() {
 			Move(960, 100).
 			SetResizeble(false).
 			SetStateEvent(func(state frame.State) {
+				fmt.Printf("%+v\n", state)
 				if state.Hidden {
 					wv2.LoadHTML(`
 							<head><script type="text/javascript">window.webkit.messageHandlers.external.postMessage('postMessage invoke');</script></head>

@@ -26,7 +26,7 @@ type (
 	appObject struct {
 		app       *C.GtkApplication
 		count     uint
-		frames    []*Window
+		winds     []*Window
 		openedWns sync.WaitGroup
 		shown     chan bool
 	}
@@ -59,7 +59,7 @@ var (
 	goRequestID uint64
 	goRequests  sync.Map
 	mutexNew    sync.Mutex
-	frames      = []*Window{}
+	winds       = []*Window{}
 	lock        sync.Mutex
 	appChan     = make(chan *appObject)
 	idItr       int64
@@ -124,14 +124,12 @@ func (a *appObject) WaitWindowClose(win *Window) {
 
 // NewWindow returns window with webview
 func (a *appObject) NewWindow(title string, sizes ...int) *Window {
-	id := atomic.AddInt64(&idItr, 1)
 	mutexNew.Lock()
-	defer func() {
-		mutexNew.Unlock()
-	}()
+	defer mutexNew.Unlock()
+	id := atomic.AddInt64(&idItr, 1)
 
-	width := 400
-	height := 300
+	width := 500
+	height := 400
 
 	if len(sizes) > 0 {
 		width = sizes[0]
@@ -152,7 +150,7 @@ func (a *appObject) NewWindow(title string, sizes ...int) *Window {
 		})
 	})
 	ret, _ := cRet.(*C.WindowObj)
-	frame := &Window{
+	wind := &Window{
 		id:      id,
 		window:  ret.window,
 		box:     ret.box,
@@ -161,8 +159,8 @@ func (a *appObject) NewWindow(title string, sizes ...int) *Window {
 		state:   State{Hidden: true},
 		app:     a,
 	}
-	frames = append(frames, frame)
-	return frame
+	winds = append(winds, wind)
+	return wind
 }
 
 //export goAppActivated
@@ -193,7 +191,7 @@ func goPrintInt(t C.int) {
 //export goWindowState
 func goWindowState(winObj *C.WindowObj, e C.int) {
 	go func() {
-		for _, win := range frames {
+		for _, win := range winds {
 			if int(win.id) == int(winObj.id) && (uint32(e)&cWithdrawn == 0 || uint32(e)&cFocused == 0) {
 				prevState := win.state
 				newState := State{
@@ -229,9 +227,9 @@ func goWindowState(winObj *C.WindowObj, e C.int) {
 //export goInvokeCallback
 func goInvokeCallback(win *C.WindowObj, data *C.char) {
 	go func() {
-		for i := range frames {
-			if frames[i].Invoke != nil && int(frames[i].id) == int(win.id) {
-				frames[i].Invoke(C.GoString(data))
+		for i := range winds {
+			if winds[i].Invoke != nil && int(winds[i].id) == int(win.id) {
+				winds[i].Invoke(C.GoString(data))
 			}
 		}
 	}()

@@ -89,8 +89,6 @@ type (
 		maxHeight  int
 		minWidth   int
 		minHeight  int
-		deferMoveX int
-		deferMoveY int
 	}
 
 	// WindowType struct
@@ -442,7 +440,7 @@ func (f *Window) GetSize() (width, height int) {
 	return
 }
 
-// Strut reserves frame space on the screen
+// Strut reserves wind space on the screen
 func (f *Window) Strut(position StrutPosition, size int) *Window {
 	monitorWidth, monitorHeight := f.GetScreenSize()
 	scale := f.GetScreenScaleFactor()
