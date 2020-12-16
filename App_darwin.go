@@ -118,10 +118,18 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 			time.Sleep(time.Second / 10)
 			state := win.state
 			state.Maximized = goBool(C.isZoomed(C.WindowObj(win.window))) && win.resizeble
+			state.Iconified = goBool(C.isMiniaturized(C.WindowObj(win.window)))
 			state.Hidden = !goBool(C.isVisible(C.WindowObj(win.window))) && !goBool(C.isMiniaturized(C.WindowObj(win.window)))
 			state.Fullscreen = goBool(C.isFullscreen(C.WindowObj(win.window)))
+			if state.Iconified {
+				state.Focused = false
+			}
 
-			if win.StateEvent != nil && (state.Maximized != win.state.Maximized || state.Fullscreen != win.state.Fullscreen || state.Hidden != win.state.Hidden) {
+			if state.Maximized != win.state.Maximized ||
+				state.Fullscreen != win.state.Fullscreen ||
+				state.Hidden != win.state.Hidden ||
+				state.Iconified != win.state.Iconified {
+
 				go stateSender(win, state)
 			}
 		}

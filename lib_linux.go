@@ -35,10 +35,8 @@ type (
 		Hidden     bool
 		Iconified  bool
 		Maximized  bool
-		Sticky     bool
 		Fullscreen bool
 		Focused    bool
-		Tiled      bool
 	}
 )
 
@@ -198,10 +196,8 @@ func goWindowState(winObj *C.WindowObj, e C.int) {
 					Hidden:     uint32(e)&cWithdrawn != 0,
 					Iconified:  uint32(e)&cIconified != 0,
 					Maximized:  uint32(e)&cMaximized != 0,
-					Sticky:     uint32(e)&cSticky != 0,
 					Fullscreen: uint32(e)&cFullscreen != 0,
 					Focused:    uint32(e)&cFocused != 0,
-					Tiled:      uint32(e)&cTiled != 0,
 				}
 				win.state = newState
 				if win.StateEvent != nil {

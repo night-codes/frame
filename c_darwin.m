@@ -47,6 +47,11 @@ AppDelegate* appDelegate = nil;
     [window orderOut:app];
     return NO;
 }
+- (void)windowDidExpose:(NSNotification*)notification
+{
+    NSWindow* window = notification.object;
+    triggerEvent([self goWindowID], window, @"windowDidExpose");
+}
 - (void)windowDidBecomeKey:(NSNotification*)notification
 {
     NSWindow* window = notification.object;
@@ -132,6 +137,17 @@ void makeWindow(char* title, int width, int height, long long unsigned int req_i
         [window setDelegate:windowDelegate];
         [window center];
 
+		NSImage* img = [[NSImage alloc] initWithContentsOfFile:[NSString stringWithUTF8String:"./moon.png"]];
+		[window setRepresentedURL:[NSURL URLWithString:[NSString stringWithUTF8String:title]]];
+		[[window standardWindowButton:NSWindowDocumentIconButton] setImage:img];
+		if (img != nil) {
+			[app setApplicationIconImage:img];
+		}
+
+		/*
+        NSDockTile *dockTile = [window dockTile];
+		[dockTile display]; */
+
         // Webwiew
         WKWebViewConfiguration* conf = [[WKWebViewConfiguration alloc] init];
         WKUserContentController* ucc = [[WKUserContentController alloc] init];
@@ -147,13 +163,6 @@ void makeWindow(char* title, int width, int height, long long unsigned int req_i
         [webview setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [[window contentView] addSubview:webview];
         [window setTitle:[NSString stringWithUTF8String:title]];
-
-        // pullSize++;
-        // windows = (NSWindow**)realloc(windows, pullSize * sizeof(NSWindow*));
-        // webviews = (WKWebView**)realloc(webviews, pullSize * sizeof(WKWebView*));
-        // windows[pullSize - 1] = window;
-        // webviews[pullSize - 1] = webviews;
-
         goWinRet(req_id, ret);
     });
 }
@@ -183,6 +192,17 @@ void hideWindow(WindowObj ww)
 {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         [ww.window orderOut:ww.window];
+    });
+}
+
+void iconifyWindow(WindowObj ww, bool flag)
+{
+	dispatch_async(dispatch_get_main_queue(), ^(void) {
+        if (flag) {
+            [ww.window miniaturize:ww.window];
+        } else {
+            [ww.window deminiaturize:ww.window];
+        }
     });
 }
 
@@ -222,13 +242,25 @@ void resizeWindow(WindowObj ww, int width, int height)
     });
 }
 
+// Put window location from the top left corner of screen.
+void moveWindow(WindowObj ww, int x, int y)
+{
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        NSRect old = [ww.window frame];
+		NSScreen *screen = ww.window.screen;
+		NSRect frame = screen.frame;
+		[ww.window setFrameTopLeftPoint:NSMakePoint(x, frame.size.height-y)];
+    });
+}
+
 void setModal(WindowObj ww, WindowObj parent)
 {
     // dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{//TODO
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         ww.window.level = NSModalPanelWindowLevel;
         ww.window.styleMask &= ~NSWindowStyleMaskMiniaturizable;
-        // boxes[id].isUserInteractionEnabled = NO;
+        // ww.window.styleMask |= NSWindowStyleMaskDocModalWindow;
+		[parent.window addChildWindow:ww.window ordered:NSWindowAbove];
     });
 }
 
@@ -236,7 +268,12 @@ void unsetModal(WindowObj ww)
 {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         ww.window.styleMask |= NSWindowStyleMaskMiniaturizable;
+        // ww.window.styleMask &= ~NSWindowStyleMaskDocModalWindow;
         ww.window.level = NSNormalWindowLevel;
+		NSWindow* parentWindow = [ww.window parentWindow];
+		if (parentWindow != NULL) {
+			[parentWindow removeChildWindow:ww.window];
+		}
     });
 }
 
@@ -286,14 +323,78 @@ void loadHTML(WindowObj ww, char* content, char* baseUrl)
     });
 }
 
-void setWindowResizeble(WindowObj ww, bool resizeble)
+void setWindowResizeble(WindowObj ww, bool flag)
 {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
-        if (resizeble) {
+        if (flag) {
             ww.window.styleMask |= NSWindowStyleMaskResizable;
         } else {
             ww.window.styleMask &= ~NSWindowStyleMaskResizable;
         }
+    });
+}
+
+void setWindowDecorated(WindowObj ww, bool flag)
+{
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        if (flag) {
+            ww.window.styleMask |= NSWindowStyleMaskTitled;
+        } else {
+            ww.window.styleMask &= ~NSWindowStyleMaskTitled;
+        }
+    });
+}
+
+void setWindowDeletable(WindowObj ww, bool flag)
+{
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        if (flag) {
+            ww.window.styleMask |= NSWindowStyleMaskClosable;
+        } else {
+            ww.window.styleMask &= ~NSWindowStyleMaskClosable;
+        }
+    });
+}
+
+void setWindowSkipPager(WindowObj ww, bool flag)
+{
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        if (flag) {
+			ww.window.collectionBehavior |= NSWindowCollectionBehaviorIgnoresCycle;
+			ww.window.collectionBehavior |= NSWindowCollectionBehaviorTransient;
+        } else {
+			ww.window.collectionBehavior &= ~NSWindowCollectionBehaviorIgnoresCycle;
+			ww.window.collectionBehavior &= ~NSWindowCollectionBehaviorTransient;
+        }
+    });
+}
+
+void setWindowSkipTaskbar(WindowObj ww, bool flag)
+{
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        if (flag) {
+			ww.window.collectionBehavior |= NSWindowCollectionBehaviorTransient;
+        } else {
+			ww.window.collectionBehavior &= ~NSWindowCollectionBehaviorTransient;
+        }
+    });
+}
+
+void stickWindow(WindowObj ww, bool flag)
+{
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        if (flag) {
+			ww.window.collectionBehavior |= NSWindowCollectionBehaviorCanJoinAllSpaces;
+        } else {
+			ww.window.collectionBehavior &= ~NSWindowCollectionBehaviorCanJoinAllSpaces;
+        }
+    });
+}
+
+void toggleFullScreen(WindowObj ww)
+{
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        [ww.window toggleFullScreen:ww.window];
     });
 }
 
@@ -310,6 +411,15 @@ void setBackgroundColor(WindowObj ww, int8_t r, int8_t g, int8_t b, double a,
         [ww.window setOpaque:NO];
         if (titlebarTransparent) {
             [ww.window setTitlebarAppearsTransparent:YES];
+			/* ww.window.styleMask |= NSFullSizeContentViewWindowMask;
+			[ww.window setMovableByWindowBackground:YES];
+
+			NSVisualEffectView *vibrant=[[NSVisualEffectView alloc] initWithFrame:[[ww.window contentView] bounds]];
+        	[vibrant setState:NSVisualEffectStateActive];
+			[vibrant setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
+			[vibrant setBlendingMode:NSVisualEffectBlendingModeBehindWindow];
+			[vibrant setMaterial:NSVisualEffectMaterialDark];
+			[[ww.window contentView] addSubview:vibrant positioned:NSWindowBelow relativeTo:NULL]; */
         }
         [ww.webview setValue:[NSNumber numberWithBool:NO] forKey:@"drawsBackground"];
     });

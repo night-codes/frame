@@ -37,10 +37,8 @@ type State struct {
 	Hidden     bool
 	Iconified  bool
 	Maximized  bool
-	Sticky     bool
 	Fullscreen bool
 	Focused    bool
-	Tiled      bool
 }
 
 //export goAppActivated
@@ -68,17 +66,11 @@ func goBool(b C.BOOL) bool {
 func stateSender(win *Window, newState State) {
 	oldState := win.state
 	win.state = newState
-	win.StateEvent(newState)
+	if win.StateEvent != nil {
+		win.StateEvent(newState)
+	}
 
 	if !newState.Hidden && oldState.Hidden {
-		if win.parent != nil && win.modal == nil {
-			parent := win.parent
-			win.UnsetModal()
-			parent.Show()
-			if parent.parent != nil {
-				parent.SetModal(parent.parent)
-			}
-		}
 	}
 }
 
@@ -100,30 +92,23 @@ func goWindowEvent(windowID C.int, eventTitle *C.char, x C.int, y C.int, w C.int
 
 	if win.Invoke != nil && strings.HasPrefix(title, "invoke:") {
 		win.Invoke(strings.TrimPrefix(title, "invoke:"))
-		fmt.Println("~~~~~", strings.TrimPrefix(title, "invoke:"))
 		return
 	}
 
-	if win.StateEvent != nil {
-		state := win.state
-		switch title {
-		case "windowDidMiniaturize":
-			state.Iconified = true
-		case "windowDidDeminiaturize:":
-			state.Iconified = false
-		case "windowDidBecomeKey":
-			state.Focused = true
-		case "windowDidResignKey":
-			state.Focused = false
-		case "windowWillClose":
-			state.Hidden = true
-		case "windowDidExpose":
-			state.Hidden = false
-		}
+	state := win.state
+	switch title {
+	case "windowDidBecomeKey":
+		state.Focused = true
+	case "windowDidResignKey":
+		state.Focused = false
+	case "windowWillClose":
+		state.Hidden = true
+	case "windowDidExpose":
+		state.Hidden = false
+	}
 
-		if state.Focused != win.state.Focused || state.Iconified != win.state.Iconified || state.Hidden != win.state.Hidden {
-			go stateSender(win, state)
-		}
+	if state.Focused != win.state.Focused {
+		go stateSender(win, state)
 	}
 }
 

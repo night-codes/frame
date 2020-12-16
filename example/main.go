@@ -19,6 +19,7 @@ func main() {
 		SetIconFromFile(basepath+"/moon.png").
 		SetBackgroundColor(50, 50, 50, 0.8).
 		Move(20, 100).
+		// SetDecorated(false).
 		LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Hello world</h1>
       <p>Test test test...</p>
@@ -42,24 +43,23 @@ func main() {
       </body>`, "").
 		// KeepAbove(true).
 		Move(540, 100).
-		SetResizeble(false).
+		//SetModal(wv).
 		SetStateEvent(func(state frame.State) {
 			if state.Hidden {
 				fmt.Println("Modal window 1 closed")
 			}
 		}).
-		SetCenter().
 		SetInvoke(func(msg string) {
 			fmt.Println(":::", msg)
 		}).
 		Show()
 
 	go func() {
-		wv.Eval("document.body.style.background = '#449977'; thisIsError1")
+		// wv.Eval("document.body.style.background = '#449977'; thisIsError1")
 		wv.Eval("window.external.invoke('Wow! This is external invoke!')")
 		wv.SetTitle("New title")
 		wv.Eval("thisIsError2")
-		wv.Eval("document.body.style.background = '#994477'")
+		// wv.Eval("document.body.style.background = '#994477'")
 		// wv2.Hide()
 		wv3 := frame.NewWindow("Modal window", 300, 200).
 			SetIconFromFile(basepath+"/moon.png").
@@ -68,13 +68,14 @@ func main() {
       <h1>Some Dialog</h1>
       <p>Modal window...</p>
 	  </body>`, "").
+			// SetModal(wv2).
 			SetInvoke(func(msg string) {
 				fmt.Println(":::", msg)
 			})
 		t := false
 		wv3.
-			Move(960, 100).
 			SetResizeble(false).
+			Move(960, 100).
 			SetStateEvent(func(state frame.State) {
 				fmt.Printf("%+v\n", state)
 				if state.Hidden {
@@ -98,9 +99,9 @@ func main() {
 		go func() {
 			wv3.Show()
 			time.Sleep(time.Second)
-			wv2.Iconify(true)
+			wv2.SkipTaskbar(true)
 			time.Sleep(2 * time.Second)
-			wv2.Iconify(false)
+			wv2.Fullscreen(false)
 
 			wv.Eval("window.external.invoke('Window 1: This is external invoke')")
 			wv2.Eval("window.external.invoke('Window 2: This is external invoke')")

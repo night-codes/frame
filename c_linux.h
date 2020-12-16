@@ -133,7 +133,6 @@ static void updateVisual(GtkWidget* window)
     }
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 static gboolean setZoom(gpointer arg)
 {
     idleData* data = (idleData*)arg;

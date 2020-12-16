@@ -35,6 +35,14 @@ void setWindowCenter(WindowObj ww);
 void setWindowResizeble(WindowObj ww, bool resizeble);
 void showWindow(WindowObj ww);
 void unsetModal(WindowObj ww);
+void moveWindow(WindowObj ww, int x, int y);
+void iconifyWindow(WindowObj ww, bool flag);
+void setWindowDecorated(WindowObj ww, bool flag);
+void setWindowDeletable(WindowObj ww, bool flag);
+void toggleFullScreen(WindowObj ww);
+void stickWindow(WindowObj ww, bool flag);
+void setWindowSkipPager(WindowObj ww, bool flag);
+void setWindowSkipTaskbar(WindowObj ww, bool flag);
 
 @interface WindowDelegate : NSObject <NSWindowDelegate, WKScriptMessageHandler>
 @property (assign) int goWindowID;

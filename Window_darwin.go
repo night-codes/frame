@@ -15,13 +15,27 @@ type (
 	Window struct {
 		id         int64
 		window     C.WindowObj
-		modal      *Window
-		parent     *Window
 		StateEvent func(State)
 		Invoke     func(string)
-		app        *App
-		state      State
-		resizeble  bool // BACK after modal?
+
+		OnHide func()
+		OnShow func()
+
+		OnFocus   func()
+		OnUnfocus func()
+
+		OnIconize   func()
+		OnDeiconize func()
+
+		OnDemaximize func()
+		OnMaximize   func()
+
+		OnFullscreen     func()
+		OnExitFullscreen func()
+
+		app       *App
+		state     State
+		resizeble bool // BACK after modal?
 	}
 
 	// WindowType struct
@@ -62,6 +76,102 @@ StrutLeft   = StrutPosition(C.PANEL_WINDOW_POSITION_LEFT)
 StrutRight  = StrutPosition(C.PANEL_WINDOW_POSITION_RIGHT) */
 )
 
+// SetIconFromFile for Window
+func (f *Window) SetIconFromFile(filename string) *Window {
+	// C.gtk_window_set_icon_from_file(C.WindowObj(f.window), C.gcharptr(C.CString(filename)), nil)
+	return f
+}
+
+// SetIconName for Window
+func (f *Window) SetIconName(name string) *Window {
+	// C.gtk_window_set_icon_name(C.WindowObj(f.window), C.gcharptr(C.CString(name)))
+	return f
+}
+
+// KeepAbove the window
+func (f *Window) KeepAbove(flag bool) *Window {
+	// C.gtk_window_set_keep_above(C.WindowObj(f.window), gboolean(above))
+	return f
+}
+
+// KeepBelow of window
+func (f *Window) KeepBelow(flag bool) *Window {
+	// C.gtk_window_set_keep_below(C.WindowObj(f.window), gboolean(below))
+	return f
+}
+
+// SetType of window
+func (f *Window) SetType(hint WindowType) *Window {
+	// C.gtk_window_set_type_hint(C.WindowObj(f.window), C.GdkWindowTypeHint(int(hint)))
+	return f
+}
+
+// GetSize returns width and height of window
+func (f *Window) GetSize() (width, height int) {
+	var cWidth, cHeight C.int
+	// C.gtk_window_get_size(C.WindowObj(f.window), &cWidth, &cHeight)
+	width, height = int(cWidth), int(cHeight)
+	return
+}
+
+// Maximize window
+func (f *Window) Maximize(flag bool) *Window {
+	//C.setWindowSkipTaskbar(C.WindowObj(f.window), C.bool(flag))
+	return f
+}
+
+// SetOpacity of window
+func (f *Window) SetOpacity(opacity float64) *Window {
+	// ---------------
+	return f
+}
+
+// ====================================================
+
+// SkipTaskbar of window
+func (f *Window) SkipTaskbar(flag bool) *Window {
+	C.setWindowSkipTaskbar(C.WindowObj(f.window), C.bool(flag))
+	return f
+}
+
+// SkipPager of window
+func (f *Window) SkipPager(flag bool) *Window {
+	C.setWindowSkipPager(C.WindowObj(f.window), C.bool(flag))
+	return f
+}
+
+// Stick window
+func (f *Window) Stick(flag bool) *Window {
+	C.stickWindow(C.WindowObj(f.window), C.bool(flag))
+	return f
+}
+
+// Fullscreen window
+func (f *Window) Fullscreen(flag bool) *Window {
+	if (flag && !f.state.Fullscreen) || (!flag && f.state.Fullscreen) {
+		C.toggleFullScreen(C.WindowObj(f.window))
+	}
+	return f
+}
+
+// SetDeletable of window
+func (f *Window) SetDeletable(flag bool) *Window {
+	C.setWindowDeletable(C.WindowObj(f.window), C.bool(flag))
+	return f
+}
+
+// SetDecorated of window
+func (f *Window) SetDecorated(flag bool) *Window {
+	C.setWindowDecorated(C.WindowObj(f.window), C.bool(flag))
+	return f
+}
+
+// Iconify window
+func (f *Window) Iconify(flag bool) *Window {
+	C.iconifyWindow(C.WindowObj(f.window), C.bool(flag))
+	return f
+}
+
 // Load URL to Window webview
 func (f *Window) Load(uri string) *Window {
 	C.loadURI(C.WindowObj(f.window), C.CString(uri))
@@ -74,22 +184,10 @@ func (f *Window) LoadHTML(html string, baseURI string) *Window {
 	return f
 }
 
-// SkipTaskbar of window
-func (f *Window) SkipTaskbar(skip bool) *Window {
-	// C.gtk_window_set_skip_taskbar_hint(C.WindowObj(f.window), gboolean(skip))
-	return f
-}
-
-// SkipPager of window
-func (f *Window) SkipPager(skip bool) *Window {
-	// C.gtk_window_set_skip_pager_hint(C.WindowObj(f.window), gboolean(skip))
-	return f
-}
-
 // SetResizeble of window
-func (f *Window) SetResizeble(resizeble bool) *Window {
-	f.resizeble = resizeble
-	C.setWindowResizeble(C.WindowObj(f.window), C.bool(resizeble))
+func (f *Window) SetResizeble(flag bool) *Window {
+	f.resizeble = flag
+	C.setWindowResizeble(C.WindowObj(f.window), C.bool(flag))
 	return f
 }
 
@@ -119,10 +217,7 @@ func (f *Window) SetSize(width, height int) *Window {
 
 // Move the window
 func (f *Window) Move(x, y int) *Window {
-	/*
-		// visible := C.gtk_widget_get_visible(C.WindowObj(f.window)) == 1
-		C.gtk_window_move(C.WindowObj(f.window), C.gint(C.int(x)), C.gint(C.int(y)))
-	*/
+	C.moveWindow(C.WindowObj(f.window), C.int(x), C.int(y))
 	return f
 }
 
@@ -165,43 +260,13 @@ func goWinRet(reqid C.ulonglong, win C.WindowObj) {
 
 // SetModal makes current Window attached as modal window to parent
 func (f *Window) SetModal(parent *Window) *Window {
-	f.parent = parent
-	parent.modal = f
 	C.setModal(C.WindowObj(f.window), parent.window)
 	return f
 }
 
 // UnsetModal unset current Window as modal window from another Frames
 func (f *Window) UnsetModal() *Window {
-	if f.parent != nil {
-		f.parent.modal = nil
-		f.parent = nil
-	}
 	C.unsetModal(C.WindowObj(f.window))
-	return f
-}
-
-// SetDecorated of window
-func (f *Window) SetDecorated(decorated bool) *Window {
-	// C.gtk_window_set_decorated(C.WindowObj(f.window), gboolean(decorated))
-	return f
-}
-
-// SetDeletable of window
-func (f *Window) SetDeletable(deletable bool) *Window {
-	// C.gtk_window_set_deletable(C.WindowObj(f.window), gboolean(deletable))
-	return f
-}
-
-// KeepAbove the window
-func (f *Window) KeepAbove(above bool) *Window {
-	// C.gtk_window_set_keep_above(C.WindowObj(f.window), gboolean(above))
-	return f
-}
-
-// KeepBelow of window
-func (f *Window) KeepBelow(below bool) *Window {
-	// C.gtk_window_set_keep_below(C.WindowObj(f.window), gboolean(below))
 	return f
 }
 
@@ -214,58 +279,6 @@ func (f *Window) Show() *Window {
 // Hide window
 func (f *Window) Hide() *Window {
 	C.hideWindow(C.WindowObj(f.window))
-	return f
-}
-
-// Iconify window
-func (f *Window) Iconify(iconify bool) *Window {
-	if iconify {
-		// C.gtk_window_iconify(C.WindowObj(f.window))
-	} else {
-		// C.gtk_window_deiconify(C.WindowObj(f.window))
-	}
-	return f
-}
-
-// Stick window
-func (f *Window) Stick(stick bool) *Window {
-	if stick {
-		// C.gtk_window_stick(C.WindowObj(f.window))
-	} else {
-		// C.gtk_window_unstick(C.WindowObj(f.window))
-	}
-	return f
-}
-
-// Maximize window
-func (f *Window) Maximize(maximize bool) *Window {
-	if maximize {
-		// C.gtk_window_maximize(C.WindowObj(f.window))
-	} else {
-		// C.gtk_window_unmaximize(C.WindowObj(f.window))
-	}
-	return f
-}
-
-// Fullscreen window
-func (f *Window) Fullscreen(fullscreen bool) *Window {
-	if fullscreen {
-		// C.gtk_window_fullscreen(C.WindowObj(f.window))
-	} else {
-		// C.gtk_window_unfullscreen(C.WindowObj(f.window))
-	}
-	return f
-}
-
-// SetIconFromFile for Window
-func (f *Window) SetIconFromFile(filename string) *Window {
-	// C.gtk_window_set_icon_from_file(C.WindowObj(f.window), C.gcharptr(C.CString(filename)), nil)
-	return f
-}
-
-// SetIconName for Window
-func (f *Window) SetIconName(name string) *Window {
-	// C.gtk_window_set_icon_name(C.WindowObj(f.window), C.gcharptr(C.CString(name)))
 	return f
 }
 
@@ -285,26 +298,6 @@ func (f *Window) SetMaxSize(width, height int) *Window {
 func (f *Window) SetMinSize(width, height int) *Window {
 	C.setMinWindowSize(C.WindowObj(f.window), C.int(width), C.int(height))
 	return f
-}
-
-// SetOpacity of window
-func (f *Window) SetOpacity(opacity float64) *Window {
-	// C.gdk_window_set_opacity(C.gtk_widget_get_window(C.WindowObj(f.window)), C.gdouble(opacity))
-	return f
-}
-
-// SetType of window
-func (f *Window) SetType(hint WindowType) *Window {
-	// C.gtk_window_set_type_hint(C.WindowObj(f.window), C.GdkWindowTypeHint(int(hint)))
-	return f
-}
-
-// GetSize returns width and height of window
-func (f *Window) GetSize() (width, height int) {
-	var cWidth, cHeight C.int
-	// C.gtk_window_get_size(C.WindowObj(f.window), &cWidth, &cHeight)
-	width, height = int(cWidth), int(cHeight)
-	return
 }
 
 // Strut reserves wind space on the screen
