@@ -54,49 +54,27 @@ var (
 )
 
 const (
-/*
-TypeNormal       = WindowType(C.GDK_WINDOW_TYPE_HINT_NORMAL)        // Normal toplevel window.
-TypeDialog       = WindowType(C.GDK_WINDOW_TYPE_HINT_DIALOG)        // Dialog window.
-TypeMenu         = WindowType(C.GDK_WINDOW_TYPE_HINT_MENU)          // Window used to implement a menu; GTK+ uses this hint only for torn-off menus, see GtkTearoffMenuItem.
-TypeToolbar      = WindowType(C.GDK_WINDOW_TYPE_HINT_TOOLBAR)       // Window used to implement toolbars.
-TypeSplashscreen = WindowType(C.GDK_WINDOW_TYPE_HINT_SPLASHSCREEN)  // Window used to display a splash screen during application startup.
-TypeUtility      = WindowType(C.GDK_WINDOW_TYPE_HINT_UTILITY)       // Utility windows which are not detached toolbars or dialogs.
-TypeDock         = WindowType(C.GDK_WINDOW_TYPE_HINT_DOCK)          // Used for creating dock or panel windows.
-TypeDesktop      = WindowType(C.GDK_WINDOW_TYPE_HINT_DESKTOP)       // Used for creating the desktop background window.
-TypeDropdownMenu = WindowType(C.GDK_WINDOW_TYPE_HINT_DROPDOWN_MENU) // A menu that belongs to a menubar.
-TypePopupMenu    = WindowType(C.GDK_WINDOW_TYPE_HINT_POPUP_MENU)    // A menu that does not belong to a menubar, e.g. a context menu.
-TypeTooltip      = WindowType(C.GDK_WINDOW_TYPE_HINT_TOOLTIP)       // A tooltip.
-TypeNotification = WindowType(C.GDK_WINDOW_TYPE_HINT_NOTIFICATION)  // A notification - typically a “bubble” that belongs to a status icon.
-TypeCombo        = WindowType(C.GDK_WINDOW_TYPE_HINT_COMBO)         // A popup from a combo box.
-TypeDnd          = WindowType(C.GDK_WINDOW_TYPE_HINT_DND)           // A window that is used to implement a DND cursor.
+	TypeNormal       = WindowType(C.NSNormalWindowLevel)      // Normal toplevel window.
+	TypeDialog       = WindowType(C.NSNormalWindowLevel)      // Dialog window.
+	TypeMenu         = WindowType(C.NSTornOffMenuWindowLevel) // Window used to implement a menu; GTK+ uses this hint only for torn-off menus, see GtkTearoffMenuItem.
+	TypeToolbar      = WindowType(C.NSNormalWindowLevel)      // Window used to implement toolbars.
+	TypeSplashscreen = WindowType(C.NSStatusWindowLevel)      // Window used to display a splash screen during application startup.
+	TypeUtility      = WindowType(C.NSNormalWindowLevel)      // Utility windows which are not detached toolbars or dialogs.
+	TypeDock         = WindowType(C.NSDockWindowLevel)        // Used for creating dock or panel windows. /* NSDockWindowLevel is deprecated, and not replaced */
+	TypeDesktop      = WindowType(C.kCGDesktopWindowLevelKey) // Used for creating the desktop background window.
+	TypeDropdownMenu = WindowType(C.NSTornOffMenuWindowLevel) // A menu that belongs to a menubar.
+	TypePopupMenu    = WindowType(C.NSPopUpMenuWindowLevel)   // A menu that does not belong to a menubar, e.g. a context menu.
+	TypeTooltip      = WindowType(C.NSPopUpMenuWindowLevel)   // A tooltip.
+	TypeNotification = WindowType(C.NSStatusWindowLevel)      // A notification - typically a “bubble” that belongs to a status icon.
+	TypeCombo        = WindowType(C.NSPopUpMenuWindowLevel)   // A popup from a combo box.
+	TypeDnd          = WindowType(C.NSPopUpMenuWindowLevel)   // A window that is used to implement a DND cursor.
 
+/*
 StrutTop    = StrutPosition(C.PANEL_WINDOW_POSITION_TOP)
 StrutBottom = StrutPosition(C.PANEL_WINDOW_POSITION_BOTTOM)
 StrutLeft   = StrutPosition(C.PANEL_WINDOW_POSITION_LEFT)
 StrutRight  = StrutPosition(C.PANEL_WINDOW_POSITION_RIGHT) */
 )
-
-func (f *Window) GetScreenScaleFactor() int {
-	return 1
-}
-func (f *Window) GetScreenSize() (width, height int) {
-	return 0, 0
-}
-func (f *Window) SetZoom(zoom float64) *Window {
-	return f
-}
-
-// KeepAbove the window
-func (f *Window) KeepAbove(flag bool) *Window {
-	// C.gtk_window_set_keep_above(C.WindowObj(f.window), gboolean(above))
-	return f
-}
-
-// KeepBelow of window
-func (f *Window) KeepBelow(flag bool) *Window {
-	// C.gtk_window_set_keep_below(C.WindowObj(f.window), gboolean(below))
-	return f
-}
 
 // SetType of window
 func (f *Window) SetType(hint WindowType) *Window {
@@ -104,15 +82,40 @@ func (f *Window) SetType(hint WindowType) *Window {
 	return f
 }
 
-// GetSize returns width and height of window
-func (f *Window) GetSize() (width, height int) {
-	var cWidth, cHeight C.int
-	// C.gtk_window_get_size(C.WindowObj(f.window), &cWidth, &cHeight)
-	width, height = int(cWidth), int(cHeight)
+// ====================================================
+
+// GetScreenScaleFactor returns scale factor of window monitor
+func (f *Window) GetScreenScaleFactor() float64 {
+	return float64(C.getScreenScale(C.WindowObj(f.window)))
+}
+
+// GetScreenSize returns size of window monitor
+func (f *Window) GetScreenSize() (width, height int) {
+	size := C.getScreenSize(C.WindowObj(f.window))
+	width, height = int(size.width), int(size.height)
 	return
 }
 
-// ====================================================
+// GetSize returns width and height of window
+func (f *Window) GetSize() (width, height int) {
+	size := C.windowSize(C.WindowObj(f.window))
+	width, height = int(size.width), int(size.height)
+	return
+}
+
+// GetWebviewSize returns width and height of window webview content
+func (f *Window) GetWebviewSize() (width, height int) {
+	size := C.contentSize(C.WindowObj(f.window))
+	width, height = int(size.width), int(size.height)
+	return
+}
+
+// GetPosition returns position of window
+func (f *Window) GetPosition() (x, y int) {
+	position := C.windowPosition(C.WindowObj(f.window))
+	x, y = int(position.x), int(position.y)
+	return
+}
 
 // SetIconFromFile for Window
 func (f *Window) SetIconFromFile(filename string) *Window {
@@ -131,6 +134,18 @@ func (f *Window) Maximize(flag bool) *Window {
 	if (flag && !f.state.Maximized) || (!flag && f.state.Maximized) {
 		C.toggleMaximize(C.WindowObj(f.window))
 	}
+	return f
+}
+
+// KeepAbove the window
+func (f *Window) KeepAbove(flag bool) *Window {
+	C.windowKeepAbove(C.WindowObj(f.window), C.bool(flag))
+	return f
+}
+
+// KeepBelow of window
+func (f *Window) KeepBelow(flag bool) *Window {
+	C.windowKeepBelow(C.WindowObj(f.window), C.bool(flag))
 	return f
 }
 
@@ -218,6 +233,12 @@ func (f *Window) SetTitle(title string) *Window {
 // SetSize of the window
 func (f *Window) SetSize(width, height int) *Window {
 	C.resizeWindow(C.WindowObj(f.window), C.int(width), C.int(height))
+	return f
+}
+
+// SetWebviewSize sets size of webview (without titlebar)
+func (f *Window) SetWebviewSize(width, height int) *Window {
+	C.resizeContent(C.WindowObj(f.window), C.int(width), C.int(height))
 	return f
 }
 

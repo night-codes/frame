@@ -43,15 +43,19 @@ func main() {
 
 | Function                         | MacOS (Cocoa)| Linux (WebKitGTK)| Windows |
 | -------------------------------- |:------------:|:----------------:|:-------:|
+| `App.NewWindow`                  |       ✅     |         ✅       |         |
+| `App.WaitAllWindowClose`         |              |         ✅       |         |
+| `App.WaitWindowClose`            |              |         ✅       |         |
 | `Window.Eval`                    |       ✅     |         ✅       |         |
 | `Window.Fullscreen`              |       ✅     |         ✅       |         |
-| `Window.GetScreenScaleFactor`    |              |         ✅       |         |
-| `Window.GetScreenSize)`          |              |         ✅       |         |
-| `Window.GetSize)`                |              |         ✅       |         |
+| `Window.GetScreenScaleFactor`    |       ✅     |         ✅       |         |
+| `Window.GetSize`                 |       ✅     |         ✅       |         |
+| `Window.GetPosition`             |       ✅     |                  |         |
+| `Window.GetWebviewSize`          |       ✅     |                  |         |
 | `Window.Hide`                    |       ✅     |         ✅       |         |
 | `Window.Iconify`                 |       ✅     |         ✅       |         |
-| `Window.KeepAbove`               |              |         ✅       |         |
-| `Window.KeepBelow`               |              |         ✅       |         |
+| `Window.KeepAbove`               |       ✅     |         ✅       |         |
+| `Window.KeepBelow`               |       ✅     |         ✅       |         |
 | `Window.Load`                    |       ✅     |         ✅       |         |
 | `Window.LoadHTML`                |       ✅     |         ✅       |         |
 | `Window.Maximize`                |       ✅     |         ✅       |         |
@@ -71,10 +75,12 @@ func main() {
 | `Window.SetStateEvent`           |       ✅     |         ✅       |         |
 | `Window.SetTitle`                |       ✅     |         ✅       |         |
 | `Window.SetType`                 |              |         ✅       |         |
-| `Window.SetZoom`                 |       ✅     |         ✅       |         |
+| `Window.SetWebviewSize`          |       ✅     |                  |         |
 | `Window.Show`                    |       ✅     |         ✅       |         |
 | `Window.SkipPager`               |       ✅     |         ✅       |         |
 | `Window.SkipTaskbar`             |       ✅     |         ✅       |         |
 | `Window.Stick`                   |       ✅     |         ✅       |         |
 | `Window.Strut`                   |       ✅     |         ✅       |         |
 | `Window.UnsetModal`              |       ✅     |         ✅       |         |
+| `Menu.AddSubMenu`                |              |         ✅       |         |
+| `Menu.AddItem`                   |              |         ✅       |         |

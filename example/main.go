@@ -17,28 +17,10 @@ var (
 func main() {
 	app := frame.MakeApp("My App")
 
-	editMenu := app.MainMenu.AddSubMenu("Edit")
-	editMenu.AddItem("Find some items", func() {
-		fmt.Println("EDIT")
-	}, "f")
-
-	editMenu.AddItem("Ololo", func() {
-		fmt.Println("OLOLO")
-	}, "o")
-
-	editMenu.AddItem("Test", func() {
-		fmt.Println("TEST")
-	})
-
-	app.MainMenu.AddSubMenu("Test")
-	helpMenu := app.MainMenu.AddSubMenu("Help")
-	helpMenu.AddSubMenu("Register application")
-	helpMenu.AddSubMenu("About...")
-
 	wv := app.NewWindow("Simple program!", 500, 400).
 		SetIconFromFile(basepath+"/moon.png").
 		SetBackgroundColor(50, 50, 50, 0.8).
-		Move(20, 100).
+		// Move(20, 100).
 		// SetDecorated(false).
 		LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Hello world</h1>
@@ -56,15 +38,14 @@ func main() {
 
 	wv2 := app.NewWindow("Modal window", 400, 300).
 		SetBackgroundColor(80, 50, 50, 0.9).
-		SkipPager(true).
 		SetIconFromFile(basepath+"/moon.png").
 		LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Some Dialog</h1>
       <p>Modal window...</p>
       </body>`, "").
 		// KeepAbove(true).
-		Move(540, 100).
-		SetModal(wv).
+		// Move(540, 100).
+		//SetModal(wv).
 		SetStateEvent(func(state frame.State) {
 			if state.Hidden {
 				fmt.Println("Modal window 1 closed")
@@ -85,19 +66,18 @@ func main() {
 		wv3 := app.NewWindow("Modal window", 300, 200).
 			SetIconFromFile(basepath+"/moon.png").
 			SetBackgroundColor(40, 80, 50, 0.9).
-			SkipTaskbar(true).
 			LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Some Dialog</h1>
       <p>Modal window...</p>
 	  </body>`, "").
-			SetModal(wv2).
+			// SetModal(wv2).
 			SetInvoke(func(msg string) {
 				fmt.Println(":::", msg)
 			})
 		t := false
 		wv3.
 			SetResizeble(false).
-			Move(960, 100).
+			// Move(960, 100).
 			SetStateEvent(func(state frame.State) {
 				fmt.Printf("%+v\n", state)
 				if state.Hidden {
@@ -118,9 +98,36 @@ func main() {
 				}
 			})
 
-		go func() {
-			wv3.Show()
+		editMenu := app.MainMenu.AddSubMenu("Edit")
+		editMenu.AddItem("Find some items", func() {
+			fmt.Println("FIND")
+		}, "f")
 
+		editMenu.AddItem("Ololo", func() {
+			fmt.Println("OLOLO")
+		}, "o")
+
+		editMenu.AddItem("Test", func() {
+			fmt.Println("TEST")
+		})
+		helpMenu := app.MainMenu.AddSubMenu("Help")
+		regMenu := helpMenu.AddSubMenu("Register application")
+		helpMenu.AddItem("About...", func() {
+			wv3.Show()
+		}, "a")
+		regMenu.AddItem("Register by key", func() {
+			fmt.Println("Register by key")
+		})
+		regMenu.AddItem("Buy key in store...", func() {
+			fmt.Println("Buy key")
+		})
+
+		go func() {
+			fmt.Println(wv.GetSize())
+			fmt.Println(wv.GetWebviewSize())
+			fmt.Println(wv.GetPosition())
+			fmt.Println(wv.GetScreenSize())
+			fmt.Println(wv.GetScreenScaleFactor())
 			wv.Eval("window.external.invoke('Window 1: This is external invoke')")
 			wv2.Eval("window.external.invoke('Window 2: This is external invoke')")
 			wv3.Eval("window.external.invoke('Window 3: This is external invoke')")

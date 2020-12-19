@@ -133,13 +133,6 @@ static void updateVisual(GtkWidget* window)
     }
 }
 
-static gboolean setZoom(gpointer arg)
-{
-    idleData* data = (idleData*)arg;
-    webkit_web_view_set_zoom_level(WEBKIT_WEB_VIEW(data->webview), data->dbl);
-    return FALSE;
-}
-
 static gboolean windowSetModal(gpointer arg)
 {
     idleData* data = (idleData*)arg;
@@ -378,11 +371,7 @@ static GdkRectangle getMonitorSize(GtkWidget* window)
 
 static int getMonitorScaleFactor(GtkWidget* window)
 {
-    GdkScreen* screen = gtk_widget_get_screen(window);
-    GdkDisplay* display = gdk_screen_get_display(screen);
-    GdkMonitor* monitor = gdk_display_get_monitor_at_window(display, gtk_widget_get_window(window));
-    GdkRectangle monitorSize;
-    return gdk_monitor_get_scale_factor(monitor);
+    return gdk_window_get_scale_factor(gtk_widget_get_window(window));
 }
 
 static void setSizes(GtkWidget* window, gint max_width, gint max_height, gint min_width, gint min_height)

@@ -262,6 +262,29 @@ void iconifyWindow(WindowObj ww, bool flag)
     });
 }
 
+
+void windowKeepAbove(WindowObj ww, bool flag)
+{
+	dispatch_async(dispatch_get_main_queue(), ^(void) {
+        if (flag) {
+            [ww.window setLevel:100];
+        } else {
+            [ww.window setLevel:0];
+        }
+    });
+}
+
+void windowKeepBelow(WindowObj ww, bool flag)
+{
+	dispatch_async(dispatch_get_main_queue(), ^(void) {
+        if (flag) {
+            [ww.window setLevel:-1];
+        } else {
+            [ww.window setLevel:0];
+        }
+    });
+}
+
 BOOL isFocused(WindowObj ww)
 {
     return [ww.window isKeyWindow];
@@ -296,6 +319,50 @@ void resizeWindow(WindowObj ww, int width, int height)
             height);
         [ww.window setFrame:r display:YES animate:YES];
     });
+}
+
+void resizeContent(WindowObj ww, int width, int height)
+{
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        NSRect old = [ww.window frame];
+		NSSize size = {};
+		size.width = height;
+		size.height = width;
+        [ww.window setContentSize:size];
+    });
+}
+
+CGSize windowSize(WindowObj ww)
+{
+	NSRect frame = [ww.window frame];
+	return frame.size;
+}
+
+CGSize contentSize(WindowObj ww)
+{
+	NSRect frame = [ww.webview frame];
+	return frame.size;
+}
+
+CGPoint windowPosition(WindowObj ww)
+{
+	NSRect frame = [ww.window frame];
+	NSScreen *screen = ww.window.screen;
+	NSRect scrFrame = screen.frame;
+	frame.origin.y=scrFrame.size.height-(frame.origin.y+frame.size.height);
+	return frame.origin;
+}
+
+CGSize getScreenSize(WindowObj ww)
+{
+	NSScreen *screen = ww.window.screen;
+	return screen.frame.size;
+}
+
+double getScreenScale(WindowObj ww)
+{
+	NSScreen *screen = ww.window.screen;
+	return (double)screen.backingScaleFactor;
 }
 
 // Put window location from the top left corner of screen.

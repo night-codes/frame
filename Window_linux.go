@@ -37,7 +37,6 @@ typedef struct GSR {
     GSourceFunc evalJS;
     GSourceFunc loadURI;
     GSourceFunc loadHTML;
-    GSourceFunc setZoom;
 } GSR;
 
 GSR fn = {
@@ -66,8 +65,7 @@ GSR fn = {
     windowHide,
     evalJS,
     loadURI,
-	loadHTML,
-	setZoom
+	loadHTML
 };
 */
 import "C"
@@ -200,15 +198,6 @@ func (f *Window) SetOpacity(opacity float64) *Window {
 	idle(C.fn.windowSetOpacity, C.idleData{
 		window: f.window,
 		dbl:    C.gdouble(opacity),
-	})
-	return f
-}
-
-// SetZoom of webview
-func (f *Window) SetZoom(zoom float64) *Window {
-	idle(C.fn.setZoom, C.idleData{
-		webview: f.webview,
-		dbl:     C.gdouble(zoom),
 	})
 	return f
 }
@@ -428,8 +417,8 @@ func (f *Window) GetScreenSize() (width, height int) {
 }
 
 // GetScreenScaleFactor returns scale factor of window monitor
-func (f *Window) GetScreenScaleFactor() int {
-	return int(C.getMonitorScaleFactor(f.window))
+func (f *Window) GetScreenScaleFactor() float64 {
+	return float64(int(C.getMonitorScaleFactor(f.window)))
 }
 
 // GetSize returns width and height of window
