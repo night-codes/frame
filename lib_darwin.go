@@ -14,6 +14,7 @@ import "C"
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"sync/atomic"
 	// "reflect"
 )
@@ -43,6 +44,8 @@ type State struct {
 //export goAppActivated
 func goAppActivated(ret C.AppMenu) {
 	app := &App{
+		openedWns: sync.WaitGroup{},
+		shown:     make(chan bool),
 		MainMenu: &Menu{
 			menu: ret.mainMenu,
 		},
@@ -73,13 +76,20 @@ func goBool(b C.BOOL) bool {
 }
 
 func stateSender(win *Window, newState State) {
-	oldState := win.state
+	prevState := win.state
 	win.state = newState
 	if win.StateEvent != nil {
 		win.StateEvent(newState)
 	}
 
-	if !newState.Hidden && oldState.Hidden {
+	if prevState.Hidden && !newState.Hidden {
+		win.app.openedWns.Add(1)
+		select {
+		case win.app.shown <- true:
+		default:
+		}
+	} else if !prevState.Hidden && newState.Hidden {
+		win.app.openedWns.Done()
 	}
 }
 

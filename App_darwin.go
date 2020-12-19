@@ -21,8 +21,10 @@ import (
 type (
 	// App is main application object
 	App struct {
-		MainMenu *Menu
-		AppMenu  *Menu
+		MainMenu  *Menu
+		AppMenu   *Menu
+		openedWns sync.WaitGroup
+		shown     chan bool
 	}
 )
 
@@ -37,12 +39,22 @@ var (
 
 // WaitAllWindowClose locker
 func (a *App) WaitAllWindowClose() {
-	select {}
+	<-a.shown
+	a.openedWns.Wait()
 }
 
 // WaitWindowClose locker
 func (a *App) WaitWindowClose(win *Window) {
-	select {}
+	<-a.shown
+	shown := false
+	for {
+		if !win.state.Hidden {
+			shown = true
+		}
+		if win.state.Hidden && shown {
+			break
+		}
+	}
 }
 
 // MakeApp is make and run one instance of application (At the moment, it is possible to create only one instance)
@@ -86,7 +98,7 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 		id:        id,
 		resizeble: true,
 		window:    ret,
-		state:     State{Hidden: false},
+		state:     State{Hidden: true},
 		app:       a,
 	}
 

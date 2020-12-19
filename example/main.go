@@ -137,6 +137,6 @@ func main() {
 	// w, h := wv.GetScreen().Size()
 	// fmt.Println("Screen size:", w, h)
 
-	app.WaitWindowClose(wv2) // lock main
+	app.WaitAllWindowClose()
 	fmt.Println("Application terminated")
 }

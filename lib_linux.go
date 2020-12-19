@@ -17,14 +17,6 @@ import (
 )
 
 type (
-	// App is main application object
-	App struct {
-		app       *C.GtkApplication
-		count     uint
-		winds     []*Window
-		openedWns sync.WaitGroup
-		shown     chan bool
-	}
 	// State struct
 	State struct {
 		Hidden     bool

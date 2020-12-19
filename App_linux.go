@@ -19,6 +19,18 @@ import (
 	"runtime"
 	"sync/atomic"
 )
+import "sync"
+
+type (
+	// App is main application object
+	App struct {
+		app       *C.GtkApplication
+		count     uint
+		winds     []*Window
+		openedWns sync.WaitGroup
+		shown     chan bool
+	}
+)
 
 // makeApp is make and run one instance of application (At the moment, it is possible to create only one instance)
 func makeApp(appName string) *App {

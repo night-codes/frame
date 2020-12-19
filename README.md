@@ -44,8 +44,8 @@ func main() {
 | Function                         | MacOS (Cocoa)| Linux (WebKitGTK)| Windows |
 | -------------------------------- |:------------:|:----------------:|:-------:|
 | `App.NewWindow`                  |       ✅     |         ✅       |         |
-| `App.WaitAllWindowClose`         |              |         ✅       |         |
-| `App.WaitWindowClose`            |              |         ✅       |         |
+| `App.WaitAllWindowClose`         |       ✅     |         ✅       |         |
+| `App.WaitWindowClose`            |       ✅     |         ✅       |         |
 | `Window.Eval`                    |       ✅     |         ✅       |         |
 | `Window.Fullscreen`              |       ✅     |         ✅       |         |
 | `Window.GetScreenScaleFactor`    |       ✅     |         ✅       |         |
