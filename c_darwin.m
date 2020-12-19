@@ -5,8 +5,13 @@
 #import "c_darwin.h"
 #import "_cgo_export.h"
 
-static bool appInitialized = false; // false first time function is called
+static bool appInitialized = false;
+static bool menuInitialized = false;
 static NSApplication* app;
+static NSMenu* mainMenu;
+static NSMenu* windowsMenu;
+static NSMenu* appMenu;
+static char* appName;
 
 WindowDelegate* windowDelegate = nil;
 AppDelegate* appDelegate = nil;
@@ -93,29 +98,81 @@ void triggerEvent(int goWindowID, NSWindow* window, NSString* eventTitle)
 {
     [super dealloc];
 }
-- (void)applicationDidFinishLaunching:(NSNotification*)aNotification
+
+- (void)menuAction:(NSMenuItem*)menuItem
 {
-    goAppActivated();
+	MenuObj mm;
+	mm.menuItem = menuItem;
+	goMenuFunc(mm);
+}
+
+- (void)applicationDidFinishLaunching:(NSNotification*)notification
+{
+	mainMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
+	[app setMainMenu:mainMenu];
+	NSMenuItem* appMenuItem = [NSMenuItem new];
+    [mainMenu addItem:appMenuItem];
+    appMenu = [NSMenu new];
+	[appMenuItem setSubmenu:appMenu];
+
+	windowsMenu = [[[NSMenu alloc] initWithTitle:@"Window"] autorelease];
+	[app setWindowsMenu:windowsMenu];
+	NSMenuItem* windowsMenuItem = [NSMenuItem new];
+    [windowsMenu addItem:windowsMenuItem];
+	[windowsMenuItem setSubmenu:[NSMenu new]];
+
+	[app setActivationPolicy:NSApplicationActivationPolicyRegular];
+	[app activateIgnoringOtherApps:YES];
+	AppMenu send = {mainMenu,appMenu};
+    goAppActivated(send);
 }
 @end
 
 // The application is started.
-void makeApp()
+void makeApp(char* aName)
 {
     if (appInitialized) {
         return;
     }
     appInitialized = true;
 
+	appName = aName;
+
     app = [NSApplication sharedApplication];
     @autoreleasepool {
-        [app setActivationPolicy:NSApplicationActivationPolicyRegular];
         appDelegate = [[AppDelegate alloc] init];
         [app setDelegate:appDelegate];
-        [app activateIgnoringOtherApps:YES];
         NSWindow.allowsAutomaticWindowTabbing = NO;
         [app run];
     }
+}
+
+
+MenuObj addSubMenu(MenuObj mm)
+{
+	NSMenuItem* aMenuItem = [NSMenuItem new];
+	[mm.menu addItem:aMenuItem];
+	NSMenu* aMenu = [[NSMenu alloc] initWithTitle:[NSString stringWithUTF8String:mm.title]];
+	[aMenuItem setTitle:[NSString stringWithUTF8String:mm.title]];
+	dispatch_async(dispatch_get_main_queue(), ^(void) {
+		[aMenuItem setSubmenu:aMenu];
+	});
+
+	mm.menu = aMenu;
+	mm.menuItem = aMenuItem;
+	return mm;
+}
+
+MenuObj addItem(MenuObj mm)
+{
+	NSMenuItem* aMenuItem = [[NSMenuItem alloc] initWithTitle:[NSString stringWithUTF8String:mm.title] action:@selector(menuAction:) keyEquivalent:[NSString stringWithUTF8String:mm.key]];
+	[aMenuItem setTitle:[NSString stringWithUTF8String:mm.title]];
+	dispatch_async(dispatch_get_main_queue(), ^(void) {
+		[mm.menu addItem:aMenuItem];
+	});
+
+	mm.menuItem = aMenuItem;
+	return mm;
 }
 
 void makeWindow(char* title, int width, int height, long long unsigned int req_id, int id)
@@ -137,13 +194,6 @@ void makeWindow(char* title, int width, int height, long long unsigned int req_i
         [window setDelegate:windowDelegate];
         [window center];
 
-		NSImage* img = [[NSImage alloc] initWithContentsOfFile:[NSString stringWithUTF8String:"./moon.png"]];
-		[window setRepresentedURL:[NSURL URLWithString:[NSString stringWithUTF8String:title]]];
-		[[window standardWindowButton:NSWindowDocumentIconButton] setImage:img];
-		if (img != nil) {
-			[app setApplicationIconImage:img];
-		}
-
 		/*
         NSDockTile *dockTile = [window dockTile];
 		[dockTile display]; */
@@ -163,6 +213,7 @@ void makeWindow(char* title, int width, int height, long long unsigned int req_i
         [webview setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [[window contentView] addSubview:webview];
         [window setTitle:[NSString stringWithUTF8String:title]];
+
         goWinRet(req_id, ret);
     });
 }
@@ -185,6 +236,11 @@ void showWindow(WindowObj ww)
 {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         [ww.window makeKeyAndOrderFront:app];
+
+		if (appMenu != NULL && !menuInitialized){
+   			menuInitialized = true;
+			[appMenu setTitle:[[NSString stringWithUTF8String:appName] stringByAppendingString:@"\x1b"]];
+		}
     });
 }
 
@@ -288,6 +344,25 @@ void setTitle(WindowObj ww, char* title)
 {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         [ww.window setTitle:[NSString stringWithUTF8String:title]];
+    });
+}
+
+void setWindowIconFromFile(WindowObj ww, char* filename)
+{
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+		NSImage* img = [[NSImage alloc] initWithContentsOfFile:[NSString stringWithUTF8String:filename]];
+		[ww.window setRepresentedURL:[NSURL URLWithString:[NSString stringWithUTF8String:""]]];
+		[[ww.window standardWindowButton:NSWindowDocumentIconButton] setImage:img];
+		// if (img != nil) {
+		// 	[app setApplicationIconImage:img];
+		// }
+    });
+}
+
+void setWindowAlpha(WindowObj ww, double opacity)
+{
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        [ww.window setAlphaValue:opacity];
     });
 }
 
@@ -395,6 +470,13 @@ void toggleFullScreen(WindowObj ww)
 {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         [ww.window toggleFullScreen:ww.window];
+    });
+}
+
+void toggleMaximize(WindowObj ww)
+{
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        [ww.window zoom:ww.window];
     });
 }
 

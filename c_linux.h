@@ -112,7 +112,7 @@ static void started(GtkApplication* app, gpointer user_data)
 }
 
 // The application is started.
-static void makeApp()
+static void makeApp(char* appName)
 {
     XInitThreads();
     gtk_init(0, NULL);

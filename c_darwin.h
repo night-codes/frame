@@ -14,12 +14,24 @@ typedef struct WindowObj {
     // GtkWidget* menubar;
 } WindowObj;
 
+typedef struct MenuObj {
+    char* title;
+    char* key;
+    NSMenu* menu;
+    NSMenuItem* menuItem;
+} MenuObj;
+
+typedef struct AppMenu {
+    NSMenu* mainMenu;
+    NSMenu* appMenu;
+} AppMenu;
+
 BOOL isFocused(WindowObj ww);
 BOOL isVisible(WindowObj ww);
 BOOL isZoomed(WindowObj ww);
 BOOL isMiniaturized(WindowObj ww);
 BOOL isFullscreen(WindowObj ww);
-void makeApp();
+void makeApp(char* appName);
 void makeWindow(char* title, int width, int height, long long unsigned int req_id, int id);
 void evalJS(WindowObj ww, const char* js, long long unsigned int reqid);
 void hideWindow(WindowObj ww);
@@ -43,6 +55,11 @@ void toggleFullScreen(WindowObj ww);
 void stickWindow(WindowObj ww, bool flag);
 void setWindowSkipPager(WindowObj ww, bool flag);
 void setWindowSkipTaskbar(WindowObj ww, bool flag);
+void setWindowAlpha(WindowObj ww, double opacity);
+void toggleMaximize(WindowObj ww);
+void setWindowIconFromFile(WindowObj ww, char* filename);
+MenuObj addSubMenu(MenuObj mm);
+MenuObj addItem(MenuObj mm);
 
 @interface WindowDelegate : NSObject <NSWindowDelegate, WKScriptMessageHandler>
 @property (assign) int goWindowID;

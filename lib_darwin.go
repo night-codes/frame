@@ -8,7 +8,6 @@ package frame
 #ifndef WEBVIEW_COCOA
 #define WEBVIEW_COCOA
 #endif
-
 */
 import "C"
 
@@ -42,8 +41,18 @@ type State struct {
 }
 
 //export goAppActivated
-func goAppActivated() {
-	appChan <- &App{}
+func goAppActivated(ret C.AppMenu) {
+	app := &App{
+		MainMenu: &Menu{
+			menu: ret.mainMenu,
+		},
+		AppMenu: &Menu{
+			menu: ret.appMenu,
+		},
+	}
+	app.MainMenu.app = app
+	app.AppMenu.app = app
+	appChan <- app
 }
 
 //export goPrint

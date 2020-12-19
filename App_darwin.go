@@ -21,41 +21,19 @@ import (
 type (
 	// App is main application object
 	App struct {
-		count uint
-		winds []*Window
+		MainMenu *Menu
+		AppMenu  *Menu
 	}
 )
 
 var (
-	mutexNew   sync.Mutex
-	winds      = []*Window{}
-	lock       sync.Mutex
-	appChan    = make(chan *App)
-	defaultApp *App
-	idItr      int64
+	mutexNew  sync.Mutex
+	winds     = []*Window{}
+	menuItems = []*MenuItem{}
+	lock      sync.Mutex
+	appChan   = make(chan *App)
+	idItr     int64
 )
-
-// NewWindow returns window with webview
-func NewWindow(title string, sizes ...int) *Window {
-	if defaultApp == nil {
-		defaultApp = makeApp()
-	}
-	return defaultApp.NewWindow(title, sizes...)
-}
-
-// WaitAllWindowClose locker
-func WaitAllWindowClose() {
-	if defaultApp != nil {
-		defaultApp.WaitAllWindowClose()
-	}
-}
-
-// WaitWindowClose locker
-func WaitWindowClose(win *Window) {
-	if defaultApp != nil && win != nil {
-		defaultApp.WaitWindowClose(win)
-	}
-}
 
 // WaitAllWindowClose locker
 func (a *App) WaitAllWindowClose() {
@@ -67,12 +45,12 @@ func (a *App) WaitWindowClose(win *Window) {
 	select {}
 }
 
-// makeApp is make and run one instance of application (At the moment, it is possible to create only one instance)
-func makeApp() *App {
+// MakeApp is make and run one instance of application (At the moment, it is possible to create only one instance)
+func MakeApp(appName string) *App {
 	lock.Lock()
 	go func() {
 		runtime.LockOSThread()
-		C.makeApp()
+		C.makeApp(C.CString(appName))
 		runtime.UnlockOSThread()
 	}()
 	app := <-appChan

@@ -15,7 +15,27 @@ var (
 )
 
 func main() {
-	wv := frame.NewWindow("Simple program!", 500, 400).
+	app := frame.MakeApp("My App")
+
+	editMenu := app.MainMenu.AddSubMenu("Edit")
+	editMenu.AddItem("Find some items", func() {
+		fmt.Println("EDIT")
+	}, "f")
+
+	editMenu.AddItem("Ololo", func() {
+		fmt.Println("OLOLO")
+	}, "o")
+
+	editMenu.AddItem("Test", func() {
+		fmt.Println("TEST")
+	})
+
+	app.MainMenu.AddSubMenu("Test")
+	helpMenu := app.MainMenu.AddSubMenu("Help")
+	helpMenu.AddSubMenu("Register application")
+	helpMenu.AddSubMenu("About...")
+
+	wv := app.NewWindow("Simple program!", 500, 400).
 		SetIconFromFile(basepath+"/moon.png").
 		SetBackgroundColor(50, 50, 50, 0.8).
 		Move(20, 100).
@@ -34,8 +54,9 @@ func main() {
 		}).
 		Show()
 
-	wv2 := frame.NewWindow("Modal window", 400, 300).
+	wv2 := app.NewWindow("Modal window", 400, 300).
 		SetBackgroundColor(80, 50, 50, 0.9).
+		SkipPager(true).
 		SetIconFromFile(basepath+"/moon.png").
 		LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Some Dialog</h1>
@@ -43,7 +64,7 @@ func main() {
       </body>`, "").
 		// KeepAbove(true).
 		Move(540, 100).
-		//SetModal(wv).
+		SetModal(wv).
 		SetStateEvent(func(state frame.State) {
 			if state.Hidden {
 				fmt.Println("Modal window 1 closed")
@@ -61,14 +82,15 @@ func main() {
 		wv.Eval("thisIsError2")
 		// wv.Eval("document.body.style.background = '#994477'")
 		// wv2.Hide()
-		wv3 := frame.NewWindow("Modal window", 300, 200).
+		wv3 := app.NewWindow("Modal window", 300, 200).
 			SetIconFromFile(basepath+"/moon.png").
 			SetBackgroundColor(40, 80, 50, 0.9).
+			SkipTaskbar(true).
 			LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Some Dialog</h1>
       <p>Modal window...</p>
 	  </body>`, "").
-			// SetModal(wv2).
+			SetModal(wv2).
 			SetInvoke(func(msg string) {
 				fmt.Println(":::", msg)
 			})
@@ -98,10 +120,6 @@ func main() {
 
 		go func() {
 			wv3.Show()
-			time.Sleep(time.Second)
-			wv2.SkipTaskbar(true)
-			time.Sleep(2 * time.Second)
-			wv2.Fullscreen(false)
 
 			wv.Eval("window.external.invoke('Window 1: This is external invoke')")
 			wv2.Eval("window.external.invoke('Window 2: This is external invoke')")
@@ -112,6 +130,6 @@ func main() {
 	// w, h := wv.GetScreen().Size()
 	// fmt.Println("Screen size:", w, h)
 
-	frame.WaitWindowClose(wv2) // lock main
+	app.WaitWindowClose(wv2) // lock main
 	fmt.Println("Application terminated")
 }

@@ -82,7 +82,7 @@ type (
 		menubar    *C.GtkWidget
 		StateEvent func(State)
 		Invoke     func(string)
-		app        *appObject
+		app        *App
 		state      State
 		maxLimited bool
 		maxWidth   int

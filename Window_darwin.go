@@ -76,15 +76,13 @@ StrutLeft   = StrutPosition(C.PANEL_WINDOW_POSITION_LEFT)
 StrutRight  = StrutPosition(C.PANEL_WINDOW_POSITION_RIGHT) */
 )
 
-// SetIconFromFile for Window
-func (f *Window) SetIconFromFile(filename string) *Window {
-	// C.gtk_window_set_icon_from_file(C.WindowObj(f.window), C.gcharptr(C.CString(filename)), nil)
-	return f
+func (f *Window) GetScreenScaleFactor() int {
+	return 1
 }
-
-// SetIconName for Window
-func (f *Window) SetIconName(name string) *Window {
-	// C.gtk_window_set_icon_name(C.WindowObj(f.window), C.gcharptr(C.CString(name)))
+func (f *Window) GetScreenSize() (width, height int) {
+	return 0, 0
+}
+func (f *Window) SetZoom(zoom float64) *Window {
 	return f
 }
 
@@ -114,19 +112,27 @@ func (f *Window) GetSize() (width, height int) {
 	return
 }
 
-// Maximize window
-func (f *Window) Maximize(flag bool) *Window {
-	//C.setWindowSkipTaskbar(C.WindowObj(f.window), C.bool(flag))
+// ====================================================
+
+// SetIconFromFile for Window
+func (f *Window) SetIconFromFile(filename string) *Window {
+	C.setWindowIconFromFile(C.WindowObj(f.window), C.CString(filename))
 	return f
 }
 
 // SetOpacity of window
 func (f *Window) SetOpacity(opacity float64) *Window {
-	// ---------------
+	C.setWindowAlpha(C.WindowObj(f.window), C.double(opacity))
 	return f
 }
 
-// ====================================================
+// Maximize window
+func (f *Window) Maximize(flag bool) *Window {
+	if (flag && !f.state.Maximized) || (!flag && f.state.Maximized) {
+		C.toggleMaximize(C.WindowObj(f.window))
+	}
+	return f
+}
 
 // SkipTaskbar of window
 func (f *Window) SkipTaskbar(flag bool) *Window {
