@@ -43,38 +43,38 @@ func main() {
 
 | Function                         | MacOS (Cocoa)| Linux (WebKitGTK)| Windows |
 | -------------------------------- |:------------:|:----------------:|:-------:|
-| `Window.Eval`                    |      [x]     |        [x]       |   [ ]   |
-| `Window.Fullscreen`              |      [x]     |        [x]       |   [ ]   |
-| `Window.GetScreenScaleFactor`    |      [ ]     |        [x]       |   [ ]   |
-| `Window.GetScreenSize)`          |      [ ]     |        [x]       |   [ ]   |
-| `Window.GetSize)`                |      [ ]     |        [x]       |   [ ]   |
-| `Window.Hide`                    |      [x]     |        [x]       |   [ ]   |
-| `Window.Iconify`                 |      [x]     |        [x]       |   [ ]   |
-| `Window.KeepAbove`               |      [ ]     |        [x]       |   [ ]   |
-| `Window.KeepBelow`               |      [ ]     |        [x]       |   [ ]   |
-| `Window.Load`                    |      [x]     |        [x]       |   [ ]   |
-| `Window.LoadHTML`                |      [x]     |        [x]       |   [ ]   |
-| `Window.Maximize`                |      [x]     |        [x]       |   [ ]   |
-| `Window.Move`                    |      [x]     |        [x]       |   [ ]   |
-| `Window.SetBackgroundColor`      |      [x]     |        [x]       |   [ ]   |
-| `Window.SetCenter`               |      [x]     |        [x]       |   [ ]   |
-| `Window.SetDecorated`            |      [x]     |        [x]       |   [ ]   |
-| `Window.SetDeletable`            |      [x]     |        [x]       |   [ ]   |
-| `Window.SetIconFromFile`         |      [x]     |        [x]       |   [ ]   |
-| `Window.SetInvoke`               |      [x]     |        [x]       |   [ ]   |
-| `Window.SetMaxSize`              |      [x]     |        [x]       |   [ ]   |
-| `Window.SetMinSize`              |      [x]     |        [x]       |   [ ]   |
-| `Window.SetModal`                |      [x]     |        [x]       |   [ ]   |
-| `Window.SetOpacity`              |      [x]     |        [x]       |   [ ]   |
-| `Window.SetResizeble`            |      [x]     |        [x]       |   [ ]   |
-| `Window.SetSize`                 |      [x]     |        [x]       |   [ ]   |
-| `Window.SetStateEvent`           |      [x]     |        [x]       |   [ ]   |
-| `Window.SetTitle`                |      [x]     |        [x]       |   [ ]   |
-| `Window.SetType`                 |      [ ]     |        [x]       |   [ ]   |
-| `Window.SetZoom`                 |      [x]     |        [x]       |   [ ]   |
-| `Window.Show`                    |      [x]     |        [x]       |   [ ]   |
-| `Window.SkipPager`               |      [x]     |        [x]       |   [ ]   |
-| `Window.SkipTaskbar`             |      [x]     |        [x]       |   [ ]   |
-| `Window.Stick`                   |      [x]     |        [x]       |   [ ]   |
-| `Window.Strut`                   |      [x]     |        [x]       |   [ ]   |
-| `Window.UnsetModal`              |      [x]     |        [x]       |   [ ]   |
+| `Window.Eval`                    |    - [x]     |      - [x]       | - [ ]   |
+| `Window.Fullscreen`              |    - [x]     |      - [x]       | - [ ]   |
+| `Window.GetScreenScaleFactor`    |    - [ ]     |      - [x]       | - [ ]   |
+| `Window.GetScreenSize)`          |    - [ ]     |      - [x]       | - [ ]   |
+| `Window.GetSize)`                |    - [ ]     |      - [x]       | - [ ]   |
+| `Window.Hide`                    |    - [x]     |      - [x]       | - [ ]   |
+| `Window.Iconify`                 |    - [x]     |      - [x]       | - [ ]   |
+| `Window.KeepAbove`               |    - [ ]     |      - [x]       | - [ ]   |
+| `Window.KeepBelow`               |    - [ ]     |      - [x]       | - [ ]   |
+| `Window.Load`                    |    - [x]     |      - [x]       | - [ ]   |
+| `Window.LoadHTML`                |    - [x]     |      - [x]       | - [ ]   |
+| `Window.Maximize`                |    - [x]     |      - [x]       | - [ ]   |
+| `Window.Move`                    |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SetBackgroundColor`      |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SetCenter`               |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SetDecorated`            |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SetDeletable`            |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SetIconFromFile`         |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SetInvoke`               |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SetMaxSize`              |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SetMinSize`              |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SetModal`                |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SetOpacity`              |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SetResizeble`            |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SetSize`                 |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SetStateEvent`           |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SetTitle`                |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SetType`                 |    - [ ]     |      - [x]       | - [ ]   |
+| `Window.SetZoom`                 |    - [x]     |      - [x]       | - [ ]   |
+| `Window.Show`                    |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SkipPager`               |    - [x]     |      - [x]       | - [ ]   |
+| `Window.SkipTaskbar`             |    - [x]     |      - [x]       | - [ ]   |
+| `Window.Stick`                   |    - [x]     |      - [x]       | - [ ]   |
+| `Window.Strut`                   |    - [x]     |      - [x]       | - [ ]   |
+| `Window.UnsetModal`              |    - [x]     |      - [x]       | - [ ]   |
