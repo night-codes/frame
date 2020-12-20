@@ -20,7 +20,7 @@ import (
 func main() {
 
 	app := frame.MakeApp("My App")
-
+	app.SetDefaultIconFromFile(basepath + "/moon.png")
 	app.NewWindow("Simple program!", 450, 300).
 		KeepAbove(false).
 		SkipTaskbar(false).
@@ -44,6 +44,7 @@ func main() {
 | Function                         | MacOS (Cocoa)| Linux (WebKitGTK)| Windows |
 | -------------------------------- |:------------:|:----------------:|:-------:|
 | `App.NewWindow`                  |       ✅     |         ✅       |         |
+| `App.SetIconFromFile`            |       ✅     |         ✅       |         |
 | `App.WaitAllWindowClose`         |       ✅     |         ✅       |         |
 | `App.WaitWindowClose`            |       ✅     |         ✅       |         |
 | `Window.Eval`                    |       ✅     |         ✅       |         |

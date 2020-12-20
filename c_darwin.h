@@ -61,6 +61,7 @@ void windowKeepBelow(WindowObj ww, bool flag);
 void setWindowAlpha(WindowObj ww, double opacity);
 void toggleMaximize(WindowObj ww);
 void setWindowIconFromFile(WindowObj ww, char* filename);
+void setAppIconFromFile(char* filename);
 MenuObj addSubMenu(MenuObj mm);
 MenuObj addItem(MenuObj mm);
 MenuObj addSeparatorItem(MenuObj mm);

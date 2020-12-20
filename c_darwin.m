@@ -101,29 +101,29 @@ void triggerEvent(int goWindowID, NSWindow* window, NSString* eventTitle)
 
 - (void)menuAction:(NSMenuItem*)menuItem
 {
-	MenuObj mm;
-	mm.menuItem = menuItem;
-	goMenuFunc(mm);
+    MenuObj mm;
+    mm.menuItem = menuItem;
+    goMenuFunc(mm);
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification*)notification
 {
-	mainMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
-	[app setMainMenu:mainMenu];
-	NSMenuItem* appMenuItem = [NSMenuItem new];
+    mainMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
+    [app setMainMenu:mainMenu];
+    NSMenuItem* appMenuItem = [NSMenuItem new];
     [mainMenu addItem:appMenuItem];
     appMenu = [NSMenu new];
-	[appMenuItem setSubmenu:appMenu];
+    [appMenuItem setSubmenu:appMenu];
 
-	windowsMenu = [[[NSMenu alloc] initWithTitle:@"Window"] autorelease];
-	[app setWindowsMenu:windowsMenu];
-	NSMenuItem* windowsMenuItem = [NSMenuItem new];
+    windowsMenu = [[[NSMenu alloc] initWithTitle:@"Window"] autorelease];
+    [app setWindowsMenu:windowsMenu];
+    NSMenuItem* windowsMenuItem = [NSMenuItem new];
     [windowsMenu addItem:windowsMenuItem];
-	[windowsMenuItem setSubmenu:[NSMenu new]];
+    [windowsMenuItem setSubmenu:[NSMenu new]];
 
-	[app setActivationPolicy:NSApplicationActivationPolicyRegular];
-	[app activateIgnoringOtherApps:YES];
-	AppMenu send = {mainMenu,appMenu};
+    [app setActivationPolicy:NSApplicationActivationPolicyRegular];
+    [app activateIgnoringOtherApps:YES];
+    AppMenu send = { mainMenu, appMenu };
     goAppActivated(send);
 }
 @end
@@ -136,7 +136,7 @@ void makeApp(char* aName)
     }
     appInitialized = true;
 
-	appName = aName;
+    appName = aName;
 
     app = [NSApplication sharedApplication];
     @autoreleasepool {
@@ -147,42 +147,41 @@ void makeApp(char* aName)
     }
 }
 
-
 MenuObj addSubMenu(MenuObj mm)
 {
-	NSMenuItem* aMenuItem = [NSMenuItem new];
-	[mm.menu addItem:aMenuItem];
-	NSMenu* aMenu = [[NSMenu alloc] initWithTitle:[NSString stringWithUTF8String:mm.title]];
-	[aMenuItem setTitle:[NSString stringWithUTF8String:mm.title]];
-	dispatch_async(dispatch_get_main_queue(), ^(void) {
-		[aMenuItem setSubmenu:aMenu];
-	});
+    NSMenuItem* aMenuItem = [NSMenuItem new];
+    [mm.menu addItem:aMenuItem];
+    NSMenu* aMenu = [[NSMenu alloc] initWithTitle:[NSString stringWithUTF8String:mm.title]];
+    [aMenuItem setTitle:[NSString stringWithUTF8String:mm.title]];
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        [aMenuItem setSubmenu:aMenu];
+    });
 
-	mm.menu = aMenu;
-	mm.menuItem = aMenuItem;
-	return mm;
+    mm.menu = aMenu;
+    mm.menuItem = aMenuItem;
+    return mm;
 }
 
 MenuObj addItem(MenuObj mm)
 {
-	NSMenuItem* aMenuItem = [[NSMenuItem alloc] initWithTitle:[NSString stringWithUTF8String:mm.title] action:@selector(menuAction:) keyEquivalent:[NSString stringWithUTF8String:mm.key]];
-	[aMenuItem setTitle:[NSString stringWithUTF8String:mm.title]];
-	dispatch_async(dispatch_get_main_queue(), ^(void) {
-		[mm.menu addItem:aMenuItem];
-	});
+    NSMenuItem* aMenuItem = [[NSMenuItem alloc] initWithTitle:[NSString stringWithUTF8String:mm.title] action:@selector(menuAction:) keyEquivalent:[NSString stringWithUTF8String:mm.key]];
+    [aMenuItem setTitle:[NSString stringWithUTF8String:mm.title]];
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        [mm.menu addItem:aMenuItem];
+    });
 
-	mm.menuItem = aMenuItem;
-	return mm;
+    mm.menuItem = aMenuItem;
+    return mm;
 }
 
 MenuObj addSeparatorItem(MenuObj mm)
 {
-	NSMenuItem* aMenuItem = [NSMenuItem separatorItem];
-	dispatch_async(dispatch_get_main_queue(), ^(void) {
-		[mm.menu addItem:aMenuItem];
-	});
-	mm.menuItem = aMenuItem;
-	return mm;
+    NSMenuItem* aMenuItem = [NSMenuItem separatorItem];
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        [mm.menu addItem:aMenuItem];
+    });
+    mm.menuItem = aMenuItem;
+    return mm;
 }
 
 void makeWindow(char* title, int width, int height, long long unsigned int req_id, int id)
@@ -203,10 +202,6 @@ void makeWindow(char* title, int width, int height, long long unsigned int req_i
         [windowDelegate setGoWindowID:id];
         [window setDelegate:windowDelegate];
         [window center];
-
-		/*
-        NSDockTile *dockTile = [window dockTile];
-		[dockTile display]; */
 
         // Webwiew
         WKWebViewConfiguration* conf = [[WKWebViewConfiguration alloc] init];
@@ -247,24 +242,24 @@ void showWindow(WindowObj ww)
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         [ww.window makeKeyAndOrderFront:app];
 
-		if (appMenu != NULL && !menuInitialized){
-   			menuInitialized = true;
-			[appMenu setTitle:[[NSString stringWithUTF8String:appName] stringByAppendingString:@"\x1b"]];
+        if (appMenu != NULL && !menuInitialized) {
+            menuInitialized = true;
+            [appMenu setTitle:[[NSString stringWithUTF8String:appName] stringByAppendingString:@"\x1b"]];
 
-			NSString *title = [@"Hide " stringByAppendingString:[NSString stringWithUTF8String:appName]];
-			NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:title action:@selector(hide:) keyEquivalent:@"h"] autorelease];
-			[appMenu addItem:item];
-			item = [[[NSMenuItem alloc] initWithTitle:@"Hide Others" action:@selector(hideOtherApplications:) keyEquivalent:@"h"] autorelease];
-			[item setKeyEquivalentModifierMask:(NSEventModifierFlagOption | NSEventModifierFlagCommand)];
-			[appMenu addItem:item];
-			item = [[[NSMenuItem alloc] initWithTitle:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@""] autorelease];
-			[appMenu addItem:item];
-			[appMenu addItem:[NSMenuItem separatorItem]];
+            NSString* title = [@"Hide " stringByAppendingString:[NSString stringWithUTF8String:appName]];
+            NSMenuItem* item = [[[NSMenuItem alloc] initWithTitle:title action:@selector(hide:) keyEquivalent:@"h"] autorelease];
+            [appMenu addItem:item];
+            item = [[[NSMenuItem alloc] initWithTitle:@"Hide Others" action:@selector(hideOtherApplications:) keyEquivalent:@"h"] autorelease];
+            [item setKeyEquivalentModifierMask:(NSEventModifierFlagOption | NSEventModifierFlagCommand)];
+            [appMenu addItem:item];
+            item = [[[NSMenuItem alloc] initWithTitle:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@""] autorelease];
+            [appMenu addItem:item];
+            [appMenu addItem:[NSMenuItem separatorItem]];
 
-			title = [@"Quit " stringByAppendingString:[NSString stringWithUTF8String:appName]];
-			item = [[[NSMenuItem alloc] initWithTitle:title action:@selector(terminate:) keyEquivalent:@"q"] autorelease];
-			[appMenu addItem:item];
-		}
+            title = [@"Quit " stringByAppendingString:[NSString stringWithUTF8String:appName]];
+            item = [[[NSMenuItem alloc] initWithTitle:title action:@selector(terminate:) keyEquivalent:@"q"] autorelease];
+            [appMenu addItem:item];
+        }
     });
 }
 
@@ -277,7 +272,7 @@ void hideWindow(WindowObj ww)
 
 void iconifyWindow(WindowObj ww, bool flag)
 {
-	dispatch_async(dispatch_get_main_queue(), ^(void) {
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
         if (flag) {
             [ww.window miniaturize:ww.window];
         } else {
@@ -286,10 +281,9 @@ void iconifyWindow(WindowObj ww, bool flag)
     });
 }
 
-
 void windowKeepAbove(WindowObj ww, bool flag)
 {
-	dispatch_async(dispatch_get_main_queue(), ^(void) {
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
         if (flag) {
             [ww.window setLevel:100];
         } else {
@@ -300,7 +294,7 @@ void windowKeepAbove(WindowObj ww, bool flag)
 
 void windowKeepBelow(WindowObj ww, bool flag)
 {
-	dispatch_async(dispatch_get_main_queue(), ^(void) {
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
         if (flag) {
             [ww.window setLevel:-1];
         } else {
@@ -349,44 +343,44 @@ void resizeContent(WindowObj ww, int width, int height)
 {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         NSRect old = [ww.window frame];
-		NSSize size = {};
-		size.width = height;
-		size.height = width;
+        NSSize size = {};
+        size.width = height;
+        size.height = width;
         [ww.window setContentSize:size];
     });
 }
 
 CGSize windowSize(WindowObj ww)
 {
-	NSRect frame = [ww.window frame];
-	return frame.size;
+    NSRect frame = [ww.window frame];
+    return frame.size;
 }
 
 CGSize contentSize(WindowObj ww)
 {
-	NSRect frame = [ww.webview frame];
-	return frame.size;
+    NSRect frame = [ww.webview frame];
+    return frame.size;
 }
 
 CGPoint windowPosition(WindowObj ww)
 {
-	NSRect frame = [ww.window frame];
-	NSScreen *screen = ww.window.screen;
-	NSRect scrFrame = screen.frame;
-	frame.origin.y=scrFrame.size.height-(frame.origin.y+frame.size.height);
-	return frame.origin;
+    NSRect frame = [ww.window frame];
+    NSScreen* screen = ww.window.screen;
+    NSRect scrFrame = screen.frame;
+    frame.origin.y = scrFrame.size.height - (frame.origin.y + frame.size.height);
+    return frame.origin;
 }
 
 CGSize getScreenSize(WindowObj ww)
 {
-	NSScreen *screen = ww.window.screen;
-	return screen.frame.size;
+    NSScreen* screen = ww.window.screen;
+    return screen.frame.size;
 }
 
 double getScreenScale(WindowObj ww)
 {
-	NSScreen *screen = ww.window.screen;
-	return (double)screen.backingScaleFactor;
+    NSScreen* screen = ww.window.screen;
+    return (double)screen.backingScaleFactor;
 }
 
 // Put window location from the top left corner of screen.
@@ -394,9 +388,9 @@ void moveWindow(WindowObj ww, int x, int y)
 {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         NSRect old = [ww.window frame];
-		NSScreen *screen = ww.window.screen;
-		NSRect frame = screen.frame;
-		[ww.window setFrameTopLeftPoint:NSMakePoint(x, frame.size.height-y)];
+        NSScreen* screen = ww.window.screen;
+        NSRect frame = screen.frame;
+        [ww.window setFrameTopLeftPoint:NSMakePoint(x, frame.size.height - y)];
     });
 }
 
@@ -407,7 +401,7 @@ void setModal(WindowObj ww, WindowObj parent)
         ww.window.level = NSModalPanelWindowLevel;
         ww.window.styleMask &= ~NSWindowStyleMaskMiniaturizable;
         // ww.window.styleMask |= NSWindowStyleMaskDocModalWindow;
-		[parent.window addChildWindow:ww.window ordered:NSWindowAbove];
+        [parent.window addChildWindow:ww.window ordered:NSWindowAbove];
     });
 }
 
@@ -417,10 +411,10 @@ void unsetModal(WindowObj ww)
         ww.window.styleMask |= NSWindowStyleMaskMiniaturizable;
         // ww.window.styleMask &= ~NSWindowStyleMaskDocModalWindow;
         ww.window.level = NSNormalWindowLevel;
-		NSWindow* parentWindow = [ww.window parentWindow];
-		if (parentWindow != NULL) {
-			[parentWindow removeChildWindow:ww.window];
-		}
+        NSWindow* parentWindow = [ww.window parentWindow];
+        if (parentWindow != NULL) {
+            [parentWindow removeChildWindow:ww.window];
+        }
     });
 }
 
@@ -441,12 +435,21 @@ void setTitle(WindowObj ww, char* title)
 void setWindowIconFromFile(WindowObj ww, char* filename)
 {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
-		NSImage* img = [[NSImage alloc] initWithContentsOfFile:[NSString stringWithUTF8String:filename]];
-		[ww.window setRepresentedURL:[NSURL URLWithString:[NSString stringWithUTF8String:""]]];
-		[[ww.window standardWindowButton:NSWindowDocumentIconButton] setImage:img];
-		// if (img != nil) {
-		// 	[app setApplicationIconImage:img];
-		// }
+        NSImage* img = [[NSImage alloc] initWithContentsOfFile:[NSString stringWithUTF8String:filename]];
+        if (img != nil) {
+            [ww.window setRepresentedURL:[NSURL URLWithString:[NSString stringWithUTF8String:""]]];
+            [[ww.window standardWindowButton:NSWindowDocumentIconButton] setImage:img];
+        }
+    });
+}
+
+void setAppIconFromFile(char* filename)
+{
+    dispatch_async(dispatch_get_main_queue(), ^(void) {
+        NSImage* img = [[NSImage alloc] initWithContentsOfFile:[NSString stringWithUTF8String:filename]];
+        if (img != nil) {
+            [app setApplicationIconImage:img];
+        }
     });
 }
 
@@ -526,11 +529,11 @@ void setWindowSkipPager(WindowObj ww, bool flag)
 {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         if (flag) {
-			ww.window.collectionBehavior |= NSWindowCollectionBehaviorIgnoresCycle;
-			ww.window.collectionBehavior |= NSWindowCollectionBehaviorTransient;
+            ww.window.collectionBehavior |= NSWindowCollectionBehaviorIgnoresCycle;
+            ww.window.collectionBehavior |= NSWindowCollectionBehaviorTransient;
         } else {
-			ww.window.collectionBehavior &= ~NSWindowCollectionBehaviorIgnoresCycle;
-			ww.window.collectionBehavior &= ~NSWindowCollectionBehaviorTransient;
+            ww.window.collectionBehavior &= ~NSWindowCollectionBehaviorIgnoresCycle;
+            ww.window.collectionBehavior &= ~NSWindowCollectionBehaviorTransient;
         }
     });
 }
@@ -539,9 +542,9 @@ void setWindowSkipTaskbar(WindowObj ww, bool flag)
 {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         if (flag) {
-			ww.window.collectionBehavior |= NSWindowCollectionBehaviorTransient;
+            ww.window.collectionBehavior |= NSWindowCollectionBehaviorTransient;
         } else {
-			ww.window.collectionBehavior &= ~NSWindowCollectionBehaviorTransient;
+            ww.window.collectionBehavior &= ~NSWindowCollectionBehaviorTransient;
         }
     });
 }
@@ -550,9 +553,9 @@ void stickWindow(WindowObj ww, bool flag)
 {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         if (flag) {
-			ww.window.collectionBehavior |= NSWindowCollectionBehaviorCanJoinAllSpaces;
+            ww.window.collectionBehavior |= NSWindowCollectionBehaviorCanJoinAllSpaces;
         } else {
-			ww.window.collectionBehavior &= ~NSWindowCollectionBehaviorCanJoinAllSpaces;
+            ww.window.collectionBehavior &= ~NSWindowCollectionBehaviorCanJoinAllSpaces;
         }
     });
 }
@@ -584,11 +587,11 @@ void setBackgroundColor(WindowObj ww, int8_t r, int8_t g, int8_t b, double a,
         [ww.window setOpaque:NO];
         if (titlebarTransparent) {
             [ww.window setTitlebarAppearsTransparent:YES];
-			/* ww.window.styleMask |= NSFullSizeContentViewWindowMask;
+            /* ww.window.styleMask |= NSFullSizeContentViewWindowMask;
 			[ww.window setMovableByWindowBackground:YES];
 
 			NSVisualEffectView *vibrant=[[NSVisualEffectView alloc] initWithFrame:[[ww.window contentView] bounds]];
-        	[vibrant setState:NSVisualEffectStateActive];
+			[vibrant setState:NSVisualEffectStateActive];
 			[vibrant setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
 			[vibrant setBlendingMode:NSVisualEffectBlendingModeBehindWindow];
 			[vibrant setMaterial:NSVisualEffectMaterialDark];

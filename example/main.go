@@ -2,23 +2,16 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
-	"runtime"
 	"time"
 
 	"github.com/night-codes/frame"
 )
 
-var (
-	_, b, _, _ = runtime.Caller(0)
-	basepath   = filepath.Dir(b)
-)
-
 func main() {
 	app := frame.MakeApp("My App")
+	app.SetIconFromFile("./moon.png")
 
 	wv := app.NewWindow("Simple program!", 500, 400).
-		SetIconFromFile(basepath+"/moon.png").
 		SetBackgroundColor(50, 50, 50, 0.8).
 		// Move(20, 100).
 		// SetDecorated(false).
@@ -38,7 +31,6 @@ func main() {
 
 	wv2 := app.NewWindow("Modal window", 400, 300).
 		SetBackgroundColor(80, 50, 50, 0.9).
-		SetIconFromFile(basepath+"/moon.png").
 		LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Some Dialog</h1>
       <p>Modal window...</p>
@@ -64,7 +56,6 @@ func main() {
 		// wv.Eval("document.body.style.background = '#994477'")
 		// wv2.Hide()
 		wv3 := app.NewWindow("Modal window", 300, 200).
-			SetIconFromFile(basepath+"/moon.png").
 			SetBackgroundColor(40, 80, 50, 0.9).
 			LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Some Dialog</h1>

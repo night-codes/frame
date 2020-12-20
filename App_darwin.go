@@ -57,6 +57,11 @@ func (a *App) WaitWindowClose(win *Window) {
 	}
 }
 
+// SetIconFromFile sets dock icon
+func (a *App) SetIconFromFile(filename string) {
+	C.setAppIconFromFile(C.CString(filename))
+}
+
 // MakeApp is make and run one instance of application (At the moment, it is possible to create only one instance)
 func MakeApp(appName string) *App {
 	lock.Lock()

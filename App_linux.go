@@ -43,14 +43,9 @@ func makeApp(appName string) *App {
 	return <-appChan
 }
 
-// SetDefaultIconFromFile for application windows
-func (a *App) SetDefaultIconFromFile(filename string) {
+// SetIconFromFile  sets application icon
+func (a *App) SetIconFromFile(filename string) {
 	C.gtk_window_set_default_icon_from_file(C.gcharptr(C.CString(filename)), nil)
-}
-
-// SetDefaultIconName for application windows
-func (a *App) SetDefaultIconName(name string) {
-	C.gtk_window_set_default_icon_name(C.gcharptr(C.CString(name)))
 }
 
 // WaitAllWindowClose locker
