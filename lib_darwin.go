@@ -43,19 +43,16 @@ type State struct {
 
 //export goAppActivated
 func goAppActivated(ret C.AppMenu) {
-	app := &App{
+	appChan <- &App{
 		openedWns: sync.WaitGroup{},
 		shown:     make(chan bool),
-		MainMenu: &Menu{
+		mainMenu: &Menu{
 			menu: ret.mainMenu,
 		},
-		AppMenu: &Menu{
+		appMenu: &Menu{
 			menu: ret.appMenu,
 		},
 	}
-	app.MainMenu.app = app
-	app.AppMenu.app = app
-	appChan <- app
 }
 
 //export goPrint

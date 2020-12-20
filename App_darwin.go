@@ -21,8 +21,8 @@ import (
 type (
 	// App is main application object
 	App struct {
-		MainMenu  *Menu
-		AppMenu   *Menu
+		mainMenu  *Menu
+		appMenu   *Menu
 		openedWns sync.WaitGroup
 		shown     chan bool
 	}
@@ -100,6 +100,7 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 		window:    ret,
 		state:     State{Hidden: true},
 		app:       a,
+		MainMenu:  a.mainMenu,
 	}
 
 	go func() {

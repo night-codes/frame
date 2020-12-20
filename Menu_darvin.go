@@ -18,7 +18,6 @@ import "C"
 type (
 	// Menu of window
 	Menu struct {
-		app      *App
 		title    string
 		key      string
 		menu     *C.NSMenu
@@ -28,10 +27,9 @@ type (
 
 	// MenuItem element
 	MenuItem struct {
-		app      *App
+		Action   func()
 		title    string
 		key      string
-		action   func()
 		menuItem *C.NSMenuItem
 		parent   *Menu
 	}
@@ -45,7 +43,6 @@ func (m *Menu) AddSubMenu(title string) *Menu {
 	})
 
 	menu := Menu{
-		app:      m.app,
 		title:    title,
 		menu:     retM.menu,
 		menuItem: retM.menuItem,
@@ -67,14 +64,20 @@ func (m *Menu) AddItem(title string, action func(), key ...string) *MenuItem {
 	})
 
 	item := MenuItem{
-		app:      m.app,
+		Action:   action,
 		title:    title,
 		menuItem: retM.menuItem,
-		action:   action,
 		parent:   m,
 	}
 	menuItems = append(menuItems, &item)
 	return &item
+}
+
+// AddSeparatorItem adds separator item to menu
+func (m *Menu) AddSeparatorItem() {
+	C.addSeparatorItem(C.MenuObj{
+		menu: m.menu,
+	})
 }
 
 //export goMenuFunc
@@ -82,7 +85,7 @@ func goMenuFunc(m C.MenuObj) {
 	go func() {
 		for _, mm := range menuItems {
 			if unsafe.Pointer(mm.menuItem) == unsafe.Pointer(m.menuItem) {
-				go mm.action()
+				go mm.Action()
 			}
 		}
 	}()

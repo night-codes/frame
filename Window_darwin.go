@@ -17,6 +17,7 @@ type (
 		window     C.WindowObj
 		StateEvent func(State)
 		Invoke     func(string)
+		MainMenu   *Menu
 
 		OnHide func()
 		OnShow func()

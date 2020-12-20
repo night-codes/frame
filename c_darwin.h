@@ -63,6 +63,7 @@ void toggleMaximize(WindowObj ww);
 void setWindowIconFromFile(WindowObj ww, char* filename);
 MenuObj addSubMenu(MenuObj mm);
 MenuObj addItem(MenuObj mm);
+MenuObj addSeparatorItem(MenuObj mm);
 CGSize windowSize(WindowObj ww);
 CGSize contentSize(WindowObj ww);
 CGSize getScreenSize(WindowObj ww);

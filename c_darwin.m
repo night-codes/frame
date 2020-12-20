@@ -175,6 +175,16 @@ MenuObj addItem(MenuObj mm)
 	return mm;
 }
 
+MenuObj addSeparatorItem(MenuObj mm)
+{
+	NSMenuItem* aMenuItem = [NSMenuItem separatorItem];
+	dispatch_async(dispatch_get_main_queue(), ^(void) {
+		[mm.menu addItem:aMenuItem];
+	});
+	mm.menuItem = aMenuItem;
+	return mm;
+}
+
 void makeWindow(char* title, int width, int height, long long unsigned int req_id, int id)
 {
     dispatch_async(dispatch_get_main_queue(), ^(void) {
@@ -240,6 +250,20 @@ void showWindow(WindowObj ww)
 		if (appMenu != NULL && !menuInitialized){
    			menuInitialized = true;
 			[appMenu setTitle:[[NSString stringWithUTF8String:appName] stringByAppendingString:@"\x1b"]];
+
+			NSString *title = [@"Hide " stringByAppendingString:[NSString stringWithUTF8String:appName]];
+			NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:title action:@selector(hide:) keyEquivalent:@"h"] autorelease];
+			[appMenu addItem:item];
+			item = [[[NSMenuItem alloc] initWithTitle:@"Hide Others" action:@selector(hideOtherApplications:) keyEquivalent:@"h"] autorelease];
+			[item setKeyEquivalentModifierMask:(NSEventModifierFlagOption | NSEventModifierFlagCommand)];
+			[appMenu addItem:item];
+			item = [[[NSMenuItem alloc] initWithTitle:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@""] autorelease];
+			[appMenu addItem:item];
+			[appMenu addItem:[NSMenuItem separatorItem]];
+
+			title = [@"Quit " stringByAppendingString:[NSString stringWithUTF8String:appName]];
+			item = [[[NSMenuItem alloc] initWithTitle:title action:@selector(terminate:) keyEquivalent:@"q"] autorelease];
+			[appMenu addItem:item];
 		}
     });
 }

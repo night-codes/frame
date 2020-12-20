@@ -98,10 +98,12 @@ func main() {
 				}
 			})
 
-		editMenu := app.MainMenu.AddSubMenu("Edit")
+		editMenu := wv.MainMenu.AddSubMenu("Edit")
 		editMenu.AddItem("Find some items", func() {
 			fmt.Println("FIND")
 		}, "f")
+
+		editMenu.AddSeparatorItem()
 
 		editMenu.AddItem("Ololo", func() {
 			fmt.Println("OLOLO")
@@ -110,7 +112,7 @@ func main() {
 		editMenu.AddItem("Test", func() {
 			fmt.Println("TEST")
 		})
-		helpMenu := app.MainMenu.AddSubMenu("Help")
+		helpMenu := wv.MainMenu.AddSubMenu("Help")
 		regMenu := helpMenu.AddSubMenu("Register application")
 		helpMenu.AddItem("About...", func() {
 			wv3.Show()
