@@ -31,7 +31,6 @@ type (
 var (
 	mutexNew  sync.Mutex
 	winds     = []*Window{}
-	menuItems = []*MenuItem{}
 	lock      sync.Mutex
 	appChan   = make(chan *App)
 	idItr     int64

@@ -83,6 +83,6 @@ func main() {
 | `Window.Stick`                   |       ✅     |         ✅       |         |
 | `Window.Strut`                   |       ✅     |         ✅       |         |
 | `Window.UnsetModal`              |       ✅     |         ✅       |         |
-| `Menu.AddSubMenu`                |       ✅     |                  |         |
-| `Menu.AddItem`                   |       ✅     |                  |         |
-| `Menu.AddSeparatorItem`          |       ✅     |                  |         |
+| `Menu.AddSubMenu`                |       ✅     |         ✅       |         |
+| `Menu.AddItem`                   |       ✅     |         ✅       |         |
+| `Menu.AddSeparatorItem`          |       ✅     |         ✅       |         |

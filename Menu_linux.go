@@ -7,21 +7,87 @@ package frame
 */
 import "C"
 
+import (
+	"unsafe"
+)
+
+
 type (
 	// Menu of window
 	Menu struct {
+		title    string
+		key      string
+		menu     *C.GtkWidget
+		menuItem *C.GtkWidget
+		parent   *Menu
 	}
 
 	// MenuItem element
 	MenuItem struct {
-		menu Menu
+		Action   func()
+		title    string
+		key      string
+		menuItem *C.GtkWidget
+		parent   *Menu
 	}
 )
 
-// NewIem returns window with webview
-func (m *Menu) NewIem(title string) MenuItem {
-	menuitem := MenuItem{
-		//
+var (
+	menuItems = []*MenuItem{}
+)
+
+// AddSubMenu returns a new submenu
+func (m *Menu) AddSubMenu(title string) *Menu {
+	retM := C.addSubMenu(C.MenuObj{
+		title: C.CString(title),
+		menu:  m.menu,
+	})
+
+	menu := Menu{
+		title:    title,
+		menu:     retM.menu,
+		menuItem: retM.menuItem,
+		parent:   m,
 	}
-	return menuitem
+	return &menu
+}
+
+// AddItem returns a new menu item
+func (m *Menu) AddItem(title string, action func(), key ...string) *MenuItem {
+	k := ""
+	if len(key) > 0 {
+		k = key[0]
+	}
+	retM := C.addItem(C.MenuObj{
+		title: C.CString(title),
+		key:   C.CString(k),
+		menu:  m.menu,
+	})
+
+	item := MenuItem{
+		Action:   action,
+		title:    title,
+		menuItem: retM.menuItem,
+		parent:   m,
+	}
+	menuItems = append(menuItems, &item)
+	return &item
+}
+
+// AddSeparatorItem adds separator item to menu
+func (m *Menu) AddSeparatorItem() {
+	C.addSeparatorItem(C.MenuObj{
+		menu: m.menu,
+	})
+}
+
+//export goMenuFunc
+func goMenuFunc(mi *C.GtkWidget) {
+	go func() {
+		for _, mm := range menuItems {
+			if unsafe.Pointer(mm.menuItem) == unsafe.Pointer(mi) {
+				go mm.Action()
+			}
+		}
+	}()
 }

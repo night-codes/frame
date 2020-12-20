@@ -25,15 +25,14 @@ type (
 	// App is main application object
 	App struct {
 		app       *C.GtkApplication
-		count     uint
 		winds     []*Window
 		openedWns sync.WaitGroup
 		shown     chan bool
 	}
 )
 
-// makeApp is make and run one instance of application (At the moment, it is possible to create only one instance)
-func makeApp(appName string) *App {
+// MakeApp is make and run one instance of application (At the moment, it is possible to create only one instance)
+func MakeApp(appName string) *App {
 	lock.Lock()
 	go func() {
 		runtime.LockOSThread()
@@ -103,6 +102,9 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 		webview: ret.webview,
 		menubar: ret.menubar,
 		state:   State{Hidden: true},
+		MainMenu: &Menu{
+			menu: ret.menubar,
+		},
 		app:     a,
 	}
 	winds = append(winds, wind)

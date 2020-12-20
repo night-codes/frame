@@ -78,6 +78,7 @@ type (
 		box        *C.GtkWidget
 		webview    *C.GtkWidget
 		menubar    *C.GtkWidget
+		MainMenu   *Menu
 		StateEvent func(State)
 		Invoke     func(string)
 		app        *App
@@ -87,6 +88,21 @@ type (
 		maxHeight  int
 		minWidth   int
 		minHeight  int
+
+		OnHide func()
+		OnShow func()
+
+		OnFocus   func()
+		OnUnfocus func()
+
+		OnIconize   func()
+		OnDeiconize func()
+
+		OnDemaximize func()
+		OnMaximize   func()
+
+		OnFullscreen     func()
+		OnExitFullscreen func()
 	}
 
 	// WindowType struct
@@ -141,13 +157,28 @@ func (f *Window) SetBackgroundColor(r, g, b int, alfa float64) *Window {
 	return f
 }
 
-// ----------------------------------------------
 // SetMinSize of window
 func (f *Window) SetMinSize(width, height int) *Window {
 	f.minHeight = height
 	f.minWidth = width
 	C.setSizes(f.window, C.gint(C.int(f.maxWidth)), C.gint(C.int(f.maxHeight)), C.gint(C.int(f.minWidth)), C.gint(C.int(f.minHeight)))
 	return f
+}
+
+
+
+// GetWebviewSize returns width and height of window webview content
+func (f *Window) GetWebviewSize() (width, height int) {
+	// size := C.contentSize(C.WindowObj(f.window))
+	// width, height = int(size.width), int(size.height)
+	return 0, 0
+}
+
+// GetPosition returns position of window
+func (f *Window) GetPosition() (x, y int) {
+	// position := C.windowPosition(C.WindowObj(f.window))
+	// x, y = int(position.x), int(position.y)
+	return 0, 0
 }
 
 // SetMaxSize of window
@@ -210,8 +241,6 @@ func (f *Window) SetType(hint WindowType) *Window {
 	})
 	return f
 }
-
-// ----------------------------------------------
 
 // SetDecorated of window
 func (f *Window) SetDecorated(flag bool) *Window {

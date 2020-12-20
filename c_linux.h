@@ -19,11 +19,20 @@ typedef struct WindowObj {
     GtkWidget* menubar;
 } WindowObj;
 
+
+typedef struct MenuObj {
+    char* title;
+    char* key;
+    GtkWidget* menu;
+    GtkWidget* menuItem;
+} MenuObj;
+
 extern void goAppActivated(GtkApplication* app);
 extern void goPrint(char* text);
 extern void goPrintInt(int num);
 extern void goScriptEvent();
 extern void goWindowState(WindowObj* win, int e);
+extern void goMenuFunc(GtkWidget* mm);
 extern void goInvokeCallback(WindowObj* win, char* data);
 extern void goWinRet(long long unsigned int reqid, WindowObj* win);
 extern void goEvalRet(long long unsigned int reqid, char* err);
@@ -435,6 +444,39 @@ static gboolean contextMenuEvent(WebKitWebView* web_view, WebKitContextMenu* con
     return TRUE;
 }
 
+static MenuObj addSubMenu(MenuObj mm)
+{
+    GtkWidget* aMenuItem = gtk_menu_item_new_with_label(gcharptr(mm.title));
+    GtkWidget* aMenu = gtk_menu_new();
+    gtk_menu_item_set_submenu(GTK_MENU_ITEM(aMenuItem), aMenu);
+    gtk_menu_shell_append(GTK_MENU_SHELL(mm.menu), aMenuItem);
+	gtk_widget_show_all(mm.menu);
+
+	mm.menu = aMenu;
+	mm.menuItem = aMenuItem;
+	return mm;
+}
+
+static MenuObj addItem(MenuObj mm)
+{
+	GtkWidget* aMenuItem = gtk_menu_item_new_with_label(gcharptr(mm.title));
+    gtk_menu_shell_append(GTK_MENU_SHELL(mm.menu), aMenuItem);
+	// gtk_accel_label_set_accel(GTK_ACCEL_LABEL(child), GDK_KEY_1, 0);
+	gtk_widget_show_all(mm.menu);
+	g_signal_connect_swapped (aMenuItem, "activate", G_CALLBACK(goMenuFunc), (gpointer)aMenuItem);
+	mm.menuItem = aMenuItem;
+	return mm;
+}
+
+static MenuObj addSeparatorItem(MenuObj mm)
+{
+	GtkWidget* aMenuItem = gtk_separator_menu_item_new();
+	gtk_menu_shell_append(GTK_MENU_SHELL(mm.menu), aMenuItem);
+	gtk_widget_show_all(mm.menu);
+	mm.menuItem = aMenuItem;
+	return mm;
+}
+
 static gboolean makeWindow_idle(gpointer arg)
 {
     idleData* data = (idleData*)arg;
@@ -463,25 +505,9 @@ static gboolean makeWindow_idle(gpointer arg)
     gtk_widget_show(box);
 
     /** MENUBAR  */
-    GtkWidget* menu = gtk_menu_new();
-    GtkWidget* item = gtk_menu_item_new_with_label(gcharptr("Файл"));
-    GtkWidget* item3 = gtk_menu_item_new_with_label(gcharptr("Опции"));
-    GtkWidget* item4 = gtk_menu_item_new_with_label(gcharptr("Справка"));
-    GtkWidget* item5 = gtk_menu_item_new_with_label(gcharptr("Открыть..."));
-    GtkWidget* item6 = gtk_menu_item_new_with_label(gcharptr("Выход"));
-
-    GtkWidget* fileMenu = gtk_menu_new();
-    gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), fileMenu);
-
-    /*  gtk_accel_label_set_accel(GTK_ACCEL_LABEL(child), GDK_KEY_1, 0); */
     GtkWidget* menubar = gtk_menu_bar_new();
     ret->menubar = menubar;
     gtk_box_pack_start(GTK_BOX(box), menubar, 0, 1, 0);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item3);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menubar), item4);
-    gtk_menu_shell_append(GTK_MENU_SHELL(fileMenu), item5);
-    gtk_menu_shell_append(GTK_MENU_SHELL(fileMenu), item6);
     gtk_widget_realize(menubar);
     gtk_widget_show(menubar);
 

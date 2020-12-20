@@ -2,10 +2,6 @@
 
 package frame
 
-import (
-	"unsafe"
-)
-
 /*
 #import  "c_darwin.h"
 
@@ -14,6 +10,10 @@ import (
 #endif
 */
 import "C"
+
+import (
+	"unsafe"
+)
 
 type (
 	// Menu of window
@@ -33,6 +33,10 @@ type (
 		menuItem *C.NSMenuItem
 		parent   *Menu
 	}
+)
+
+var (
+	menuItems = []*MenuItem{}
 )
 
 // AddSubMenu returns a new submenu
