@@ -29,11 +29,11 @@ type (
 )
 
 var (
-	mutexNew  sync.Mutex
-	winds     = []*Window{}
-	lock      sync.Mutex
-	appChan   = make(chan *App)
-	idItr     int64
+	mutexNew sync.Mutex
+	winds    = []*Window{}
+	lock     sync.Mutex
+	appChan  = make(chan *App)
+	idItr    int64
 )
 
 // WaitAllWindowClose locker
@@ -120,10 +120,8 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 				state.Focused = false
 			}
 
-			if state.Maximized != win.state.Maximized ||
-				state.Fullscreen != win.state.Fullscreen ||
-				state.Hidden != win.state.Hidden ||
-				state.Iconified != win.state.Iconified {
+			if state.Hidden != win.state.Hidden || (!state.Hidden && (state.Maximized != win.state.Maximized ||
+				state.Fullscreen != win.state.Fullscreen || state.Iconified != win.state.Iconified)) {
 
 				go stateSender(win, state)
 			}

@@ -115,15 +115,12 @@ func goWindowEvent(windowID C.int, eventTitle *C.char, x C.int, y C.int, w C.int
 	switch title {
 	case "windowDidBecomeKey":
 		state.Focused = true
+		state.Hidden = false
 	case "windowDidResignKey":
 		state.Focused = false
-	case "windowWillClose":
-		state.Hidden = true
-	case "windowDidExpose":
-		state.Hidden = false
 	}
 
-	if state.Focused != win.state.Focused {
+	if !state.Hidden && (state.Focused != win.state.Focused) {
 		go stateSender(win, state)
 	}
 }
