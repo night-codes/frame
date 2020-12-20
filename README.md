@@ -84,3 +84,4 @@ func main() {
 | `Window.UnsetModal`              |       ✅     |         ✅       |         |
 | `Menu.AddSubMenu`                |       ✅     |                  |         |
 | `Menu.AddItem`                   |       ✅     |                  |         |
+| `Menu.AddSeparatorItem`          |       ✅     |                  |         |
