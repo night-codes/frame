@@ -43,7 +43,7 @@ func main() {
 
 | Function                         | MacOS (Cocoa)| Linux (WebKitGTK)| Windows |
 | -------------------------------- |:------------:|:----------------:|:-------:|
-| `App.NewWindow`                  |       ✅     |         ✅       |         |
+| `App.NewWindow`                  |       ✅     |         ✅       |    ✅   |
 | `App.SetIconFromFile`            |       ✅     |         ✅       |         |
 | `App.WaitAllWindowClose`         |       ✅     |         ✅       |         |
 | `App.WaitWindowClose`            |       ✅     |         ✅       |         |
@@ -77,7 +77,7 @@ func main() {
 | `Window.SetTitle`                |       ✅     |         ✅       |         |
 | `Window.SetType`                 |              |         ✅       |         |
 | `Window.SetWebviewSize`          |       ✅     |                  |         |
-| `Window.Show`                    |       ✅     |         ✅       |         |
+| `Window.Show`                    |       ✅     |         ✅       |    ✅   |
 | `Window.SkipPager`               |       ✅     |         ✅       |         |
 | `Window.SkipTaskbar`             |       ✅     |         ✅       |         |
 | `Window.Stick`                   |       ✅     |         ✅       |         |

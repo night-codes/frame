@@ -10,11 +10,13 @@ package frame
 #include "c_windows.h"
 */
 import "C"
+import "time"
 
 type (
 	// Window struct
 	Window struct {
-		id         int64
+		id         int
+		thread     int
 		window     C.HWND
 		StateEvent func(State)
 		Invoke     func(string)
@@ -288,7 +290,8 @@ func (f *Window) UnsetModal() *Window {
 
 // Show window
 func (f *Window) Show() *Window {
-	// C.showWindow(C.WindowObj(f.window))
+	C.showWindow(C.int(f.thread))
+	time.Sleep(time.Second / 10)
 	return f
 }
 

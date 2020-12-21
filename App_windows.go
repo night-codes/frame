@@ -11,12 +11,12 @@ package frame
 #define WEBVIEW_WINAPI
 #endif
 
+#include <errno.h>
 #include "c_windows.h"
 */
 import "C"
 
 import (
-	"fmt"
 	"sync"
 	"sync/atomic"
 )
@@ -93,28 +93,15 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 	if len(sizes) > 1 {
 		height = sizes[1]
 	}
-	_ = width
-	_ = height
 
 	cRet := cRequest(func(reqid uint64) {
 		go C.makeWindow(C.CString(title), C.int(width), C.int(height), C.ulonglong(reqid), C.int(int(id)))
 	})
-	fmt.Println(":::CREATED")
-
-	ret, ok := cRet.(*C.WindowObj)
-	if !ok {
-		fmt.Println(":::NOT OK")
-	}
-	// fmt.Printf("%+v\n", ret.window)
-	fmt.Println(":::OK")
-	// select {}
+	ret, _ := cRet.(*C.WindowObj)
 	wind := &Window{
-		id:     id,
-		window: ret.window,
-		// box:     ret.box,
-		// webview: ret.webview,
-		// menubar: ret.menubar,
-		state: State{Hidden: true},
+		id:     int(ret.id),
+		thread: int(ret.thread),
+		state:  State{Hidden: true},
 		MainMenu: &Menu{
 			menu: nil, //ret.menubar,
 		},

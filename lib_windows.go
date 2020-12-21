@@ -41,10 +41,10 @@ func cRequest(fn func(id uint64)) interface{} {
 
 //export goWinRet
 func goWinRet(reqid C.ulonglong, win *C.WindowObj) {
+	// fmt.Printf("%+v\n", win.window)
 	go func() {
 		if chi, ok := goRequests.Load(uint64(reqid)); ok {
 			if ch, ok := chi.(chan interface{}); ok {
-				fmt.Printf("%+v\n", reqid)
 				ch <- win
 			}
 		}
@@ -57,6 +57,6 @@ func goPrint(text *C.char) {
 }
 
 //export goPrintInt
-func goPrintInt(t C.int) {
-	fmt.Println(int(t))
+func goPrintInt(text *C.char, t C.int) {
+	fmt.Println(C.GoString(text), int(t))
 }

@@ -15,15 +15,56 @@
 #include <stdio.h>
 #include <windows.h>
 
+typedef struct idleData {
+    int id;
+    int id2;
+    HWND window;
+    char* content;
+    char* uri;
+    int width;
+    int height;
+    int x;
+    int y;
+    int hint;
+    double dbl;
+    boolean flag;
+    long long unsigned int req_id;
+} idleData;
+
+#define IDLE_DISPATCH (WM_APP + 1)
+
 typedef struct WindowObj {
     int id;
+    int thread;
     long long unsigned int req_id;
     HWND window;
 } WindowObj;
 
+typedef void (*idleFn)(WindowObj* data, void* arg);
+
 extern void goPrint(char* text);
-extern void goPrintInt(int num);
+extern void goPrintInt(char* text, int num);
 extern void goWinRet(long long unsigned int req_id, WindowObj* win);
+
+static int* procs;
+static int procs_count;
+
+static void runIdle(int thread, idleFn fn, void* arg)
+{
+    PostThreadMessage((DWORD)thread, IDLE_DISPATCH, (WPARAM)fn, (LPARAM)arg);
+}
+
+static void showWindowIdle(WindowObj* data, void* arg)
+{
+    ShowWindow(data->window, SW_SHOW);
+    UpdateWindow(data->window);
+    SwitchToThisWindow(data->window, TRUE);
+}
+
+static void showWindow(int thread)
+{
+    runIdle(thread, showWindowIdle, NULL);
+}
 
 static LRESULT CALLBACK wndproc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -31,9 +72,10 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     switch (uMsg) {
     case WM_CREATE:
         ww = (WindowObj*)((CREATESTRUCT*)lParam)->lpCreateParams;
-        goPrint("CREATED!");
         ww->window = hwnd;
+
         goWinRet(ww->req_id, ww);
+        // runIdle(ww->id, showWindowIdle, NULL);
         // window = hwnd;
         // return EmbedBrowserObject(w);
         return TRUE;
@@ -54,17 +96,17 @@ static LRESULT CALLBACK wndproc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         } */
         return TRUE;
     }
-        /* case WM_WEBVIEW_DISPATCH: {
-        webview_dispatch_fn f = (webview_dispatch_fn)wParam;
+    case IDLE_DISPATCH: {
+        idleFn f = (idleFn)wParam;
         void* arg = (void*)lParam;
-        (*f)(w, arg);
+        (*f)(ww, arg);
         return TRUE;
-    } */
+    }
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-static int webview_loop(int id, int blocking)
+static int webview_loop(HWND hwnd, int blocking)
 {
     MSG msg;
     if (blocking) {
@@ -99,6 +141,7 @@ static int webview_loop(int id, int blocking)
         }
     }
     default:
+        msg.hwnd = hwnd;
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
@@ -108,7 +151,9 @@ static int webview_loop(int id, int blocking)
 static int makeWindow(char* title, int width, int height, long long unsigned int req_id, int id)
 {
     WindowObj* ww = (WindowObj*)malloc(sizeof(WindowObj));
+
     ww->id = id;
+    ww->thread = (int)GetCurrentThreadId();
     ww->req_id = req_id;
 
     static const TCHAR* classname = "WebView";
@@ -151,27 +196,23 @@ static int makeWindow(char* title, int width, int height, long long unsigned int
     rect.bottom = rect.bottom - rect.top + top;
     rect.top = top;
 
-    HWND window = CreateWindowEx(0, classname, title, style, rect.left, rect.top,
+    HWND hwnd = CreateWindowEx(0, classname, title, style, rect.left, rect.top,
         rect.right - rect.left, rect.bottom - rect.top,
         HWND_DESKTOP, NULL, hInstance, (void*)ww);
 
-    if (window == 0) {
+    if (hwnd == 0) {
         // OleUninitialize();
         return -1;
     }
 
-    ww->window = window;
+    ww->window = hwnd;
 
-    SetWindowLongPtr(window, GWLP_USERDATA, (LONG_PTR)ww);
+    SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)ww);
 
     // DisplayHTMLPage(w);
 
-    SetWindowText(window, title);
-    ShowWindow(window, SW_SHOWDEFAULT);
-    UpdateWindow(window);
-    SetFocus(window);
-
-    while (webview_loop(id, 1) == 0) {
+    SetWindowText(hwnd, title);
+    while (webview_loop(hwnd, 1) == 0) {
     }
     return 0;
 }

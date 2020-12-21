@@ -87,7 +87,7 @@ func main() {
 						t = true
 					}
 				}
-			})
+			}).Show()
 
 		editMenu := wv.MainMenu.AddSubMenu("Edit")
 		editMenu.AddItem("Find some items", func() {
