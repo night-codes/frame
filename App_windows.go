@@ -16,6 +16,7 @@ package frame
 import "C"
 
 import (
+	"fmt"
 	"sync"
 	"sync/atomic"
 )
@@ -95,20 +96,21 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 	_ = width
 	_ = height
 
-	/* cRet := cRequest(func(reqid uint64) {
-		C.makeWindow(&C.idleData{
-			id:      C.int(int(id)),
-			app:     a.app,
-			content: C.gcharptr(C.CString(title)),
-			width:   C.int(width),
-			height:  C.int(height),
-			req_id:  C.ulonglong(reqid),
-		})
+	cRet := cRequest(func(reqid uint64) {
+		go C.makeWindow(C.CString(title), C.int(width), C.int(height), C.ulonglong(reqid), C.int(int(id)))
 	})
-	ret, _ := cRet.(*C.WindowObj) */
+	fmt.Println(":::CREATED")
+
+	ret, ok := cRet.(*C.WindowObj)
+	if !ok {
+		fmt.Println(":::NOT OK")
+	}
+	// fmt.Printf("%+v\n", ret.window)
+	fmt.Println(":::OK")
+	// select {}
 	wind := &Window{
-		id: id,
-		// window:  ret.window,
+		id:     id,
+		window: ret.window,
 		// box:     ret.box,
 		// webview: ret.webview,
 		// menubar: ret.menubar,

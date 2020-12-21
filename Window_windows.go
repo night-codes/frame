@@ -11,15 +11,11 @@ package frame
 */
 import "C"
 
-import (
-	"sync"
-)
-
 type (
 	// Window struct
 	Window struct {
 		id         int64
-		window     interface{} //C.WindowObj
+		window     C.HWND
 		StateEvent func(State)
 		Invoke     func(string)
 		MainMenu   *Menu
@@ -51,11 +47,6 @@ type (
 
 	// StrutPosition struct
 	StrutPosition int
-)
-
-var (
-	goRequestID uint64
-	goRequests  sync.Map
 )
 
 const (
@@ -278,17 +269,6 @@ func (f *Window) Eval(js string) string {
 // 		if chi, ok := goRequests.Load(uint64(reqid)); ok {
 // 			if ch, ok := chi.(chan interface{}); ok {
 // 				ch <- C.GoString(err)
-// 			}
-// 		}
-// 	}()
-// }
-
-//export goWinRet
-// func goWinRet(reqid C.ulonglong, win C.WindowObj) {
-// 	go func() {
-// 		if chi, ok := goRequests.Load(uint64(reqid)); ok {
-// 			if ch, ok := chi.(chan interface{}); ok {
-// 				ch <- win
 // 			}
 // 		}
 // 	}()
