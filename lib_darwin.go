@@ -3,11 +3,11 @@
 package frame
 
 /*
-#import  "c_darwin.h"
-
 #ifndef WEBVIEW_COCOA
 #define WEBVIEW_COCOA
 #endif
+
+#import  "c_darwin.h"
 */
 import "C"
 
@@ -17,19 +17,6 @@ import (
 	"sync"
 	"sync/atomic"
 	// "reflect"
-)
-
-const (
-	// Withdrawn - window is not shown
-	cWithdrawn = 1 << iota
-	cIconified
-	cMaximized
-	cSticky
-	cFullscreen
-	cAbove
-	cBelow
-	cFocused
-	cTiled
 )
 
 // State struct

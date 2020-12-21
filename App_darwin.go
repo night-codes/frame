@@ -6,10 +6,14 @@ package frame
 #cgo CFLAGS:  -DWEBVIEW_COCOA=1 -x objective-c
 #cgo LDFLAGS: -framework Cocoa -framework WebKit
 
-#import <Cocoa/Cocoa.h>
+#ifndef WEBVIEW_COCOA
+#define WEBVIEW_COCOA
+#endif
+
 #import  "c_darwin.h"
 */
 import "C"
+
 import (
 	"fmt"
 	"runtime"

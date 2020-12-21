@@ -4,8 +4,8 @@ package frame
 
 /*
 #cgo pkg-config: gtk+-3.0 webkit2gtk-4.0
-#cgo linux CFLAGS: -DWEBVIEW_GTK=1 -Wno-deprecated-declarations
-#cgo linux LDFLAGS: -lX11
+#cgo CFLAGS: -DWEBVIEW_GTK=1 -Wno-deprecated-declarations
+#cgo LDFLAGS: -lX11
 
 #ifndef WEBVIEW_GTK
 #define WEBVIEW_GTK
@@ -14,18 +14,17 @@ package frame
 #include "c_linux.h"
 */
 import "C"
+
 import (
-	"C"
 	"runtime"
+	"sync"
 	"sync/atomic"
 )
-import "sync"
 
 type (
 	// App is main application object
 	App struct {
 		app       *C.GtkApplication
-		winds     []*Window
 		openedWns sync.WaitGroup
 		shown     chan bool
 	}
@@ -105,7 +104,7 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 		MainMenu: &Menu{
 			menu: ret.menubar,
 		},
-		app:     a,
+		app: a,
 	}
 	winds = append(winds, wind)
 	return wind

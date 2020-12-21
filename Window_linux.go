@@ -9,7 +9,6 @@ package frame
 
 #include "c_linux.h"
 
-
 typedef struct GSR {
 	GSourceFunc windowSetModal;
 	GSourceFunc windowUnsetModal;
@@ -164,8 +163,6 @@ func (f *Window) SetMinSize(width, height int) *Window {
 	C.setSizes(f.window, C.gint(C.int(f.maxWidth)), C.gint(C.int(f.maxHeight)), C.gint(C.int(f.minWidth)), C.gint(C.int(f.minHeight)))
 	return f
 }
-
-
 
 // GetWebviewSize returns width and height of window webview content
 func (f *Window) GetWebviewSize() (width, height int) {

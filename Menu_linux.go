@@ -3,6 +3,10 @@
 package frame
 
 /*
+#ifndef WEBVIEW_GTK
+#define WEBVIEW_GTK
+#endif
+
 #include "c_linux.h"
 */
 import "C"
@@ -11,9 +15,8 @@ import (
 	"unsafe"
 )
 
-
 type (
-	// Menu of window
+	// Menu struct
 	Menu struct {
 		title    string
 		key      string

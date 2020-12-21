@@ -3,11 +3,11 @@
 package frame
 
 /*
-#import  "c_darwin.h"
-
 #ifndef WEBVIEW_COCOA
 #define WEBVIEW_COCOA
 #endif
+
+#import  "c_darwin.h"
 */
 import "C"
 
@@ -16,7 +16,7 @@ import (
 )
 
 type (
-	// Menu of window
+	// Menu struct
 	Menu struct {
 		title    string
 		key      string

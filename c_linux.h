@@ -1,4 +1,3 @@
-
 #if defined(WEBVIEW_GTK)
 #ifndef WEBVIEW_H
 #define WEBVIEW_H
