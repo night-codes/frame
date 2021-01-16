@@ -18,9 +18,8 @@ import (
 )
 
 func main() {
-
-	app := frame.MakeApp("My App")
-	app.SetDefaultIconFromFile(basepath + "/moon.png")
+	app := frame.MakeApp("My App") // please, use this row as first in main func
+	app.SetIconFromFile(basepath + "/moon.png")
 	app.NewWindow("Simple program!", 450, 300).
 		KeepAbove(false).
 		SkipTaskbar(false).

@@ -1,3 +1,5 @@
+// +build darwin
+
 #if defined(WEBVIEW_COCOA)
 #ifndef WEBVIEW_N
 #define WEBVIEW_N
@@ -136,8 +138,8 @@ void makeApp(char* aName)
     }
     appInitialized = true;
 
+    // dispatch_main();
     appName = aName;
-
     app = [NSApplication sharedApplication];
     @autoreleasepool {
         appDelegate = [[AppDelegate alloc] init];

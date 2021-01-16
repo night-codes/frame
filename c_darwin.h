@@ -5,6 +5,25 @@
 #include <WebKit/WebKit.h>
 #include <objc/runtime.h>
 
+#if (!defined MAC_OS_X_VERSION_10_12) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12
+#define NSAlertStyleWarning NSWarningAlertStyle
+#define NSAlertStyleCritical NSCriticalAlertStyle
+#define NSWindowStyleMaskResizable NSResizableWindowMask
+#define NSWindowStyleMaskMiniaturizable NSMiniaturizableWindowMask
+#define NSWindowStyleMaskTitled NSTitledWindowMask
+#define NSWindowStyleMaskClosable NSClosableWindowMask
+#define NSWindowStyleMaskFullScreen NSFullScreenWindowMask
+#define NSEventMaskAny NSAnyEventMask
+#define NSEventModifierFlagCommand NSCommandKeyMask
+#define NSEventModifierFlagOption NSAlternateKeyMask
+#define NSAlertStyleInformational NSInformationalAlertStyle
+#endif /* MAC_OS_X_VERSION_10_12 */
+
+#if (!defined MAC_OS_X_VERSION_10_13) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_13
+#define NSModalResponseOK NSFileHandlingPanelOKButton
+#endif /* MAC_OS_X_VERSION_10_12, MAC_OS_X_VERSION_10_13 */
+
+
 typedef struct WindowObj {
     int id;
     long long unsigned int req_id;
