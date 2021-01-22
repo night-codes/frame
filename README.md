@@ -38,6 +38,29 @@ func main() {
 }
 ```
 
+## Building example:
+To build the app use the following commands:
+
+```bash
+# Macos
+$ mkdir -p Example.app/Contents/MacOS
+$ go build -o Example.app/Contents/MacOS/example
+$ open example.app # Or click on the app in Finder
+
+# Linux
+sudo apt install build-essential
+sudo apt install libwebkit2gtk-4.0-dev
+
+go build -o example
+./example # run example
+
+# Windows
+# OS requires special linker flags for GUI apps.
+# It's also recommended to use TDM-GCC-64 compiler for CGo.
+# http://tdm-gcc.tdragon.net/download
+go build -ldflags="-H windowsgui -s -w" -o example.exe
+```
+
 ## Implementation
 
 | Function                         | MacOS (Cocoa)| Linux (WebKitGTK)| Windows |

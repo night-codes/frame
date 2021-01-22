@@ -2,22 +2,20 @@
 
 package frame
 
-/*
-#ifndef WEBVIEW_WINAPI
-#define WEBVIEW_WINAPI
-#endif
-
-#include "c_windows.h"
-*/
-import "C"
-import "time"
+import (
+	"time"
+	"unsafe"
+)
 
 type (
 	// Window struct
 	Window struct {
-		id         int
-		thread     int
-		window     C.HWND
+		id        int
+		thread    int
+		browser   unsafe.Pointer
+		window    unsafe.Pointer
+		destroyed bool
+
 		StateEvent func(State)
 		Invoke     func(string)
 		MainMenu   *Menu
@@ -290,7 +288,7 @@ func (f *Window) UnsetModal() *Window {
 
 // Show window
 func (f *Window) Show() *Window {
-	C.showWindow(C.int(f.thread))
+	// C.showWindow(C.int(f.thread))
 	time.Sleep(time.Second / 10)
 	return f
 }
