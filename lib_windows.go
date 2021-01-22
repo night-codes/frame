@@ -11,7 +11,6 @@ package frame
 */
 import "C"
 import (
-	"fmt"
 	"sync"
 	"sync/atomic"
 )
@@ -51,12 +50,12 @@ func goWinRet(reqid C.ulonglong, win *C.WindowObj) {
 	}()
 }
 
-//export goPrint
-func goPrint(text *C.char) {
-	fmt.Println(C.GoString(text))
-}
-
-//export goPrintInt
-func goPrintInt(text *C.char, t C.int) {
-	fmt.Println(C.GoString(text), int(t))
+func cRequestRet(reqid uint64, result interface{}) {
+	go func() {
+		if chi, ok := goRequests.Load(reqid); ok {
+			if ch, ok := chi.(chan interface{}); ok {
+				ch <- result
+			}
+		}
+	}()
 }
