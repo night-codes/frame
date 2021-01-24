@@ -7,9 +7,15 @@ import (
 	"time"
 
 	"github.com/night-codes/frame"
+	"golang.org/x/sys/windows"
 )
 
 func main() {
+	defer func() {
+		fmt.Println("))))))))")
+	}()
+	fmt.Println("[-------->PD--------->:0]", windows.GetCurrentProcessId(), windows.GetCurrentThreadId())
+
 	dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	app := frame.MakeApp("My App")
 	app.SetIconFromFile(filepath.Join(dir, "/moon.png"))
@@ -136,4 +142,7 @@ func main() {
 
 	app.WaitAllWindowClose()
 	fmt.Println("Application terminated")
+	// windows.ExitProcess(0)
+	return
+	// syscall.Syscall(uintptr(1), uintptr(0), uintptr(0), uintptr(0), uintptr(0))
 }

@@ -273,7 +273,7 @@ static cef_request_handler_t* initialize_request_handler()
     // handler->on_quota_request = on_quota_request;
     // handler->on_protocol_execution = on_protocol_execution;
     // handler->on_certificate_error = on_certificate_error;
-    handler->on_plugin_crashed = on_plugin_crashed;
+    // handler->on_plugin_crashed = on_plugin_crashed;
     handler->on_render_view_ready = on_render_view_ready;
     handler->on_render_process_terminated = on_render_process_terminated;
 

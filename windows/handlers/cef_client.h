@@ -127,7 +127,7 @@ static struct _cef_render_handler_t* CEF_CALLBACK get_render_handler(struct _cef
 ///
 static struct _cef_request_handler_t* CEF_CALLBACK get_request_handler(struct _cef_client_t* self)
 {
-    return NULL; //initialize_request_handler();
+    return initialize_request_handler();
 }
 
 ///
@@ -137,12 +137,6 @@ static struct _cef_request_handler_t* CEF_CALLBACK get_request_handler(struct _c
 ///
 static int CEF_CALLBACK on_process_message_received(struct _cef_client_t* self, struct _cef_browser_t* browser, cef_process_id_t source_process, struct _cef_process_message_t* message)
 {
-    cef_string_userfree_t msg = message->get_name(message);
-    if (strcmp(cefToString(msg), "KILL") == 0) {
-        goPrintCef("---->", msg);
-        exit(0);
-        return 1;
-    }
     return 0;
 }
 
@@ -165,5 +159,5 @@ static void initialize_cef_client(struct _cef_client_t* client)
     client->get_load_handler = get_load_handler;
     client->get_render_handler = get_render_handler;
     client->get_request_handler = get_request_handler;
-    client->on_process_message_received = on_process_message_received;
+    // client->on_process_message_received = on_process_message_received;
 }

@@ -46,6 +46,11 @@ static void CEF_CALLBACK on_browser_destroyed(
     struct _cef_browser_t* browser)
 {
     goPrint("~~~~~~~~ ON_BROWSER_DESTROYED ~~~~~~~");
+    // cef_browser_host_t* host = browser->get_host(browser);
+    // goDestroyWindow(host->get_window_handle(host));
+    free(self);
+
+    // free(browser);
 };
 
 ///
@@ -140,10 +145,12 @@ static int CEF_CALLBACK on_render_message_received(struct _cef_render_process_ha
 {
     cef_string_userfree_t msg = message->get_name(message);
     if (strcmp(cefToString(msg), "KILL") == 0) {
-        goPrintCef("--0-->", msg);
-        exit(0);
+        free(self);
+        // free(browser);
+        free(msg);
         return 1;
     }
+    free(msg);
     return 0;
 }
 

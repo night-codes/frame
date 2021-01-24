@@ -17,29 +17,18 @@ package frame
 	#include "include/capi/cef_urlrequest_capi.h"
 	#include "include/capi/cef_v8_capi.h"
 
-	static void resizeWebview(HWND hwnd) {
-		RECT* rect = (RECT*)malloc(sizeof(RECT));
-		GetClientRect(hwnd, rect);
-		HWND cefHwnd = GetWindow(hwnd, GW_CHILD);
-		if (cefHwnd != NULL) {
-			HDWP hdwp = BeginDeferWindowPos(1);
-			hdwp = DeferWindowPos(hdwp, cefHwnd, NULL, rect->left, rect->top, rect->right - rect->left, rect->bottom - rect->top, SWP_NOZORDER);
-			EndDeferWindowPos(hdwp);
-		}
-	}
+	// static void ExecuteJavaScript(cef_browser_t* browser, const char* code, const char* script_url, int start_line) {
+	// 	cef_frame_t * frame = browser->get_main_frame(browser);
+	// 	cef_string_t * codeCef = cef_string_userfree_utf16_alloc();
+	// 	cef_string_from_utf8(code, strlen(code), codeCef);
+	// 	cef_string_t * urlVal = cef_string_userfree_utf16_alloc();
+	// 	cef_string_from_utf8(script_url, strlen(script_url), urlVal);
 
-	static void ExecuteJavaScript(cef_browser_t* browser, const char* code, const char* script_url, int start_line) {
-		cef_frame_t * frame = browser->get_main_frame(browser);
-		cef_string_t * codeCef = cef_string_userfree_utf16_alloc();
-		cef_string_from_utf8(code, strlen(code), codeCef);
-		cef_string_t * urlVal = cef_string_userfree_utf16_alloc();
-		cef_string_from_utf8(script_url, strlen(script_url), urlVal);
+	// 	frame->execute_java_script(frame, codeCef, urlVal, start_line);
 
-		frame->execute_java_script(frame, codeCef, urlVal, start_line);
-
-		cef_string_userfree_utf16_free(urlVal);
-		cef_string_userfree_utf16_free(codeCef);
-	}
+	// 	cef_string_userfree_utf16_free(urlVal);
+	// 	cef_string_userfree_utf16_free(codeCef);
+	// }
 
 	static void LoadURL(cef_browser_t* browser, cef_string_t* url) {
 		cef_frame_t * frame = browser->get_main_frame(browser);
@@ -77,15 +66,6 @@ package frame
 		// return browser->send_process_message(browser, PID_RENDERER, message);
 	}
 
-	static cef_string_utf8_t * cefStringToUtf8(cef_string_t * source) {
-		cef_string_utf8_t * output = cef_string_userfree_utf8_alloc();
-		if (source == 0) {
-			return output;
-		}
-		cef_string_to_utf8(source->str, source->length, output);
-		return output;
-	}
-
 	static cef_string_t * GetURL(cef_browser_t* browser) {
 		cef_frame_t * frame = browser->get_main_frame(browser);
 		return frame->get_url(frame);
@@ -98,6 +78,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -122,6 +103,7 @@ type (
 
 var (
 	cef2destroy = false
+	shutdown    = false
 	mutexNew    sync.Mutex
 	winds       = []*Window{}
 	lock        sync.Mutex
@@ -153,6 +135,7 @@ var (
 	winHeapAlloc          = kernel32.NewProc("HeapAlloc")
 	winHeapFree           = kernel32.NewProc("HeapFree")
 	winGetCurrentThreadID = kernel32.NewProc("GetCurrentThreadId")
+	winExitThread         = kernel32.NewProc("ExitThread")
 	winLoadImageW         = user32.NewProc("LoadImageW")
 	winGetSystemMetrics   = user32.NewProc("GetSystemMetrics")
 	winGetDpiForWindow    = user32.NewProc("GetDpiForWindow")
@@ -229,7 +212,13 @@ const (
 
 // MakeApp is make and run one instance of application (At the moment, it is possible to create only one instance)
 func MakeApp(appName string) *App {
+	defer func() {
+		os.RemoveAll(resDir)
+		fmt.Println("os.RemoveAll(resDir)")
+	}()
+	runtime.LockOSThread()
 	lock.Lock()
+	fmt.Println("[-------->PD--------->:1]", windows.GetCurrentProcessId(), windows.GetCurrentThreadId())
 
 	app := App{
 		mainArgs: C.cef_main_args_t{
@@ -258,7 +247,7 @@ func MakeApp(appName string) *App {
 	cefSettings.no_sandbox = C.int(1)
 	cefSettings.single_process = C.int(1)
 	cefSettings.multi_threaded_message_loop = C.int(1)
-	cefSettings.context_safety_implementation = C.int(-1)
+	// cefSettings.context_safety_implementation = C.int(-1)
 	cefSettings.log_severity = (C.cef_log_severity_t)(C.int(C.LOGSEVERITY_VERBOSE))
 	cefSettings.cache_path = *cefString("")
 	cefSettings.log_file = *cefString(resDir + "/log.txt")
@@ -282,9 +271,33 @@ func (a *App) SetIconFromFile(filename string) {
 
 // WaitAllWindowClose locker
 func (a *App) WaitAllWindowClose() {
+	fmt.Println("[-------->PD--------->:3]", windows.GetCurrentProcessId(), windows.GetCurrentThreadId())
 	fmt.Println("WaitAllWindowClose wait...")
-	<-a.shown
+	for {
+		runtime.Gosched()
+		time.Sleep(time.Millisecond * 10)
+		if shutdown {
+			break
+		}
+	}
+	defer func() {
+		// C.free(unsafe.Pointer(a.appHandler))
+		//panic("qqq")
+	}()
 	fmt.Println("WaitAllWindowClose - OK")
+	runtime.UnlockOSThread()
+	// windows.ExitProcess(1)
+	go func() {
+		process, _ := os.FindProcess(int(windows.GetCurrentProcessId()))
+		process.Kill()
+	}()
+
+	// winExitThread.Call(uintptr(0))
+	// runtime.ThreadExit(0)
+	// runtime.Gosched()
+	// runtime.Goexit()
+	// syscall.Syscall(uintptr(1), uintptr(0), uintptr(0), uintptr(0), uintptr(0))
+	// os.Exit(1)
 	// a.openedWns.Wait()
 }
 
@@ -304,6 +317,7 @@ func (a *App) WaitWindowClose(win *Window) {
 
 // NewWindow returns window with webview
 func (a *App) NewWindow(title string, sizes ...int) *Window {
+	runtime.LockOSThread()
 	mutexNew.Lock()
 	defer mutexNew.Unlock()
 	id := atomic.AddInt64(&idItr, 1)
@@ -355,7 +369,7 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 			uintptr(unsafe.Pointer(C.NULL)),
 		)
 
-		thread, _, _ = winGetCurrentThreadID.Call()
+		fmt.Println("[-------->PD--------->:2]", windows.GetCurrentProcessId(), windows.GetCurrentThreadId())
 	})
 
 	if browser, ok := cRet.(*C.cef_browser_t); ok {
@@ -401,59 +415,6 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 		winds = append(winds, wind)
 		return wind
 	}
-	/*
-
-
-		fmt.Println("[::::: goBrowserCreate]",
-			uintptr(unsafe.Pointer(browser)),
-			uintptr(unsafe.Pointer(frame)),
-			uintptr(unsafe.Pointer(win)),
-		)
-
-		winSetWindowPos.Call(
-			uintptr(unsafe.Pointer(win)),
-			uintptr(0),
-			uintptr(100),
-			uintptr(100),
-			uintptr(700),
-			uintptr(700),
-			uintptr(SWP_SHOWWINDOW|SWP_NOOWNERZORDER|SWP_NOZORDER|SWP_ASYNCWINDOWPOS),
-		)
-
-		winRedrawWindow.Call(uintptr(unsafe.Pointer(win)),
-			uintptr(unsafe.Pointer(C.NULL)),
-			uintptr(unsafe.Pointer(C.NULL)),
-			uintptr(RDW_INVALIDATE),
-		)
-
-		go func() {
-			time.Sleep(time.Second * 10)
-			winSetWindowPos.Call(
-				uintptr(unsafe.Pointer(win)),
-				uintptr(0),
-				uintptr(100),
-				uintptr(100),
-				uintptr(1000),
-				uintptr(1000),
-				uintptr(SWP_SHOWWINDOW|SWP_NOOWNERZORDER|SWP_NOZORDER|SWP_ASYNCWINDOWPOS),
-			)
-
-			winRedrawWindow.Call(uintptr(unsafe.Pointer(win)),
-				uintptr(unsafe.Pointer(C.NULL)),
-				uintptr(unsafe.Pointer(C.NULL)),
-				uintptr(RDW_INVALIDATE),
-			)
-		}()
-
-		go func() {
-			time.Sleep(time.Second / 10)
-			C.LoadURL(browser, cefString("data:text/html,%3C!DOCTYPE%20html%3E%3Chtml%3E%3Chead%3E%3Cmeta%20http-equiv%3D%22refresh%22%20content%3D%220%3B%20url%3Dhttp%3A%2F%2Flocalhost%3A8080%2F%22%20%2F%3E%3C%2Fhead%3E%3Cbody%3E%3Ch1%3EHello%2C%20World!!!%3C%2Fh1%3E Test test test%3C%2Fbody%3E"))
-			// time.Sleep(time.Second)
-			//C.LoadURL(browser, cefString("http://localhost:8080/test2"))
-			fmt.Println("[::::: LoadURL]")
-		}()
-	*/
-
 	return nil
 }
 
@@ -536,48 +497,50 @@ func goGetLifeSpan(client *C.cef_client_t) unsafe.Pointer {
 //export goBrowserCreate
 func goBrowserCreate(browser *C.cef_browser_t) {
 	if reqid, ok := cliReqs[uintptr(unsafe.Pointer(C.GetClient(browser)))]; ok {
-		thread, _, _ := winGetCurrentThreadID.Call()
-		fmt.Println("[::::::::: PROCESS:2]", thread)
 		cRequestRet(reqid, browser)
 	}
+}
+
+//export goBrowserDestroyed
+func goBrowserDestroyed(browser *C.cef_browser_t) C.int {
+	return C.int(0)
+}
+
+//export goNop
+func goNop() {
+	runtime.Gosched()
 }
 
 //export goBrowserDoClose
 func goBrowserDoClose(browser *C.cef_browser_t) C.int {
 	window := C.GetWindowHandle(browser)
 	winShowWindow.Call(uintptr(unsafe.Pointer(window)), uintptr(SW_HIDE))
-	thread, _, _ := winGetCurrentThreadID.Call()
-	fmt.Println("[::::::::: PROCESS:3]", thread)
 
-	// message, _, _ := cefProcessMessageCreate.Call(uintptr(unsafe.Pointer(cefString("KILL"))))
-	// C.SendProcessMessage(browser, (*C.cef_process_message_t)(unsafe.Pointer(message)))
+	fmt.Println("[--------->PD-------->:4]", windows.GetCurrentProcessId(), windows.GetCurrentThreadId())
 
 	if cef2destroy {
 		fmt.Println("[>] GOBROWSERDOCLOSE - 0[<]")
-		defer os.Exit(1)
+		// go func() {
+		//	message, _, _ := cefProcessMessageCreate.Call(uintptr(unsafe.Pointer(cefString("KILL"))))
+		//	C.SendProcessMessage(browser, (*C.cef_process_message_t)(unsafe.Pointer(message)))
+		//}()
 		return C.int(0) // 1
 	}
 	fmt.Println("[>] GOBROWSERDOCLOSE - 1[<]")
 	go closeCef()
-	return C.int(0)
+	return C.int(1)
 }
 
 func closeCef() {
-	cef2destroy = true
+	// cef2destroy = true
 	var win *Window
 	for _, win = range winds {
-		go func() {
-			C.CloseBrowser((*C.cef_browser_t)(win.browser))
-		}()
+		// C.CloseBrowser((*C.cef_browser_t)(win.browser))
+		winDestroyWindow.Call(uintptr(unsafe.Pointer(win.window)))
 	}
-
-	fmt.Println("win = range winds")
-	// cefShutdown.Call()
-	// fmt.Println("cefShutdown.Call()")
-	time.Sleep(time.Second * 5)
-	fmt.Println("win.app.shown <- true 1")
-	win.app.shown <- true
-	fmt.Println("win.app.shown <- true 2")
+	cefQuitMessageLoop.Call()
+	cefShutdown.Call()
+	shutdown = true
 }
 
 //export goBrowserBeforeClose
@@ -585,7 +548,7 @@ func goBrowserBeforeClose(browser *C.cef_browser_t) {
 	frame := C.GetMainFrame(browser)
 	win := C.GetWindowHandle(browser)
 
-	fmt.Println("[::::: goBrowserBeforeClose]",
+	fmt.Println("[>>>>>>> goBrowserBeforeClose >>>>>>]",
 		uintptr(unsafe.Pointer(browser)),
 		uintptr(unsafe.Pointer(frame)),
 		uintptr(unsafe.Pointer(win)),

@@ -7,8 +7,10 @@
 extern void goPrint(char* text);
 extern void goPrintInt(char* text, int num);
 extern void goPrintCef(char* text0, cef_string_t* text);
+extern void goNop();
 extern char* cefToString(cef_string_t* source);
 extern cef_string_t* cefFromString(char* source);
+extern int goBrowserDestroyed(cef_browser_t* browser);
 
 #pragma once
 
