@@ -7,15 +7,9 @@ import (
 	"time"
 
 	"github.com/night-codes/frame"
-	"golang.org/x/sys/windows"
 )
 
 func main() {
-	defer func() {
-		fmt.Println("))))))))")
-	}()
-	fmt.Println("[-------->PD--------->:0]", windows.GetCurrentProcessId(), windows.GetCurrentThreadId())
-
 	dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 	app := frame.MakeApp("My App")
 	app.SetIconFromFile(filepath.Join(dir, "/moon.png"))
@@ -41,7 +35,7 @@ func main() {
 
 	wv2 := app.NewWindow(dir, 400, 300).
 		SetBackgroundColor(80, 50, 50, 0.9).
-		LoadHTML(`<body style="color:#dddddd; background: transparent">
+		LoadHTML(`<body style="color:#cccccc; background: transparent">
       <h1>Some Dialog</h1>
       <p>Modal window...</p>
       </body>`, "").
@@ -67,8 +61,8 @@ func main() {
 		// wv2.Hide()
 		wv3 := app.NewWindow("Modal window", 300, 200).
 			SetBackgroundColor(40, 80, 50, 0.9).
-			LoadHTML(`<body style="color:#dddddd; background: transparent">
-      <h1>Some Dialog</h1>
+			LoadHTML(`<body style="color:#cccccc; background: transparent">
+      <h1>Some Dialog 2</h1>
       <p>Modal window...</p>
 	  </body>`, "").
 			// SetModal(wv2).
@@ -76,6 +70,10 @@ func main() {
 				fmt.Println(":::", msg)
 			})
 		t := false
+
+		go func() {
+			wv3.Load("https://google.com")
+		}()
 		wv3.
 			SetResizeble(false).
 			// Move(960, 100).
@@ -84,8 +82,8 @@ func main() {
 				if state.Hidden {
 					wv2.LoadHTML(`
 							<head><script type="text/javascript">window.webkit.messageHandlers.external.postMessage('postMessage invoke');</script></head>
-							<body style="color:#dddddd; background: #995500">
-							<h1>Super Dialog</h1>
+							<body style="color:#cccccc; background: #995500">
+							<h1>Super Dialog 3</h1>
 							<p>Super modal window...</p>
 							</body>`, "")
 
@@ -141,8 +139,6 @@ func main() {
 	// fmt.Println("Screen size:", w, h)
 
 	app.WaitAllWindowClose()
+	// select {}
 	fmt.Println("Application terminated")
-	// windows.ExitProcess(0)
-	return
-	// syscall.Syscall(uintptr(1), uintptr(0), uintptr(0), uintptr(0), uintptr(0))
 }

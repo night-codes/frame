@@ -1,5 +1,6 @@
 .vscode
 .DS_Store
+._*
 Thumbs.db
 /windows/resources
 /windows/wrapper

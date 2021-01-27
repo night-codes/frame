@@ -17,22 +17,19 @@ package frame
 	#include "include/capi/cef_urlrequest_capi.h"
 	#include "include/capi/cef_v8_capi.h"
 
-	// static void ExecuteJavaScript(cef_browser_t* browser, const char* code, const char* script_url, int start_line) {
-	// 	cef_frame_t * frame = browser->get_main_frame(browser);
-	// 	cef_string_t * codeCef = cef_string_userfree_utf16_alloc();
-	// 	cef_string_from_utf8(code, strlen(code), codeCef);
-	// 	cef_string_t * urlVal = cef_string_userfree_utf16_alloc();
-	// 	cef_string_from_utf8(script_url, strlen(script_url), urlVal);
-
-	// 	frame->execute_java_script(frame, codeCef, urlVal, start_line);
-
-	// 	cef_string_userfree_utf16_free(urlVal);
-	// 	cef_string_userfree_utf16_free(codeCef);
-	// }
+	static void ExecuteJavaScript(cef_browser_t* browser, cef_string_t* code, cef_string_t* url, int start_line) {
+		cef_frame_t * frame = browser->get_main_frame(browser);
+		frame->execute_java_script(frame, code, url, start_line);
+	}
 
 	static void LoadURL(cef_browser_t* browser, cef_string_t* url) {
 		cef_frame_t * frame = browser->get_main_frame(browser);
 		frame->load_url(frame, url);
+	}
+
+	static void LoadHTML(cef_browser_t* browser, cef_string_t* html, cef_string_t* url) {
+		cef_frame_t * frame = browser->get_main_frame(browser);
+		frame->load_string(frame, html, url);
 	}
 
 	static void BrowserWasResized(cef_browser_t* browser) {
@@ -77,11 +74,13 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
 	"unsafe"
 
@@ -186,39 +185,32 @@ const (
 	RDW_UPDATENOW      = 0x0100
 )
 
-// ShowWindow constants
-const (
-	SW_HIDE            = 0
-	SW_NORMAL          = 1
-	SW_SHOWNORMAL      = 1
-	SW_SHOWMINIMIZED   = 2
-	SW_MAXIMIZE        = 3
-	SW_SHOWMAXIMIZED   = 3
-	SW_SHOWNOACTIVATE  = 4
-	SW_SHOW            = 5
-	SW_MINIMIZE        = 6
-	SW_SHOWMINNOACTIVE = 7
-	SW_SHOWNA          = 8
-	SW_RESTORE         = 9
-	SW_SHOWDEFAULT     = 10
-	SW_FORCEMINIMIZE   = 11
-)
-
 const (
 	MONITOR_DEFAULTTONULL    = 0x00000000
 	MONITOR_DEFAULTTOPRIMARY = 0x00000001
 	MONITOR_DEFAULTTONEAREST = 0x00000002
 )
 
+func appDir() string {
+	home := os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH")
+	if home == "" {
+		home = os.Getenv("USERPROFILE")
+	}
+	return home + "\\AppData"
+}
+
+// C:\Users\mirrr\AppData\Local\Temp
 // MakeApp is make and run one instance of application (At the moment, it is possible to create only one instance)
 func MakeApp(appName string) *App {
-	defer func() {
-		os.RemoveAll(resDir)
-		fmt.Println("os.RemoveAll(resDir)")
-	}()
-	runtime.LockOSThread()
 	lock.Lock()
-	fmt.Println("[-------->PD--------->:1]", windows.GetCurrentProcessId(), windows.GetCurrentThreadId())
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigs
+		for _, win := range winds {
+			C.CloseBrowser((*C.cef_browser_t)(win.browser))
+		}
+	}()
 
 	app := App{
 		mainArgs: C.cef_main_args_t{
@@ -239,18 +231,27 @@ func MakeApp(appName string) *App {
 		os.Exit(int(code))
 	}
 
-	var cefSettings *C.cef_settings_t
-	cefSettings = (*C.cef_settings_t)(C.calloc(1, C.sizeof_cef_settings_t))
+	cefSettings := (*C.cef_settings_t)(C.calloc(1, C.sizeof_cef_settings_t))
 	cefSettings.size = C.sizeof_cef_settings_t
 	// cefSettings.pack_loading_disabled = C.int(1)
+	userdata := filepath.Join(appDir(), appName)
+	cache := filepath.Join(userdata, "cache")
+	if _, err := os.Stat(cache); err != nil {
+		os.MkdirAll(cache, 0755)
+	}
+
 	cefSettings.user_agent = *cefString("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36")
-	cefSettings.no_sandbox = C.int(1)
+	cefSettings.no_sandbox = C.int(0)
 	cefSettings.single_process = C.int(1)
+	// cefSettings.remote_debugging_port = C.int(9090)
 	cefSettings.multi_threaded_message_loop = C.int(1)
-	// cefSettings.context_safety_implementation = C.int(-1)
+	cefSettings.context_safety_implementation = C.int(0)
+	cefSettings.user_data_path = *cefString(userdata)
+	cefSettings.persist_session_cookies = C.int(1)
+	cefSettings.persist_user_preferences = C.int(1)
 	cefSettings.log_severity = (C.cef_log_severity_t)(C.int(C.LOGSEVERITY_VERBOSE))
-	cefSettings.cache_path = *cefString("")
-	cefSettings.log_file = *cefString(resDir + "/log.txt")
+	cefSettings.cache_path = *cefString(cache)
+	cefSettings.log_file = *cefString(filepath.Join(resDir, "log.txt"))
 	cefSettings.resources_dir_path = *cefString(resDir)
 	cefSettings.locales_dir_path = *cefString(resDir)
 
@@ -271,8 +272,6 @@ func (a *App) SetIconFromFile(filename string) {
 
 // WaitAllWindowClose locker
 func (a *App) WaitAllWindowClose() {
-	fmt.Println("[-------->PD--------->:3]", windows.GetCurrentProcessId(), windows.GetCurrentThreadId())
-	fmt.Println("WaitAllWindowClose wait...")
 	for {
 		runtime.Gosched()
 		time.Sleep(time.Millisecond * 10)
@@ -280,25 +279,8 @@ func (a *App) WaitAllWindowClose() {
 			break
 		}
 	}
-	defer func() {
-		// C.free(unsafe.Pointer(a.appHandler))
-		//panic("qqq")
-	}()
-	fmt.Println("WaitAllWindowClose - OK")
-	runtime.UnlockOSThread()
-	// windows.ExitProcess(1)
-	go func() {
-		process, _ := os.FindProcess(int(windows.GetCurrentProcessId()))
-		process.Kill()
-	}()
-
-	// winExitThread.Call(uintptr(0))
-	// runtime.ThreadExit(0)
-	// runtime.Gosched()
-	// runtime.Goexit()
-	// syscall.Syscall(uintptr(1), uintptr(0), uintptr(0), uintptr(0), uintptr(0))
-	// os.Exit(1)
-	// a.openedWns.Wait()
+	process, _ := os.FindProcess(int(windows.GetCurrentProcessId()))
+	process.Kill()
 }
 
 // WaitWindowClose locker
@@ -317,7 +299,6 @@ func (a *App) WaitWindowClose(win *Window) {
 
 // NewWindow returns window with webview
 func (a *App) NewWindow(title string, sizes ...int) *Window {
-	runtime.LockOSThread()
 	mutexNew.Lock()
 	defer mutexNew.Unlock()
 	id := atomic.AddInt64(&idItr, 1)
@@ -353,6 +334,8 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 		var settings *C.cef_browser_settings_t
 		settings = (*C.cef_browser_settings_t)(C.calloc(1, C.sizeof_cef_browser_settings_t))
 		settings.size = C.sizeof_cef_browser_settings_t
+		settings.javascript = C.STATE_ENABLED
+		settings.javascript_open_windows = C.STATE_DISABLED
 		settings.javascript_access_clipboard = C.STATE_ENABLED
 		settings.application_cache = C.STATE_ENABLED
 		settings.text_area_resize = C.STATE_DISABLED
@@ -368,8 +351,6 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 			uintptr(unsafe.Pointer(settings)),
 			uintptr(unsafe.Pointer(C.NULL)),
 		)
-
-		fmt.Println("[-------->PD--------->:2]", windows.GetCurrentProcessId(), windows.GetCurrentThreadId())
 	})
 
 	if browser, ok := cRet.(*C.cef_browser_t); ok {
@@ -386,7 +367,6 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 		windowInfo.x = C.int(info.rcWork.right/2) - C.int(windowInfo.width/2)
 		windowInfo.y = C.int(info.rcWork.bottom/2) - C.int(windowInfo.height/2)
 
-		C.LoadURL(browser, cefString("data:text/html,"+urlEncode("<!DOCTYPE html><html><body><h1>Hello, World!!!</h1>Testtesttest</body>")))
 		winSetWindowPos.Call(
 			uintptr(unsafe.Pointer(window)),
 			uintptr(0),
@@ -397,7 +377,7 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 			uintptr(SWP_SHOWWINDOW|SWP_NOOWNERZORDER|SWP_NOZORDER|SWP_ASYNCWINDOWPOS),
 		)
 
-		winShowWindow.Call(uintptr(unsafe.Pointer(window)), uintptr(SW_SHOW))
+		winShowWindow.Call(uintptr(unsafe.Pointer(window)), uintptr(windows.SW_SHOW))
 		winUpdateWindow.Call(uintptr(unsafe.Pointer(window)))
 		winSwitchToThisWindow.Call(uintptr(unsafe.Pointer(window)), uintptr(C.TRUE))
 
@@ -418,12 +398,22 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 	return nil
 }
 
+func loadHTML(browser unsafe.Pointer, html, uri string) {
+	if uri == "" {
+		uri = "about:balnk"
+	}
+	C.LoadHTML((*C.cef_browser_t)(browser), cefString(html), cefString(uri))
+}
+
+func loadURL(browser unsafe.Pointer, uri string) {
+	C.LoadURL((*C.cef_browser_t)(browser), cefString(uri))
+}
+
 func urlEncode(str string) string {
 	return strings.Replace(url.QueryEscape(str), "+", "%20", -1)
 }
 
 func cefToGoString(source *C.cef_string_t) string {
-	// output := C.cef_string_userfree_utf8_alloc()
 	outputU64, _, _ := cefAllocUTF8.Call()
 	output := (*C.cef_string_utf8_t)(unsafe.Pointer(uintptr(outputU64)))
 	if source == nil || source.length == 0 {
@@ -436,9 +426,7 @@ func cefToGoString(source *C.cef_string_t) string {
 		uintptr(unsafe.Pointer(output)),
 	)
 
-	defer cefFreeUTF8.Call(
-		uintptr(unsafe.Pointer(output)),
-	)
+	defer cefFreeUTF8.Call(uintptr(unsafe.Pointer(output)))
 	return C.GoString(output.str)
 }
 
@@ -484,8 +472,6 @@ func goPrintCef(text0 *C.char, text *C.cef_string_t) {
 
 //export goGetLifeSpan
 func goGetLifeSpan(client *C.cef_client_t) unsafe.Pointer {
-	fmt.Println("[::::: goGetLifeSpan]", int(uintptr(unsafe.Pointer(client))))
-
 	if lifeHandler, ok := lifeHandlers[uintptr(unsafe.Pointer(client))]; ok {
 		return unsafe.Pointer(lifeHandler)
 	}
@@ -514,19 +500,11 @@ func goNop() {
 //export goBrowserDoClose
 func goBrowserDoClose(browser *C.cef_browser_t) C.int {
 	window := C.GetWindowHandle(browser)
-	winShowWindow.Call(uintptr(unsafe.Pointer(window)), uintptr(SW_HIDE))
-
-	fmt.Println("[--------->PD-------->:4]", windows.GetCurrentProcessId(), windows.GetCurrentThreadId())
+	winShowWindow.Call(uintptr(unsafe.Pointer(window)), uintptr(windows.SW_HIDE))
 
 	if cef2destroy {
-		fmt.Println("[>] GOBROWSERDOCLOSE - 0[<]")
-		// go func() {
-		//	message, _, _ := cefProcessMessageCreate.Call(uintptr(unsafe.Pointer(cefString("KILL"))))
-		//	C.SendProcessMessage(browser, (*C.cef_process_message_t)(unsafe.Pointer(message)))
-		//}()
-		return C.int(0) // 1
+		return C.int(0)
 	}
-	fmt.Println("[>] GOBROWSERDOCLOSE - 1[<]")
 	go closeCef()
 	return C.int(1)
 }

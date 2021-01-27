@@ -194,13 +194,13 @@ func (f *Window) Iconify(flag bool) *Window {
 
 // Load URL to Window webview
 func (f *Window) Load(uri string) *Window {
-	// C.loadURI(C.WindowObj(f.window), C.CString(uri))
+	loadURL(f.browser, uri)
 	return f
 }
 
 // LoadHTML to Window webview
 func (f *Window) LoadHTML(html string, baseURI string) *Window {
-	// C.loadHTML(C.WindowObj(f.window), C.CString(html), C.CString(baseURI))
+	loadHTML(f.browser, html, baseURI)
 	return f
 }
 

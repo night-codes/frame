@@ -79,8 +79,8 @@ go build -ldflags="-H windowsgui -s -w" -o example.exe
 | `Window.Iconify`                 |       ✅     |         ✅       |         |
 | `Window.KeepAbove`               |       ✅     |         ✅       |         |
 | `Window.KeepBelow`               |       ✅     |         ✅       |         |
-| `Window.Load`                    |       ✅     |         ✅       |         |
-| `Window.LoadHTML`                |       ✅     |         ✅       |         |
+| `Window.Load`                    |       ✅     |         ✅       |    ✅   |
+| `Window.LoadHTML`                |       ✅     |         ✅       |    ✅   |
 | `Window.Maximize`                |       ✅     |         ✅       |         |
 | `Window.Move`                    |       ✅     |         ✅       |         |
 | `Window.SetBackgroundColor`      |       ✅     |         ✅       |         |

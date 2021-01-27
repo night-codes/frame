@@ -269,7 +269,7 @@ static cef_request_handler_t* initialize_request_handler()
     handler->on_resource_response = on_resource_response;
     // handler->get_resource_response_filter = get_resource_response_filter;
     handler->on_resource_load_complete = on_resource_load_complete;
-    // handler->get_auth_credentials = get_auth_credentials;
+    handler->get_auth_credentials = get_auth_credentials;
     // handler->on_quota_request = on_quota_request;
     // handler->on_protocol_execution = on_protocol_execution;
     // handler->on_certificate_error = on_certificate_error;
