@@ -46,11 +46,7 @@ static void CEF_CALLBACK on_browser_destroyed(
     struct _cef_browser_t* browser)
 {
     goPrint("~~~~~~~~ ON_BROWSER_DESTROYED ~~~~~~~");
-    // cef_browser_host_t* host = browser->get_host(browser);
-    // goDestroyWindow(host->get_window_handle(host));
     free(self);
-
-    // free(browser);
 };
 
 ///
@@ -102,7 +98,6 @@ static void CEF_CALLBACK on_context_released(
 static struct _cef_load_handler_t* CEF_CALLBACK get_load_rp_handler(
     struct _cef_render_process_handler_t* self)
 {
-    goPrint("~~~~~~~~ GET_LOAD_HANDLER ~~~~~~~");
     return initialize_cef_load_handler();
 }
 
@@ -115,10 +110,7 @@ static void CEF_CALLBACK on_uncaught_exception(
     struct _cef_render_process_handler_t* self,
     struct _cef_browser_t* browser, struct _cef_frame_t* frame,
     struct _cef_v8context_t* context, struct _cef_v8exception_t* exception,
-    struct _cef_v8stack_trace_t* stackTrace)
-{
-    goPrint("~~~~~~~~ ON_UNCAUGHT_EXCEPTION ~~~~~~~");
-};
+    struct _cef_v8stack_trace_t* stackTrace) {};
 
 ///
 // Called when a new node in the the browser gets focus. The |node| value may
@@ -159,7 +151,6 @@ static cef_render_process_handler_t* initialize_render_process_handler()
     cef_render_process_handler_t* handler = (cef_render_process_handler_t*)calloc(1, sizeof(cef_render_process_handler_t));
     handler->base.size = sizeof(cef_render_process_handler_t);
     initialize_cef_base((cef_base_t*)handler);
-    DEBUG_CALLBACK("[+ INITIALIZE_RENDER_PROCESS_HANDLER +]\n");
 
     handler->on_render_thread_created = on_render_thread_created;
     handler->on_web_kit_initialized = on_web_kit_initialized;

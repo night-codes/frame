@@ -51,7 +51,6 @@ static void* initialize_cef_life_span_handler()
     cef_life_span_handler_t* lifeHandler = (cef_life_span_handler_t*)calloc(1, sizeof(cef_life_span_handler_t));
     lifeHandler->base.size = sizeof(cef_life_span_handler_t);
     initialize_cef_base((cef_base_t*)lifeHandler);
-    DEBUG_CALLBACK("[+ INITIALIZE_CEF_LIFE_SPAN_HANDLE +]\n");
 
     lifeHandler->on_after_created = on_after_created;
     lifeHandler->on_before_close = on_before_close;

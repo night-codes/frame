@@ -166,16 +166,15 @@ func (f *Window) SetMinSize(width, height int) *Window {
 
 // GetWebviewSize returns width and height of window webview content
 func (f *Window) GetWebviewSize() (width, height int) {
-	// size := C.contentSize(C.WindowObj(f.window))
-	// width, height = int(size.width), int(size.height)
-	return 0, 0
+	return f.GetSize()
 }
 
 // GetPosition returns position of window
 func (f *Window) GetPosition() (x, y int) {
-	// position := C.windowPosition(C.WindowObj(f.window))
-	// x, y = int(position.x), int(position.y)
-	return 0, 0
+	var cX, cY C.gint
+	C.gtk_window_get_position(C.to_GtkWindow(f.window), &cX, &cY)
+	x, y = int(cX), int(cY)
+	return
 }
 
 // SetMaxSize of window

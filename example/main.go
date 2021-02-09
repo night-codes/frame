@@ -17,9 +17,9 @@ func main() {
 
 	wv := app.NewWindow("Simple program!", 500, 400).
 		SetBackgroundColor(50, 50, 50, 0.8).
-		// Move(20, 100).
+		Move(20, 100).
 		// SetDecorated(false).
-		LoadHTML(`<body style="color:#dddddd; background: transparent">
+		LoadHTML(`<body style="color:#dddddd; background: rgba(244,150,0,0.9)">
       <h1>Hello world</h1>
       <p>Test test test...</p>
       </body>`, "http://localhost:1015/panel/").
@@ -39,9 +39,9 @@ func main() {
       <h1>Some Dialog</h1>
       <p>Modal window...</p>
       </body>`, "").
-		// KeepAbove(true).
-		// Move(540, 100).
-		//SetModal(wv).
+		KeepBelow(true).
+		Move(540, 100).
+		// SetModal(wv).
 		SetStateEvent(func(state frame.State) {
 			if state.Hidden {
 				fmt.Println("Modal window 1 closed")
@@ -55,13 +55,13 @@ func main() {
 	go func() {
 		// wv.Eval("document.body.style.background = '#449977'; thisIsError1")
 		wv.Eval("window.external.invoke('Wow! This is external invoke!')")
-		wv.SetTitle("New title")
+		wv.SetTitle("Новый заголовок")
 		wv.Eval("thisIsError2")
 		// wv.Eval("document.body.style.background = '#994477'")
 		// wv2.Hide()
 		wv3 := app.NewWindow("Modal window", 300, 200).
-			SetBackgroundColor(40, 80, 50, 0.9).
-			LoadHTML(`<body style="color:#cccccc; background: transparent">
+			SetBackgroundColor(40, 80, 50, 0.5).
+			LoadHTML(`<body style="color:#ffffff; background: rgba(255,150,0,0.2);">
       <h1>Some Dialog 2</h1>
       <p>Modal window...</p>
 	  </body>`, "").
@@ -71,21 +71,19 @@ func main() {
 			})
 		t := false
 
-		go func() {
-			wv3.Load("https://google.com")
-		}()
 		wv3.
-			SetResizeble(false).
-			// Move(960, 100).
+			SetDecorated(false).
+			Move(960, 100).
 			SetStateEvent(func(state frame.State) {
 				fmt.Printf("%+v\n", state)
 				if state.Hidden {
 					wv2.LoadHTML(`
-							<head><script type="text/javascript">window.webkit.messageHandlers.external.postMessage('postMessage invoke');</script></head>
-							<body style="color:#cccccc; background: #995500">
-							<h1>Super Dialog 3</h1>
-							<p>Super modal window...</p>
-							</body>`, "")
+					<html>
+					<head><script type="text/javascript">window.webkit.messageHandlers.external.postMessage('postMessage invoke');</script></head>
+					<body style="color:#999">
+					<h1>Super Dialog 3</h1>
+					<p>Super modal window...</p>
+					</body></html>`, "")
 
 					wv2.Eval("window.external.invoke('message:Some message');")
 					fmt.Println("Modal window 2 closed")
@@ -96,6 +94,20 @@ func main() {
 					}
 				}
 			}).Show()
+
+		go func() {
+			time.Sleep(time.Second * 5)
+			// wv3.Hide()
+			wv3.Load("https://html5test.com/")
+			wv3.SetSize(1000, 700)
+			// wv3.Iconify(true)
+			go func() {
+				time.Sleep(time.Second * 5)
+				// wv3.Iconify(false)
+				wv3.SetDecorated(true)
+				wv2.KeepBelow(true)
+			}()
+		}()
 
 		editMenu := wv.MainMenu.AddSubMenu("Edit")
 		editMenu.AddItem("Find some items", func() {
@@ -124,6 +136,7 @@ func main() {
 		})
 
 		go func() {
+			fmt.Println("~~~~~~=========<<<<<< + >>>>>=========~~~~~~~")
 			fmt.Println(wv.GetSize())
 			fmt.Println(wv.GetWebviewSize())
 			fmt.Println(wv.GetPosition())

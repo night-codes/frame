@@ -59,8 +59,8 @@ static void CEF_CALLBACK on_load_error(struct _cef_load_handler_t* self,
     cef_errorcode_t errorCode, const cef_string_t* errorText,
     const cef_string_t* failedUrl)
 {
-    goPrintCef("errorText:", errorText);
-    goPrintCef("failedUrl:", failedUrl);
+    // goPrintCef("errorText:", errorText);
+    // goPrintCef("failedUrl:", failedUrl);
     goPrint("******* ON_LOAD_ERROR");
 };
 
@@ -69,7 +69,6 @@ static cef_load_handler_t* initialize_cef_load_handler()
     cef_load_handler_t* loadHandler = (cef_load_handler_t*)calloc(1, sizeof(cef_load_handler_t));
     loadHandler->base.size = sizeof(cef_load_handler_t);
     initialize_cef_base((cef_base_t*)loadHandler);
-    DEBUG_CALLBACK("[+ INITIALIZE_CEF_LOAD_HANDLER +]\n");
 
     loadHandler->on_loading_state_change = on_loading_state_change;
     loadHandler->on_load_start = on_load_start;

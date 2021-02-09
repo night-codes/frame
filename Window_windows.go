@@ -2,9 +2,16 @@
 
 package frame
 
+/*
+
+ */
+import "C"
+
 import (
-	"time"
+	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 type (
@@ -20,8 +27,8 @@ type (
 		Invoke     func(string)
 		MainMenu   *Menu
 
-		OnHide func()
 		OnShow func()
+		OnHide func()
 
 		OnFocus   func()
 		OnUnfocus func()
@@ -81,39 +88,67 @@ func (f *Window) SetType(hint WindowType) *Window {
 
 // GetScreenScaleFactor returns scale factor of window monitor
 func (f *Window) GetScreenScaleFactor() float64 {
-	return 1 // float64(C.getScreenScale(C.WindowObj(f.window)))
+	dpi, _, _ := winGetDpiForWindow.Call(uintptr(f.window))
+	return float64(uint64(dpi)) / 96.0 // float64(C.getScreenScale(C.WindowObj(f.window)))
 }
 
 // GetScreenSize returns size of window monitor
 func (f *Window) GetScreenSize() (width, height int) {
-	// size := C.getScreenSize(C.WindowObj(f.window))
-	// width, height = int(size.width), int(size.height)
-	width, height = 0, 0
+	width, height = f.getScreenSize()
+	scale := f.GetScreenScaleFactor()
+	if scale > 0 {
+		width = int(float64(width) / scale)
+		height = int(float64(height) / scale)
+	}
 	return
+}
+
+func (f *Window) getScreenSize() (width, height int) {
+	monitor, _, _ := winMonitorFromWindow.Call(uintptr(unsafe.Pointer(f.window)), uintptr(MONITOR_DEFAULTTOPRIMARY))
+	info := C_MONITORINFO{cbSize: monitorinfoSizeof}
+	winGetMonitorInfo.Call(monitor, uintptr(unsafe.Pointer(&info)))
+	return int(info.rcWork.right), int(info.rcWork.bottom)
 }
 
 // GetSize returns width and height of window
 func (f *Window) GetSize() (width, height int) {
-	// size := C.windowSize(C.WindowObj(f.window))
-	// width, height = int(size.width), int(size.height)
-	width, height = 0, 0
+	width, height = f.getSize()
+	scale := f.GetScreenScaleFactor()
+	if scale > 0 {
+		width = int(float64(width) / scale)
+		height = int(float64(height) / scale)
+	}
 	return
 }
 
-// GetWebviewSize returns width and height of window webview content
-func (f *Window) GetWebviewSize() (width, height int) {
-	// size := C.contentSize(C.WindowObj(f.window))
-	// width, height = int(size.width), int(size.height)
-	width, height = 0, 0
+func (f *Window) getSize() (width, height int) {
+	rect := C_RECT{}
+	winGetWindowRect.Call(uintptr(f.window), uintptr(unsafe.Pointer(&rect)))
+	width, height = int(rect.right-rect.left), int(rect.bottom-rect.top)
 	return
 }
 
 // GetPosition returns position of window
 func (f *Window) GetPosition() (x, y int) {
-	// position := C.windowPosition(C.WindowObj(f.window))
-	// x, y = int(position.x), int(position.y)
-	x, y = 0, 0
+	x, y = f.getPosition()
+	scale := f.GetScreenScaleFactor()
+	if scale > 0 {
+		x = int(float64(x) / scale)
+		y = int(float64(y) / scale)
+	}
 	return
+}
+
+func (f *Window) getPosition() (x, y int) {
+	rect := C_RECT{}
+	winGetWindowRect.Call(uintptr(f.window), uintptr(unsafe.Pointer(&rect)))
+	x, y = int(rect.left), int(rect.top)
+	return
+}
+
+// GetWebviewSize returns width and height of window webview content
+func (f *Window) GetWebviewSize() (width, height int) {
+	return f.GetSize()
 }
 
 // SetIconFromFile for Window
@@ -122,29 +157,49 @@ func (f *Window) SetIconFromFile(filename string) *Window {
 	return f
 }
 
-// SetOpacity of window
-func (f *Window) SetOpacity(opacity float64) *Window {
-	// C.setWindowAlpha(C.WindowObj(f.window), C.double(opacity))
-	return f
-}
-
 // Maximize window
 func (f *Window) Maximize(flag bool) *Window {
-	// if (flag && !f.state.Maximized) || (!flag && f.state.Maximized) {
-	// 	C.toggleMaximize(C.WindowObj(f.window))
-	// }
+	if flag {
+		winShowWindow.Call(uintptr(f.window), uintptr(windows.SW_SHOWMAXIMIZED))
+	} else {
+		winShowWindow.Call(uintptr(f.window), uintptr(windows.SW_RESTORE))
+	}
 	return f
 }
 
 // KeepAbove the window
 func (f *Window) KeepAbove(flag bool) *Window {
-	// C.windowKeepAbove(C.WindowObj(f.window), C.bool(flag))
+	hwnd := HWND_TOPMOST
+	if !flag {
+		hwnd = 0
+	}
+	winSetWindowPos.Call(
+		uintptr(f.window),
+		uintptr(hwnd),
+		uintptr(0),
+		uintptr(0),
+		uintptr(0),
+		uintptr(0),
+		uintptr(SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE),
+	)
 	return f
 }
 
 // KeepBelow of window
 func (f *Window) KeepBelow(flag bool) *Window {
-	// C.windowKeepBelow(C.WindowObj(f.window), C.bool(flag))
+	hwnd := HWND_BOTTOM
+	if !flag {
+		hwnd = 0
+	}
+	winSetWindowPos.Call(
+		uintptr(f.window),
+		uintptr(hwnd),
+		uintptr(0),
+		uintptr(0),
+		uintptr(0),
+		uintptr(0),
+		uintptr(SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE),
+	)
 	return f
 }
 
@@ -182,13 +237,23 @@ func (f *Window) SetDeletable(flag bool) *Window {
 
 // SetDecorated of window
 func (f *Window) SetDecorated(flag bool) *Window {
-	// C.setWindowDecorated(C.WindowObj(f.window), C.bool(flag))
+	gwlStyle := GWL_STYLE
+	style, _, _ := winGetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)))
+	if flag {
+		winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)), uintptr(int64(style)|WS_CAPTION|WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_SYSMENU))
+	} else {
+		winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)), uintptr(int64(style) & ^(WS_CAPTION|WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_SYSMENU)))
+	}
 	return f
 }
 
 // Iconify window
 func (f *Window) Iconify(flag bool) *Window {
-	// C.iconifyWindow(C.WindowObj(f.window), C.bool(flag))
+	if flag {
+		winShowWindow.Call(uintptr(f.window), uintptr(windows.SW_MINIMIZE))
+	} else {
+		winShowWindow.Call(uintptr(f.window), uintptr(windows.SW_RESTORE))
+	}
 	return f
 }
 
@@ -206,45 +271,81 @@ func (f *Window) LoadHTML(html string, baseURI string) *Window {
 
 // SetResizeble of window
 func (f *Window) SetResizeble(flag bool) *Window {
-	// f.resizeble = flag
-	// C.setWindowResizeble(C.WindowObj(f.window), C.bool(flag))
+	gwlStyle := GWL_STYLE
+	style, _, _ := winGetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)))
+	if flag {
+		winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)), uintptr(int64(style)|WS_MAXIMIZEBOX|WS_SIZEBOX|WS_THICKFRAME))
+	} else {
+		winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)), uintptr(int64(style) & ^(WS_MAXIMIZEBOX|WS_SIZEBOX|WS_THICKFRAME)))
+	}
 	return f
 }
 
 // SetStateEvent set handler function for window state event
 func (f *Window) SetStateEvent(fn func(State)) *Window {
-	// f.StateEvent = fn
+	f.StateEvent = fn
 	return f
 }
 
 // SetInvoke set handler function for window state event
 func (f *Window) SetInvoke(fn func(string)) *Window {
-	// f.Invoke = fn
+	f.Invoke = fn
 	return f
 }
 
 // SetTitle of window
 func (f *Window) SetTitle(title string) *Window {
-	// C.setTitle(C.WindowObj(f.window), C.CString(title))
+	winSetWindowTextW.Call(uintptr(f.window), uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr(title))))
 	return f
 }
 
 // SetSize of the window
 func (f *Window) SetSize(width, height int) *Window {
-	// C.resizeWindow(C.WindowObj(f.window), C.int(width), C.int(height))
-	return f
-}
+	scale := f.GetScreenScaleFactor()
+	width = int(uint64(float64(width) * scale))
+	height = int(uint64(float64(height) * scale))
 
-// SetWebviewSize sets size of webview (without titlebar)
-func (f *Window) SetWebviewSize(width, height int) *Window {
-	// C.resizeContent(C.WindowObj(f.window), C.int(width), C.int(height))
+	pWidth, pHeight := f.getSize()
+	x, y := f.getPosition()
+	x = x + (pWidth-width)/2
+	y = y + (pHeight-height)/2
+	if x < 0 {
+		x = 0
+	}
+	if y < 0 {
+		y = 0
+	}
+
+	winSetWindowPos.Call(
+		uintptr(f.window),
+		uintptr(0),
+		uintptr(x),
+		uintptr(y),
+		uintptr(width),
+		uintptr(height),
+		uintptr(SWP_NOOWNERZORDER|SWP_NOZORDER|SWP_ASYNCWINDOWPOS), // SWP_NOSIZE SWP_NOMOVE
+	)
 	return f
 }
 
 // Move the window
 func (f *Window) Move(x, y int) *Window {
-	// C.moveWindow(C.WindowObj(f.window), C.int(x), C.int(y))
+	scale := f.GetScreenScaleFactor()
+	winSetWindowPos.Call(
+		uintptr(f.window),
+		uintptr(0),
+		uintptr(int(uint64(float64(x)*scale))),
+		uintptr(int(uint64(float64(y)*scale))),
+		uintptr(0),
+		uintptr(0),
+		uintptr(SWP_NOSIZE|SWP_NOOWNERZORDER|SWP_NOZORDER|SWP_ASYNCWINDOWPOS),
+	)
 	return f
+}
+
+// SetWebviewSize sets size of webview (without titlebar)
+func (f *Window) SetWebviewSize(width, height int) *Window {
+	return f.SetSize(width, height)
 }
 
 // SetCenter of window
@@ -276,31 +377,67 @@ func (f *Window) Eval(js string) string {
 
 // SetModal makes current Window attached as modal window to parent
 func (f *Window) SetModal(parent *Window) *Window {
-	// C.setModal(C.WindowObj(f.window), parent.window)
+	hwnd_topmost := HWND_TOPMOST
+	winSetWindowPos.Call(
+		uintptr(f.window),
+		uintptr(hwnd_topmost),
+		uintptr(0),
+		uintptr(0),
+		uintptr(0),
+		uintptr(0),
+		uintptr(SWP_NOSIZE|SWP_NOMOVE),
+	)
+
+	/* winSetParent.Call(uintptr(f.window), uintptr(parent.window))
+	gwlStyle := GWL_STYLE
+	style, _, _ := winGetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)))
+	winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)), uintptr((int64(style)|WS_CHILD) & ^WS_POPUP)) */
+	// GetWindowLong(GetWindow(Hwnd, GW_OWNER), GWL_STYLE) & WS_DISABLED & WS_POPUP
 	return f
 }
 
 // UnsetModal unset current Window as modal window from another Frames
 func (f *Window) UnsetModal() *Window {
-	// C.unsetModal(C.WindowObj(f.window))
+	winSetParent.Call(uintptr(f.window), 0)
+	/* gwlStyle := GWL_STYLE
+	style, _, _ := winGetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)))
+	winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)), uintptr(int64(style) & ^(WS_CHILD|WS_POPUP))) */
 	return f
 }
 
 // Show window
 func (f *Window) Show() *Window {
-	// C.showWindow(C.int(f.thread))
-	time.Sleep(time.Second / 10)
+	winShowWindow.Call(uintptr(f.window), uintptr(windows.SW_SHOW))
+	winUpdateWindow.Call(uintptr(f.window))
+	winSwitchToThisWindow.Call(uintptr(f.window), uintptr(1))
 	return f
 }
 
 // Hide window
 func (f *Window) Hide() *Window {
-	// C.hideWindow(C.WindowObj(f.window))
+	goBrowserDoClose(ceBrowser(f.browser))
+	return f
+}
+
+// SetOpacity of window
+func (f *Window) SetOpacity(opacity float64) *Window {
+	gwl_exstyle := GWL_EXSTYLE
+	t, _, _ := winGetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwl_exstyle)))
+	winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwl_exstyle)), uintptr(int64(t)|WS_EX_LAYERED))
+	winSetLayeredWindowAttributes.Call(uintptr(f.window), uintptr(0), uintptr(uint64(255*opacity)), uintptr(LWA_ALPHA))
 	return f
 }
 
 // SetBackgroundColor of Window
 func (f *Window) SetBackgroundColor(r, g, b int, alfa float64) *Window {
+	// gclp_hbrbackground := GCLP_HBRBACKGROUND
+	// gwl_exstyle := GWL_EXSTYLE
+	// t, _, _ := winGetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwl_exstyle)))
+	// brush, _, _ := gdiCreateSolidBrush.Call(uintptr(0x0000ff))
+	// winSetClassLongPtr.Call(uintptr(f.window), uintptr(gclp_hbrbackground), brush)
+
+	// winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwl_exstyle)), uintptr(int64(t)|WS_EX_LAYERED))
+	// winSetLayeredWindowAttributes.Call(uintptr(f.window), uintptr(uint32(r)<<16|uint32(g)<<8|uint32(b)), uintptr(uint64(255*alfa)), LWA_COLORKEY|LWA_ALPHA)
 	// C.setBackgroundColor(C.WindowObj(f.window), C.int8_t(r), C.int8_t(g), C.int8_t(b), C.double(alfa), C.bool(true))
 	return f
 }

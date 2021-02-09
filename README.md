@@ -69,42 +69,43 @@ go build -ldflags="-H windowsgui -s -w" -o example.exe
 | `App.SetIconFromFile`            |       ✅     |         ✅       |         |
 | `App.WaitAllWindowClose`         |       ✅     |         ✅       |         |
 | `App.WaitWindowClose`            |       ✅     |         ✅       |         |
+| `Menu.AddSubMenu`                |       ✅     |         ✅       |         |
+| `Menu.AddItem`                   |       ✅     |         ✅       |         |
+| `Menu.AddSeparatorItem`          |       ✅     |         ✅       |         |
 | `Window.Eval`                    |       ✅     |         ✅       |         |
 | `Window.Fullscreen`              |       ✅     |         ✅       |         |
-| `Window.GetScreenScaleFactor`    |       ✅     |         ✅       |         |
-| `Window.GetSize`                 |       ✅     |         ✅       |         |
-| `Window.GetPosition`             |       ✅     |                  |         |
-| `Window.GetWebviewSize`          |       ✅     |                  |         |
-| `Window.Hide`                    |       ✅     |         ✅       |         |
-| `Window.Iconify`                 |       ✅     |         ✅       |         |
-| `Window.KeepAbove`               |       ✅     |         ✅       |         |
+| `Window.GetScreenSize`           |       ✅     |         ✅       |    ✅   |
+| `Window.GetScreenScaleFactor`    |       ✅     |         ✅       |    ✅   |
+| `Window.GetSize`                 |       ✅     |         ✅       |    ✅   |
+| `Window.GetPosition`             |       ✅     |         ✅       |    ✅   |
+| `Window.Hide`                    |       ✅     |         ✅       |    ✅   |
+| `Window.Iconify`                 |       ✅     |         ✅       |    ✅   |
+| `Window.KeepAbove`               |       ✅     |         ✅       |    ✅   |
 | `Window.KeepBelow`               |       ✅     |         ✅       |         |
 | `Window.Load`                    |       ✅     |         ✅       |    ✅   |
 | `Window.LoadHTML`                |       ✅     |         ✅       |    ✅   |
-| `Window.Maximize`                |       ✅     |         ✅       |         |
-| `Window.Move`                    |       ✅     |         ✅       |         |
-| `Window.SetBackgroundColor`      |       ✅     |         ✅       |         |
+| `Window.Maximize`                |       ✅     |         ✅       |    ✅   |
+| `Window.Move`                    |       ✅     |         ✅       |    ✅   |
 | `Window.SetCenter`               |       ✅     |         ✅       |         |
-| `Window.SetDecorated`            |       ✅     |         ✅       |         |
+| `Window.SetDecorated`            |       ✅     |         ✅       |    ✅   |
 | `Window.SetDeletable`            |       ✅     |         ✅       |         |
 | `Window.SetIconFromFile`         |       ✅     |         ✅       |         |
 | `Window.SetInvoke`               |       ✅     |         ✅       |         |
 | `Window.SetMaxSize`              |       ✅     |         ✅       |         |
 | `Window.SetMinSize`              |       ✅     |         ✅       |         |
 | `Window.SetModal`                |       ✅     |         ✅       |         |
-| `Window.SetOpacity`              |       ✅     |         ✅       |         |
-| `Window.SetResizeble`            |       ✅     |         ✅       |         |
-| `Window.SetSize`                 |       ✅     |         ✅       |         |
+| `Window.SetOpacity`              |       ✅     |         ✅       |    ✅   |
+| `Window.SetResizeble`            |       ✅     |         ✅       |    ✅   |
+| `Window.SetSize`                 |       ✅     |         ✅       |    ✅   |
 | `Window.SetStateEvent`           |       ✅     |         ✅       |         |
-| `Window.SetTitle`                |       ✅     |         ✅       |         |
-| `Window.SetType`                 |              |         ✅       |         |
-| `Window.SetWebviewSize`          |       ✅     |                  |         |
+| `Window.SetTitle`                |       ✅     |         ✅       |    ✅   |
 | `Window.Show`                    |       ✅     |         ✅       |    ✅   |
 | `Window.SkipPager`               |       ✅     |         ✅       |         |
 | `Window.SkipTaskbar`             |       ✅     |         ✅       |         |
 | `Window.Stick`                   |       ✅     |         ✅       |         |
-| `Window.Strut`                   |       ✅     |         ✅       |         |
 | `Window.UnsetModal`              |       ✅     |         ✅       |         |
-| `Menu.AddSubMenu`                |       ✅     |         ✅       |         |
-| `Menu.AddItem`                   |       ✅     |         ✅       |         |
-| `Menu.AddSeparatorItem`          |       ✅     |         ✅       |         |
+| `Window.GetWebviewSize`          |       ✅     |         🆗       |    🆗   |
+| `Window.SetWebviewSize`          |       ✅     |         🆗       |    🆗   |
+| `Window.SetBackgroundColor`      |       ✅     |         ✅       |         |
+| `Window.Strut`                   |              |         ✅       |         |
+| `Window.SetType`                 |              |         ✅       |         |

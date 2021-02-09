@@ -66,7 +66,7 @@ static cef_return_value_t CEF_CALLBACK on_before_resource_load(
     struct _cef_frame_t* frame, struct _cef_request_t* request,
     struct _cef_request_callback_t* callback)
 {
-    goPrintCef("get_url:", request->get_url(request));
+    // goPrintCef("get_url:", request->get_url(request));
     goPrint("@@@@@ - ON_BEFORE_RESOURCE_LOAD - @@@@@");
     return RV_CONTINUE;
 }
@@ -108,12 +108,12 @@ static int CEF_CALLBACK on_resource_response(struct _cef_request_handler_t* self
     struct _cef_browser_t* browser, struct _cef_frame_t* frame,
     struct _cef_request_t* request, struct _cef_response_t* response)
 {
-    goPrintCef("test:", cefFromString("TEST - ОЛОЛО!"));
-    goPrintCef("get_url:", request->get_url(request));
-    goPrintCef("get_mime_type:", response->get_mime_type(response));
-    goPrintCef("get_header:", response->get_header(response, cefFromString("Server")));
-    goPrintCef("get_header:", response->get_header(response, cefFromString("Content-Type")));
-    goPrintCef("get_status_text:", response->get_status_text(response));
+    // goPrintCef("test:", cefFromString("TEST - ОЛОЛО!"));
+    // goPrintCef("get_url:", request->get_url(request));
+    // goPrintCef("get_mime_type:", response->get_mime_type(response));
+    // goPrintCef("get_header:", response->get_header(response, cefFromString("Server")));
+    // goPrintCef("get_header:", response->get_header(response, cefFromString("Content-Type")));
+    // goPrintCef("get_status_text:", response->get_status_text(response));
     goPrintInt("@@@@@ - ON_RESOURCE_RESPONSE - @@@@@", response->get_error(response));
     return 0;
 }
@@ -144,12 +144,12 @@ static void CEF_CALLBACK on_resource_load_complete(
     struct _cef_response_t* response, cef_urlrequest_status_t status,
     int64 received_content_length)
 {
-    goPrintCef("test:", cefFromString("TEST - ПЖПЖПЖ!"));
-    goPrintCef("get_url:", request->get_url(request));
-    goPrintCef("get_mime_type:", response->get_mime_type(response));
-    goPrintCef("get_header:", response->get_header(response, cefFromString("Server")));
-    goPrintCef("get_header:", response->get_header(response, cefFromString("Content-Type")));
-    goPrintCef("get_status_text:", response->get_status_text(response));
+    // goPrintCef("test:", cefFromString("TEST - ПЖПЖПЖ!"));
+    // goPrintCef("get_url:", request->get_url(request));
+    // goPrintCef("get_mime_type:", response->get_mime_type(response));
+    // goPrintCef("get_header:", response->get_header(response, cefFromString("Server")));
+    // goPrintCef("get_header:", response->get_header(response, cefFromString("Content-Type")));
+    // goPrintCef("get_status_text:", response->get_status_text(response));
     goPrintInt("@@@@@ - ON_RESOURCE_LOAD_COMPLETE - @@@@@", UR_FAILED);
     goPrintInt("@@@@@ - ON_RESOURCE_LOAD_COMPLETE 2 - @@@@@", status);
 }
@@ -259,7 +259,6 @@ static cef_request_handler_t* initialize_request_handler()
     cef_request_handler_t* handler = (cef_request_handler_t*)calloc(1, sizeof(cef_request_handler_t));
     handler->base.size = sizeof(cef_request_handler_t);
     initialize_cef_base((cef_base_t*)handler);
-    DEBUG_CALLBACK("[+ INITIALIZE_REQUEST_HANDLER +]\n");
 
     handler->on_before_browse = on_before_browse;
     handler->on_open_urlfrom_tab = on_open_urlfrom_tab;
