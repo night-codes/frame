@@ -373,9 +373,9 @@ func (f *Window) SetResizeble(flag bool) *Window {
 
 // SetCenter of the window
 func (f *Window) SetCenter() *Window {
-	idle(C.fn.windowSetCenter, C.idleData{
-		window: f.window,
-	})
+	width, height := f.GetSize()
+	sWidth, sHeight := f.GetScreenSize()
+	f.Move(sWidth/2-width/2, sHeight/2-height/2)
 	return f
 }
 
