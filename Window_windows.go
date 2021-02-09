@@ -21,6 +21,7 @@ type (
 		thread    int
 		browser   unsafe.Pointer
 		window    unsafe.Pointer
+		parent    *Window
 		destroyed bool
 
 		StateEvent func(State)
@@ -128,6 +129,12 @@ func (f *Window) getSize() (width, height int) {
 	return
 }
 
+func (f *Window) update() {
+	w, h := f.GetSize()
+	f.SetSize(w-5, h-5)
+	f.SetSize(w+5, h+5)
+}
+
 // GetPosition returns position of window
 func (f *Window) GetPosition() (x, y int) {
 	x, y = f.getPosition()
@@ -171,7 +178,7 @@ func (f *Window) Maximize(flag bool) *Window {
 func (f *Window) KeepAbove(flag bool) *Window {
 	hwnd := HWND_TOPMOST
 	if !flag {
-		hwnd = 0
+		hwnd = HWND_NOTOPMOST
 	}
 	winSetWindowPos.Call(
 		uintptr(f.window),
@@ -205,13 +212,37 @@ func (f *Window) KeepBelow(flag bool) *Window {
 
 // SkipTaskbar of window
 func (f *Window) SkipTaskbar(flag bool) *Window {
-	// C.setWindowSkipTaskbar(C.WindowObj(f.window), C.bool(flag))
+	hwnd := uintptr(f.app.hiddenWindow.window)
+	if !flag {
+		hwnd = 0
+	}
+	gwlStyle := GWL_STYLE
+	gwlp := GWLP_HWNDPARENT
+	winSetWindowLongPtr.Call(uintptr(f.window), uintptr(gwlp), hwnd)
+	style, _, _ := winGetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)))
+	s := int64(style) & ^WS_MINIMIZEBOX
+	if !flag {
+		s = int64(style) | WS_MINIMIZEBOX
+	}
+	winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)), uintptr(s))
 	return f
 }
 
 // SkipPager of window
 func (f *Window) SkipPager(flag bool) *Window {
-	// C.setWindowSkipPager(C.WindowObj(f.window), C.bool(flag))
+	hwnd := uintptr(f.app.altWindow.window)
+	if !flag {
+		hwnd = 0
+	}
+	gwlStyle := GWL_STYLE
+	gwlp := GWLP_HWNDPARENT
+	winSetWindowLongPtr.Call(uintptr(f.window), uintptr(gwlp), hwnd)
+	style, _, _ := winGetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)))
+	s := int64(style) & ^WS_MINIMIZEBOX
+	if !flag {
+		s = int64(style) | WS_MINIMIZEBOX
+	}
+	winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)), uintptr(s))
 	return f
 }
 
@@ -223,9 +254,10 @@ func (f *Window) Stick(flag bool) *Window {
 
 // Fullscreen window
 func (f *Window) Fullscreen(flag bool) *Window {
-	// if (flag && !f.state.Fullscreen) || (!flag && f.state.Fullscreen) {
-	// 	C.toggleFullScreen(C.WindowObj(f.window))
-	// }
+	f.Maximize(false)
+	f.SetDecorated(!flag)
+	f.KeepAbove(flag)
+	f.Maximize(flag)
 	return f
 }
 
@@ -244,6 +276,7 @@ func (f *Window) SetDecorated(flag bool) *Window {
 	} else {
 		winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)), uintptr(int64(style) & ^(WS_CAPTION|WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX|WS_SYSMENU)))
 	}
+	f.update()
 	return f
 }
 
@@ -325,6 +358,7 @@ func (f *Window) SetSize(width, height int) *Window {
 		uintptr(height),
 		uintptr(SWP_NOOWNERZORDER|SWP_NOZORDER|SWP_ASYNCWINDOWPOS), // SWP_NOSIZE SWP_NOMOVE
 	)
+	winUpdateWindow.Call(uintptr(f.window))
 	return f
 }
 
@@ -350,7 +384,9 @@ func (f *Window) SetWebviewSize(width, height int) *Window {
 
 // SetCenter of window
 func (f *Window) SetCenter() *Window {
-	// C.setWindowCenter(C.WindowObj(f.window))
+	width, height := f.GetSize()
+	sWidth, sHeight := f.GetScreenSize()
+	f.Move(sWidth/2-width/2, sHeight/2-height/2)
 	return f
 }
 
@@ -377,39 +413,66 @@ func (f *Window) Eval(js string) string {
 
 // SetModal makes current Window attached as modal window to parent
 func (f *Window) SetModal(parent *Window) *Window {
-	hwnd_topmost := HWND_TOPMOST
+	if f.parent != nil {
+		f.UnsetModal()
+	}
+
+	f.parent = parent
+	gwlStyle := GWL_STYLE
+	gwlp := GWLP_HWNDPARENT
+	winSetWindowLongPtr.Call(uintptr(f.window), uintptr(gwlp), uintptr(parent.window))
+	style, _, _ := winGetWindowLong.Call(uintptr(parent.window), uintptr(uint64(gwlStyle)))
+	winSetWindowLong.Call(uintptr(parent.window), uintptr(uint64(gwlStyle)), uintptr(int64(style)|WS_DISABLED))
+
+	style, _, _ = winGetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)))
+	winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)), uintptr(int64(style) & ^WS_MINIMIZEBOX))
+
+	hwnd := HWND_TOP
 	winSetWindowPos.Call(
 		uintptr(f.window),
-		uintptr(hwnd_topmost),
+		uintptr(hwnd),
 		uintptr(0),
 		uintptr(0),
 		uintptr(0),
 		uintptr(0),
 		uintptr(SWP_NOSIZE|SWP_NOMOVE),
 	)
-
-	/* winSetParent.Call(uintptr(f.window), uintptr(parent.window))
-	gwlStyle := GWL_STYLE
-	style, _, _ := winGetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)))
-	winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)), uintptr((int64(style)|WS_CHILD) & ^WS_POPUP)) */
-	// GetWindowLong(GetWindow(Hwnd, GW_OWNER), GWL_STYLE) & WS_DISABLED & WS_POPUP
 	return f
 }
 
 // UnsetModal unset current Window as modal window from another Frames
 func (f *Window) UnsetModal() *Window {
-	winSetParent.Call(uintptr(f.window), 0)
-	/* gwlStyle := GWL_STYLE
-	style, _, _ := winGetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)))
-	winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)), uintptr(int64(style) & ^(WS_CHILD|WS_POPUP))) */
+	if f.parent != nil {
+		winSetParent.Call(uintptr(f.window), 0)
+		gwlStyle := GWL_STYLE
+		gwlp := GWLP_HWNDPARENT
+		winSetWindowLongPtr.Call(uintptr(f.window), uintptr(gwlp), uintptr(0))
+		style, _, _ := winGetWindowLong.Call(uintptr(f.parent.window), uintptr(uint64(gwlStyle)))
+		winSetWindowLong.Call(uintptr(f.parent.window), uintptr(uint64(gwlStyle)), uintptr(int64(style) & ^WS_DISABLED))
+
+		style, _, _ = winGetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)))
+		winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)), uintptr(int64(style)|WS_MINIMIZEBOX))
+		f.parent = nil
+	}
+
 	return f
 }
 
 // Show window
 func (f *Window) Show() *Window {
+	if f.parent != nil && f.parent.state.Hidden {
+		f.parent.Show()
+	}
 	winShowWindow.Call(uintptr(f.window), uintptr(windows.SW_SHOW))
+
+	f.state.Hidden = false
 	winUpdateWindow.Call(uintptr(f.window))
 	winSwitchToThisWindow.Call(uintptr(f.window), uintptr(1))
+	if f.parent != nil {
+		gwlStyle := GWL_STYLE
+		style, _, _ := winGetWindowLong.Call(uintptr(f.parent.window), uintptr(uint64(gwlStyle)))
+		winSetWindowLong.Call(uintptr(f.parent.window), uintptr(uint64(gwlStyle)), uintptr(int64(style)|WS_DISABLED))
+	}
 	return f
 }
 
@@ -430,15 +493,14 @@ func (f *Window) SetOpacity(opacity float64) *Window {
 
 // SetBackgroundColor of Window
 func (f *Window) SetBackgroundColor(r, g, b int, alfa float64) *Window {
-	// gclp_hbrbackground := GCLP_HBRBACKGROUND
 	// gwl_exstyle := GWL_EXSTYLE
 	// t, _, _ := winGetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwl_exstyle)))
-	// brush, _, _ := gdiCreateSolidBrush.Call(uintptr(0x0000ff))
-	// winSetClassLongPtr.Call(uintptr(f.window), uintptr(gclp_hbrbackground), brush)
+	gclp_hbrbackground := GCLP_HBRBACKGROUND
+	brush, _, _ := gdiCreateSolidBrush.Call(uintptr(0xff000000 | uint32(r)<<16 | uint32(g)<<8 | uint32(b)))
+	winSetClassLongPtr.Call(uintptr(f.window), uintptr(gclp_hbrbackground), brush)
 
 	// winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwl_exstyle)), uintptr(int64(t)|WS_EX_LAYERED))
 	// winSetLayeredWindowAttributes.Call(uintptr(f.window), uintptr(uint32(r)<<16|uint32(g)<<8|uint32(b)), uintptr(uint64(255*alfa)), LWA_COLORKEY|LWA_ALPHA)
-	// C.setBackgroundColor(C.WindowObj(f.window), C.int8_t(r), C.int8_t(g), C.int8_t(b), C.double(alfa), C.bool(true))
 	return f
 }
 

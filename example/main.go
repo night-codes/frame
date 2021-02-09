@@ -35,11 +35,14 @@ func main() {
 
 	wv2 := app.NewWindow(dir, 400, 300).
 		SetBackgroundColor(80, 50, 50, 0.9).
-		LoadHTML(`<body style="color:#cccccc; background: transparent">
+		LoadHTML(`
+		<html>
+			<head><script type="text/javascript">setTimeout(function(){document.body.requestFullscreen();}, 1000);</script></head>
+		<body style="color:#cccccc; background: transparent">
       <h1>Some Dialog</h1>
       <p>Modal window...</p>
-      </body>`, "").
-		KeepBelow(true).
+      </body></html>`, "").
+		// KeepBelow(true).
 		Move(540, 100).
 		// SetModal(wv).
 		SetStateEvent(func(state frame.State) {
@@ -50,6 +53,7 @@ func main() {
 		SetInvoke(func(msg string) {
 			fmt.Println(":::", msg)
 		}).
+		SkipPager(true).
 		Show()
 
 	go func() {
@@ -72,7 +76,7 @@ func main() {
 		t := false
 
 		wv3.
-			SetDecorated(false).
+			// SetDecorated(false).
 			Move(960, 100).
 			SetStateEvent(func(state frame.State) {
 				fmt.Printf("%+v\n", state)
@@ -98,14 +102,21 @@ func main() {
 		go func() {
 			time.Sleep(time.Second * 5)
 			// wv3.Hide()
-			wv3.Load("https://html5test.com/")
-			wv3.SetSize(1000, 700)
+			wv3.Load("https://google.com/")
+			// wv3.SetSize(1000, 700)
 			// wv3.Iconify(true)
+			wv3.Fullscreen(true)
 			go func() {
 				time.Sleep(time.Second * 5)
-				// wv3.Iconify(false)
-				wv3.SetDecorated(true)
-				wv2.KeepBelow(true)
+				wv3.Fullscreen(false)
+			}()
+			go func() {
+				time.Sleep(time.Second * 10)
+				wv2.Show()
+				wv2.SkipPager(false)
+				wv.SetCenter()
+				wv2.SetCenter()
+				wv3.SetCenter()
 			}()
 		}()
 

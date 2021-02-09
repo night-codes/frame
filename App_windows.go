@@ -92,14 +92,16 @@ import (
 type (
 	// App is main application object
 	App struct {
-		WindowClose *Window
-		AllClose    bool
-		Test5       bool
-		app         interface{} // *C.GtkApplication
-		openedWns   sync.WaitGroup
-		shown       chan bool
-		mainArgs    C.cef_main_args_t
-		appHandler  C.cef_app_t
+		WindowClose  *Window
+		AllClose     bool
+		Test5        bool
+		app          interface{} // *C.GtkApplication
+		openedWns    sync.WaitGroup
+		shown        chan bool
+		mainArgs     C.cef_main_args_t
+		appHandler   C.cef_app_t
+		hiddenWindow *Window
+		altWindow    *Window
 	}
 
 	ceBrowser     *C.cef_browser_t
@@ -170,6 +172,7 @@ var (
 	winGetWindowLongPtrW          = user32.NewProc("GetWindowLongPtrW")
 	winGetWindowLong              = user32.NewProc("GetWindowLongA")
 	winSetWindowLong              = user32.NewProc("SetWindowLongA")
+	winSetWindowLongPtr           = user32.NewProc("SetWindowLongPtrA")
 	winAdjustWindowRect           = user32.NewProc("AdjustWindowRect")
 	winSetWindowPos               = user32.NewProc("SetWindowPos")
 	winRedrawWindow               = user32.NewProc("RedrawWindow")
@@ -233,6 +236,7 @@ const (
 	WS_CHILDWINDOW      = WS_CHILD
 	WS_EX_LAYERED       = 0x00080000
 	WS_EX_COMPOSITED    = 0x02000000
+	WS_EX_TOOLWINDOW    = 0x00000080
 
 	MAX_PATH              = 260
 	LWA_COLORKEY          = 0x00001
@@ -240,6 +244,7 @@ const (
 	ENUM_CURRENT_SETTINGS = 0xFFFFFFFF
 	GWL_STYLE             = -16
 	GWL_EXSTYLE           = -20
+	GWLP_HWNDPARENT       = -8
 	GCLP_HBRBACKGROUND    = -10
 	HWND_NOTOPMOST        = -2
 	HWND_TOPMOST          = -1
@@ -305,7 +310,7 @@ func MakeApp(appName string) *App {
 	cefSettings.single_process = C.int(1)
 	// cefSettings.remote_debugging_port = C.int(9090)
 	cefSettings.multi_threaded_message_loop = C.int(1)
-	cefSettings.context_safety_implementation = C.int(0)
+	// cefSettings.context_safety_implementation = C.int(0)
 	cefSettings.user_data_path = *cefString(userdata)
 	cefSettings.persist_session_cookies = C.int(1)
 	cefSettings.persist_user_preferences = C.int(1)
@@ -322,6 +327,13 @@ func MakeApp(appName string) *App {
 		uintptr(unsafe.Pointer(&app.appHandler)),
 		uintptr(unsafe.Pointer(C.NULL)),
 	)
+
+	app.hiddenWindow = app.NewWindow("", 1, 1)
+	app.altWindow = app.NewWindow("", 1, 1)
+
+	gwl_exstyle := GWL_EXSTYLE
+	t, _, _ := winGetWindowLong.Call(uintptr(app.altWindow.window), uintptr(uint64(gwl_exstyle)))
+	winSetWindowLong.Call(uintptr(app.altWindow.window), uintptr(uint64(gwl_exstyle)), uintptr(int64(t)|WS_EX_TOOLWINDOW))
 
 	return &app
 }
@@ -561,10 +573,24 @@ func goBrowserDoClose(browser ceBrowser) C.int {
 	window := C.GetWindowHandle(browser)
 	winShowWindow.Call(uintptr(unsafe.Pointer(window)), uintptr(windows.SW_HIDE))
 
+	for _, f := range winds {
+		if f.window == unsafe.Pointer(window) {
+			f.state.Hidden = true
+			f.state.Focused = false
+			f.state.Iconified = false
+
+			if f.parent != nil {
+				gwlStyle := GWL_STYLE
+				style, _, _ := winGetWindowLong.Call(uintptr(f.parent.window), uintptr(uint64(gwlStyle)))
+				winSetWindowLong.Call(uintptr(f.parent.window), uintptr(uint64(gwlStyle)), uintptr(int64(style) & ^WS_DISABLED))
+			}
+		}
+	}
+
 	if cef2destroy {
 		return C.int(0)
 	}
-	go closeCef()
+	// go closeCef()
 	return C.int(1)
 }
 

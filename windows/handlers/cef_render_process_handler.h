@@ -75,10 +75,7 @@ static int CEF_CALLBACK on_before_navigation(
 static void CEF_CALLBACK on_context_created(
     struct _cef_render_process_handler_t* self,
     struct _cef_browser_t* browser, struct _cef_frame_t* frame,
-    struct _cef_v8context_t* context)
-{
-    goPrint("~~~~~~~~ ON_CONTEXT_CREATED ~~~~~~~");
-};
+    struct _cef_v8context_t* context) {};
 
 ///
 // Called immediately before the V8 context for a frame is released. No
@@ -87,10 +84,7 @@ static void CEF_CALLBACK on_context_created(
 static void CEF_CALLBACK on_context_released(
     struct _cef_render_process_handler_t* self,
     struct _cef_browser_t* browser, struct _cef_frame_t* frame,
-    struct _cef_v8context_t* context)
-{
-    goPrint("~~~~~~~~ ON_CONTEXT_RELEASED ~~~~~~~");
-};
+    struct _cef_v8context_t* context) {};
 
 ///
 // Return the handler for browser load status events.

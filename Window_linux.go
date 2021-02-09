@@ -329,6 +329,11 @@ func (f *Window) SetSize(width, height int) *Window {
 	return f
 }
 
+// SetWebviewSize sets size of webview (without titlebar)
+func (f *Window) SetWebviewSize(width, height int) *Window {
+	return f.SetSize(width, height)
+}
+
 // Move the window
 func (f *Window) Move(x, y int) *Window {
 	idle(C.fn.windowMove, C.idleData{

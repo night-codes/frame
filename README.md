@@ -73,7 +73,7 @@ go build -ldflags="-H windowsgui -s -w" -o example.exe
 | `Menu.AddItem`                   |       ✅     |         ✅       |         |
 | `Menu.AddSeparatorItem`          |       ✅     |         ✅       |         |
 | `Window.Eval`                    |       ✅     |         ✅       |         |
-| `Window.Fullscreen`              |       ✅     |         ✅       |         |
+| `Window.Fullscreen`              |       ✅     |         ✅       |    ✅   |
 | `Window.GetScreenSize`           |       ✅     |         ✅       |    ✅   |
 | `Window.GetScreenScaleFactor`    |       ✅     |         ✅       |    ✅   |
 | `Window.GetSize`                 |       ✅     |         ✅       |    ✅   |
@@ -86,24 +86,24 @@ go build -ldflags="-H windowsgui -s -w" -o example.exe
 | `Window.LoadHTML`                |       ✅     |         ✅       |    ✅   |
 | `Window.Maximize`                |       ✅     |         ✅       |    ✅   |
 | `Window.Move`                    |       ✅     |         ✅       |    ✅   |
-| `Window.SetCenter`               |       ✅     |         ✅       |         |
+| `Window.SetCenter`               |       ✅     |         ✅       |    ✅   |
 | `Window.SetDecorated`            |       ✅     |         ✅       |    ✅   |
 | `Window.SetDeletable`            |       ✅     |         ✅       |         |
 | `Window.SetIconFromFile`         |       ✅     |         ✅       |         |
 | `Window.SetInvoke`               |       ✅     |         ✅       |         |
 | `Window.SetMaxSize`              |       ✅     |         ✅       |         |
 | `Window.SetMinSize`              |       ✅     |         ✅       |         |
-| `Window.SetModal`                |       ✅     |         ✅       |         |
+| `Window.SetModal`                |       ✅     |         ✅       |    ✅   |
 | `Window.SetOpacity`              |       ✅     |         ✅       |    ✅   |
 | `Window.SetResizeble`            |       ✅     |         ✅       |    ✅   |
 | `Window.SetSize`                 |       ✅     |         ✅       |    ✅   |
 | `Window.SetStateEvent`           |       ✅     |         ✅       |         |
 | `Window.SetTitle`                |       ✅     |         ✅       |    ✅   |
 | `Window.Show`                    |       ✅     |         ✅       |    ✅   |
-| `Window.SkipPager`               |       ✅     |         ✅       |         |
-| `Window.SkipTaskbar`             |       ✅     |         ✅       |         |
+| `Window.SkipPager`               |       ✅     |         ✅       |    ✅   |
+| `Window.SkipTaskbar`             |       ✅     |         ✅       |    ✅   |
 | `Window.Stick`                   |       ✅     |         ✅       |         |
-| `Window.UnsetModal`              |       ✅     |         ✅       |         |
+| `Window.UnsetModal`              |       ✅     |         ✅       |    ✅   |
 | `Window.GetWebviewSize`          |       ✅     |         🆗       |    🆗   |
 | `Window.SetWebviewSize`          |       ✅     |         🆗       |    🆗   |
 | `Window.SetBackgroundColor`      |       ✅     |         ✅       |         |
