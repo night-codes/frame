@@ -10,21 +10,20 @@
 #include "handlers/cef_load_handler.h"
 #include "include/capi/cef_app_capi.h"
 
+extern void goRegExtension();
+extern void goContextCreate(cef_v8value_t* global);
+
 static void CEF_CALLBACK on_render_thread_created(
     struct _cef_render_process_handler_t* self,
-    struct _cef_list_value_t* extra_info)
-{
-    goPrint("~~~~~~~~ ON_RENDER_THREAD_CREATED ~~~~~~~");
-};
+    struct _cef_list_value_t* extra_info) {};
 
 ///
 // Called after WebKit has been initialized.
 ///
-static void CEF_CALLBACK on_web_kit_initialized(
-    struct _cef_render_process_handler_t* self)
+static void CEF_CALLBACK on_web_kit_initialized(struct _cef_render_process_handler_t* self)
 {
-    goPrint("~~~~~~~~ ON_WEB_KIT_INITIALIZED ~~~~~~~");
-};
+    goRegExtension();
+}
 
 ///
 // Called after a browser has been created. When browsing cross-origin a new
@@ -33,10 +32,7 @@ static void CEF_CALLBACK on_web_kit_initialized(
 ///
 static void CEF_CALLBACK on_browser_created(
     struct _cef_render_process_handler_t* self,
-    struct _cef_browser_t* browser)
-{
-    goPrint("~~~~~~~~ ON_BROWSER_CREATED ~~~~~~~");
-};
+    struct _cef_browser_t* browser) {};
 
 ///
 // Called before a browser is destroyed.
@@ -45,7 +41,6 @@ static void CEF_CALLBACK on_browser_destroyed(
     struct _cef_render_process_handler_t* self,
     struct _cef_browser_t* browser)
 {
-    goPrint("~~~~~~~~ ON_BROWSER_DESTROYED ~~~~~~~");
     free(self);
 };
 
@@ -60,7 +55,6 @@ static int CEF_CALLBACK on_before_navigation(
     struct _cef_request_t* request, cef_navigation_type_t navigation_type,
     int is_redirect)
 {
-    goPrint("~~~~~~~~ ON_BEFORE_NAVIGATION ~~~~~~~");
     return 0;
 };
 
@@ -75,7 +69,11 @@ static int CEF_CALLBACK on_before_navigation(
 static void CEF_CALLBACK on_context_created(
     struct _cef_render_process_handler_t* self,
     struct _cef_browser_t* browser, struct _cef_frame_t* frame,
-    struct _cef_v8context_t* context) {};
+    struct _cef_v8context_t* context)
+{
+    cef_v8value_t* val = context->get_global(context);
+    goContextCreate(val);
+};
 
 ///
 // Called immediately before the V8 context for a frame is released. No
@@ -92,7 +90,7 @@ static void CEF_CALLBACK on_context_released(
 static struct _cef_load_handler_t* CEF_CALLBACK get_load_rp_handler(
     struct _cef_render_process_handler_t* self)
 {
-    return initialize_cef_load_handler();
+    return NULL; // initialize_cef_load_handler();
 }
 
 ///
@@ -117,10 +115,7 @@ static void CEF_CALLBACK on_uncaught_exception(
 static void CEF_CALLBACK on_focused_node_changed(
     struct _cef_render_process_handler_t* self,
     struct _cef_browser_t* browser, struct _cef_frame_t* frame,
-    struct _cef_domnode_t* node)
-{
-    goPrint("~~~~~~~~ ON_FOCUSED_NODE_CHANGED ~~~~~~~");
-};
+    struct _cef_domnode_t* node) {};
 
 ///
 // Called when a new message is received from a different process. Return true
@@ -150,7 +145,7 @@ static cef_render_process_handler_t* initialize_render_process_handler()
     handler->on_web_kit_initialized = on_web_kit_initialized;
     handler->on_browser_created = on_browser_created;
     handler->on_browser_destroyed = on_browser_destroyed;
-    // handler->get_load_handler = get_load_rp_handler;
+    handler->get_load_handler = get_load_rp_handler;
     handler->on_before_navigation = on_before_navigation;
     handler->on_context_created = on_context_created;
     handler->on_context_released = on_context_released;

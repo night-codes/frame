@@ -111,7 +111,7 @@ static cef_life_span_handler_t* CEF_CALLBACK get_life_span_handler(struct _cef_c
 ///
 static struct _cef_load_handler_t* CEF_CALLBACK get_load_handler(struct _cef_client_t* self)
 {
-    return NULL;
+    return initialize_cef_load_handler(); //NULL;
 }
 
 ///
@@ -142,7 +142,6 @@ static int CEF_CALLBACK on_process_message_received(struct _cef_client_t* self, 
 
 static void initialize_cef_client(struct _cef_client_t* client)
 {
-    goPrint("initialize_client_handler\n");
     client->base.size = sizeof(cef_client_t);
     initialize_cef_base((cef_base_t*)client);
     // callbacks

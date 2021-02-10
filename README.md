@@ -72,7 +72,7 @@ go build -ldflags="-H windowsgui -s -w" -o example.exe
 | `Menu.AddSubMenu`                |       ✅     |         ✅       |         |
 | `Menu.AddItem`                   |       ✅     |         ✅       |         |
 | `Menu.AddSeparatorItem`          |       ✅     |         ✅       |         |
-| `Window.Eval`                    |       ✅     |         ✅       |         |
+| `Window.Eval`                    |       ✅     |         ✅       |    ✅   |
 | `Window.Fullscreen`              |       ✅     |         ✅       |    ✅   |
 | `Window.GetScreenSize`           |       ✅     |         ✅       |    ✅   |
 | `Window.GetScreenScaleFactor`    |       ✅     |         ✅       |    ✅   |
@@ -88,9 +88,9 @@ go build -ldflags="-H windowsgui -s -w" -o example.exe
 | `Window.Move`                    |       ✅     |         ✅       |    ✅   |
 | `Window.SetCenter`               |       ✅     |         ✅       |    ✅   |
 | `Window.SetDecorated`            |       ✅     |         ✅       |    ✅   |
-| `Window.SetDeletable`            |       ✅     |         ✅       |         |
+| `Window.SetDeletable`            |       ✅     |         ✅       |    ✅   |
 | `Window.SetIconFromFile`         |       ✅     |         ✅       |         |
-| `Window.SetInvoke`               |       ✅     |         ✅       |         |
+| `Window.SetInvoke`               |       ✅     |         ✅       |    ✅   |
 | `Window.SetMaxSize`              |       ✅     |         ✅       |         |
 | `Window.SetMinSize`              |       ✅     |         ✅       |         |
 | `Window.SetModal`                |       ✅     |         ✅       |    ✅   |
@@ -106,6 +106,6 @@ go build -ldflags="-H windowsgui -s -w" -o example.exe
 | `Window.UnsetModal`              |       ✅     |         ✅       |    ✅   |
 | `Window.GetWebviewSize`          |       ✅     |         🆗       |    🆗   |
 | `Window.SetWebviewSize`          |       ✅     |         🆗       |    🆗   |
-| `Window.SetBackgroundColor`      |       ✅     |         ✅       |         |
+| `Window.SetBackgroundColor`      |       ✅     |         ✅       |    🆗   |
 | `Window.Strut`                   |              |         ✅       |         |
 | `Window.SetType`                 |              |         ✅       |         |

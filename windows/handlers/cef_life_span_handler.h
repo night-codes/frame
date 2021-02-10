@@ -55,6 +55,5 @@ static void* initialize_cef_life_span_handler()
     lifeHandler->on_after_created = on_after_created;
     lifeHandler->on_before_close = on_before_close;
     lifeHandler->do_close = do_close;
-    lifeHandler->base.size = sizeof(cef_life_span_handler_t);
     return lifeHandler;
 }

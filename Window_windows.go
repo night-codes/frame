@@ -8,6 +8,7 @@ package frame
 import "C"
 
 import (
+	"sync"
 	"syscall"
 	"unsafe"
 
@@ -43,8 +44,12 @@ type (
 		OnFullscreen     func()
 		OnExitFullscreen func()
 
-		app   *App
-		state State
+		evals     []string
+		evalsLock sync.Mutex
+		evalsLoad bool
+		app       *App
+		state     State
+		r, g, b   byte
 	}
 
 	// WindowType struct
@@ -258,12 +263,18 @@ func (f *Window) Fullscreen(flag bool) *Window {
 	f.SetDecorated(!flag)
 	f.KeepAbove(flag)
 	f.Maximize(flag)
+	f.state.Fullscreen = flag
 	return f
 }
 
 // SetDeletable of window
 func (f *Window) SetDeletable(flag bool) *Window {
-	// C.setWindowDeletable(C.WindowObj(f.window), C.bool(flag))
+	sysmenu, _, _ := winGetSystemMenu.Call(uintptr(f.window), 0)
+	if flag {
+		winEnableMenuItem.Call(sysmenu, uintptr(SC_CLOSE), 0)
+	} else {
+		winEnableMenuItem.Call(sysmenu, uintptr(SC_CLOSE), uintptr(MF_DISABLED|MF_GRAYED))
+	}
 	return f
 }
 
@@ -392,24 +403,15 @@ func (f *Window) SetCenter() *Window {
 
 // Eval JS
 func (f *Window) Eval(js string) string {
-	// cRet := cRequest(func(id uint64) {
-	// 	C.evalJS(C.WindowObj(f.window), C.CString(js), C.ulonglong(id))
-	// })
-	// ret, _ := cRet.(string)
-	// return ret
+	f.evalsLock.Lock()
+	if f.evalsLoad {
+		f.evals = append(f.evals, js)
+	} else {
+		evalJS(f.browser, js, "")
+	}
+	f.evalsLock.Unlock()
 	return ""
 }
-
-//export goEvalRet
-// func goEvalRet(reqid C.ulonglong, err *C.char) {
-// 	go func() {
-// 		if chi, ok := goRequests.Load(uint64(reqid)); ok {
-// 			if ch, ok := chi.(chan interface{}); ok {
-// 				ch <- C.GoString(err)
-// 			}
-// 		}
-// 	}()
-// }
 
 // SetModal makes current Window attached as modal window to parent
 func (f *Window) SetModal(parent *Window) *Window {
@@ -492,15 +494,13 @@ func (f *Window) SetOpacity(opacity float64) *Window {
 }
 
 // SetBackgroundColor of Window
-func (f *Window) SetBackgroundColor(r, g, b int, alfa float64) *Window {
-	// gwl_exstyle := GWL_EXSTYLE
-	// t, _, _ := winGetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwl_exstyle)))
+func (f *Window) SetBackgroundColor(r, g, b byte, alfa float64) *Window {
 	gclp_hbrbackground := GCLP_HBRBACKGROUND
 	brush, _, _ := gdiCreateSolidBrush.Call(uintptr(0xff000000 | uint32(r)<<16 | uint32(g)<<8 | uint32(b)))
 	winSetClassLongPtr.Call(uintptr(f.window), uintptr(gclp_hbrbackground), brush)
-
-	// winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwl_exstyle)), uintptr(int64(t)|WS_EX_LAYERED))
-	// winSetLayeredWindowAttributes.Call(uintptr(f.window), uintptr(uint32(r)<<16|uint32(g)<<8|uint32(b)), uintptr(uint64(255*alfa)), LWA_COLORKEY|LWA_ALPHA)
+	f.r = r
+	f.g = g
+	f.b = b
 	return f
 }
 

@@ -12,6 +12,7 @@ package frame
 	#include "handlers/cef_app.h"
 	#include "handlers/cef_client.h"
 	#include "handlers/cef_base.h"
+	#include "handlers/cef_v8_handler.h"
 	#include "include/capi/cef_client_capi.h"
 	#include "include/capi/cef_browser_capi.h"
 	#include "include/capi/cef_urlrequest_capi.h"
@@ -68,6 +69,14 @@ package frame
 		cef_frame_t * frame = browser->get_main_frame(browser);
 		return frame->get_url(frame);
 	}
+
+	static void SetValue(cef_v8value_t* context, const cef_string_t* key, cef_v8value_t* value) {
+		context->set_value_bykey(context, key, value, V8_PROPERTY_ATTRIBUTE_NONE);
+	}
+
+	static int IsSameBrowser(cef_browser_t* browser, cef_browser_t* browser2) {
+		return browser->is_same(browser, browser2);
+	}
 */
 import "C"
 
@@ -94,7 +103,7 @@ type (
 	App struct {
 		WindowClose  *Window
 		AllClose     bool
-		Test5        bool
+		Test         bool
 		app          interface{} // *C.GtkApplication
 		openedWns    sync.WaitGroup
 		shown        chan bool
@@ -104,8 +113,8 @@ type (
 		altWindow    *Window
 	}
 
-	ceBrowser     *C.cef_browser_t
 	ceString      *C.cef_string_t
+	ceBrowser     *C.cef_browser_t
 	C_MONITORINFO C.MONITORINFO
 	C_RECT        C.RECT
 )
@@ -143,6 +152,11 @@ var (
 	cefGetGlobalCtx             = libcef.NewProc("cef_request_context_get_global_context")
 	cefBrowserViewGetForBrowser = libcef.NewProc("cef_browser_view_get_for_browser")
 	cefProcessMessageCreate     = libcef.NewProc("cef_process_message_create")
+	cefRegisterExtension        = libcef.NewProc("cef_register_extension")
+	cefStringToValue            = libcef.NewProc("cef_v8value_create_string")
+	cefCreateFunction           = libcef.NewProc("cef_v8value_create_function")
+	cefCreateObject             = libcef.NewProc("cef_v8value_create_object")
+	cefCreateNull               = libcef.NewProc("cef_v8value_create_null")
 
 	winCoInitializeEx             = ole32.NewProc("CoInitializeEx")
 	winGetProcessHeap             = kernel32.NewProc("GetProcessHeap")
@@ -181,6 +195,8 @@ var (
 	winSetClassLongPtr            = user32.NewProc("SetClassLongPtrA")
 	winGetWindowRect              = user32.NewProc("GetWindowRect")
 	winSetParent                  = user32.NewProc("SetParent")
+	winGetSystemMenu              = user32.NewProc("GetSystemMenu")
+	winEnableMenuItem             = user32.NewProc("EnableMenuItem")
 
 	gdiCreateSolidBrush = gdi32.NewProc("CreateSolidBrush")
 
@@ -250,6 +266,11 @@ const (
 	HWND_TOPMOST          = -1
 	HWND_TOP              = 0
 	HWND_BOTTOM           = 1
+	MF_ENABLED            = 0x00000000
+	MF_BYCOMMAND          = 0x00000000
+	MF_GRAYED             = 0x00000001
+	MF_DISABLED           = 0x00000002
+	SC_CLOSE              = 0xF060
 
 	MONITOR_DEFAULTTONULL    = 0x00000000
 	MONITOR_DEFAULTTOPRIMARY = 0x00000001
@@ -395,11 +416,11 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 		C.GetClientRect(C.GetDesktopWindow(), &rect)
 		windowInfo.style = WS_OVERLAPPEDWINDOW | WS_TABSTOP // | WS_VISIBLE
 		windowInfo.transparent_painting_enabled = 1
+		windowInfo.window_name = *cefString(title)
 		windowInfo.height = C.int(width)
 		windowInfo.width = C.int(height)
-		windowInfo.window_name = *cefString(title)
-		windowInfo.x = C.int(rect.right/2) - C.int(windowInfo.width/2)
 		windowInfo.y = C.int(rect.bottom/2) - C.int(windowInfo.height/2)
+		windowInfo.x = C.int(rect.right/2) - C.int(windowInfo.width/2)
 
 		var client C.cef_client_t
 		C.initialize_cef_client(&client)
@@ -449,17 +470,38 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 		)
 
 		wind := &Window{
-			id:      int(id),
-			thread:  int(thread),
-			browser: unsafe.Pointer(browser),
-			window:  unsafe.Pointer(window),
-			state:   State{Hidden: true},
+			id:        int(id),
+			thread:    int(thread),
+			browser:   unsafe.Pointer(browser),
+			window:    unsafe.Pointer(window),
+			state:     State{Hidden: true},
+			evals:     []string{},
+			evalsLoad: true,
 			MainMenu: &Menu{
 				menu: nil, //ret.menubar,
 			},
 			app: a,
+			r:   230,
+			g:   230,
+			b:   230,
 		}
 		winds = append(winds, wind)
+
+		state := wind.state
+		go func() {
+			time.Sleep(time.Second / 2)
+			for {
+				time.Sleep(time.Second / 10)
+
+				if wind.StateEvent != nil {
+					if state.Hidden != wind.state.Hidden || state.Fullscreen != wind.state.Fullscreen {
+						go wind.StateEvent(wind.state)
+					}
+				}
+				state = wind.state
+			}
+		}()
+
 		return wind
 	}
 	return nil
@@ -478,6 +520,10 @@ func loadURL(browser unsafe.Pointer, uri string) {
 
 func urlEncode(str string) string {
 	return strings.Replace(url.QueryEscape(str), "+", "%20", -1)
+}
+
+func evalJS(browser unsafe.Pointer, code, uri string) {
+	C.ExecuteJavaScript(ceBrowser(browser), cefString(code), cefString(uri), 0)
 }
 
 func cefToGoString(source ceString) string {
@@ -512,6 +558,42 @@ func cefString(s string) ceString {
 	return ret
 }
 
+//export goContextCreate
+func goContextCreate(global *C.cef_v8value_t) {
+	// window := C.GetWindowHandle(browser)
+
+	fmt.Println("goContextCreate")
+	object, _, _ := cefCreateObject.Call(uintptr(unsafe.Pointer(C.initialize_cef_v8accessor())))
+	fn, _, _ := cefCreateFunction.Call(uintptr(unsafe.Pointer(cefString("extinvoke"))), uintptr(unsafe.Pointer(C.initialize_cef_v8handler())))
+	C.SetValue(global, cefString("extinvoke"), (*C.cef_v8value_t)(unsafe.Pointer(fn)))
+	C.SetValue(global, cefString("external"), (*C.cef_v8value_t)(unsafe.Pointer(object)))
+}
+
+//export goInvokeCallback
+func goInvokeCallback(value ceString, value2 ceString) {
+	defer func() {
+		defer cefFreeUTF8.Call(uintptr(unsafe.Pointer(value)))
+		defer cefFreeUTF8.Call(uintptr(unsafe.Pointer(value2)))
+	}()
+	arg := cefToGoString(value)
+	winid := cefToGoString(value2)
+	for _, f := range winds {
+		if f.Invoke != nil && fmt.Sprintf("%d", uint64(uintptr(f.window))) == winid {
+			f.Invoke(arg)
+		}
+	}
+}
+
+//export goRegExtension
+func goRegExtension() {
+	/* handler := C.initialize_cef_v8handler()
+	cefRegisterExtension.Call(
+		uintptr(unsafe.Pointer(cefString("name"))),
+		uintptr(unsafe.Pointer(cefString(`(function() {});`))),
+		uintptr(unsafe.Pointer(handler)),
+	) */
+}
+
 //export cefToString
 func cefToString(source ceString) *C.char {
 	return C.CString(cefToGoString(source))
@@ -522,13 +604,25 @@ func cefFromString(source *C.char) ceString {
 	return cefString(C.GoString(source))
 }
 
-//export goPrint
-func goPrint(text *C.char) {
-	fmt.Println(C.GoString(text))
-}
-
 func cChar(text string) *C.char {
 	return C.CString(text)
+}
+
+//export goPrintCef
+func goPrintCef(text0 *C.char, text ceString) {
+	fmt.Println(C.GoString(text0), cefToGoString(text))
+}
+
+//export valFromString
+func valFromString(value *C.char) *C.cef_v8value_t {
+	ret, _, _ := cefStringToValue.Call(uintptr(unsafe.Pointer(cefFromString(value))))
+	return (*C.cef_v8value_t)(unsafe.Pointer(ret))
+}
+
+//export valCreateNull
+func valCreateNull() *C.cef_v8value_t {
+	ret, _, _ := cefCreateNull.Call()
+	return (*C.cef_v8value_t)(unsafe.Pointer(ret))
 }
 
 //export goPrintInt
@@ -536,9 +630,36 @@ func goPrintInt(text *C.char, t C.int) {
 	fmt.Println(C.GoString(text), int(t))
 }
 
-//export goPrintCef
-func goPrintCef(text0 *C.char, text ceString) {
-	fmt.Println(C.GoString(text0), cefToGoString(text))
+//export goPrint
+func goPrint(text *C.char) {
+	fmt.Println(C.GoString(text))
+}
+
+//export goStateChange
+func goStateChange(browser ceBrowser, status C.int) {
+	window := C.GetWindowHandle(browser)
+	for _, f := range winds {
+		if f.window == unsafe.Pointer(window) {
+			f.evalsLock.Lock()
+			f.evalsLoad = int(status) == 1
+
+			if !f.evalsLoad {
+				evalJS(f.browser, fmt.Sprintf("document.querySelector('html').style.background = 'rgba(%d,%d,%d,1)';", f.r, f.g, f.b), "")
+				evalJS(f.browser, fmt.Sprintf("window.external.invoke = function(arg){window.extinvoke(arg, \"%d\")};", uint64(uintptr(f.window))), "")
+				for _, js := range f.evals {
+					evalJS(f.browser, js, "")
+				}
+			}
+			f.evalsLock.Unlock()
+		}
+	}
+}
+
+//export goBrowserCreate
+func goBrowserCreate(browser ceBrowser) {
+	if reqid, ok := cliReqs[uintptr(unsafe.Pointer(C.GetClient(browser)))]; ok {
+		cRequestRet(reqid, browser)
+	}
 }
 
 //export goGetLifeSpan
@@ -549,13 +670,6 @@ func goGetLifeSpan(client *C.cef_client_t) unsafe.Pointer {
 	lifeHandler := C.initialize_cef_life_span_handler()
 	lifeHandlers[uintptr(unsafe.Pointer(client))] = lifeHandler
 	return lifeHandler
-}
-
-//export goBrowserCreate
-func goBrowserCreate(browser ceBrowser) {
-	if reqid, ok := cliReqs[uintptr(unsafe.Pointer(C.GetClient(browser)))]; ok {
-		cRequestRet(reqid, browser)
-	}
 }
 
 //export goBrowserDestroyed
@@ -590,6 +704,7 @@ func goBrowserDoClose(browser ceBrowser) C.int {
 	if cef2destroy {
 		return C.int(0)
 	}
+	//check
 	// go closeCef()
 	return C.int(1)
 }

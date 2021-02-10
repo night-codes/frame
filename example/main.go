@@ -19,7 +19,7 @@ func main() {
 		SetBackgroundColor(50, 50, 50, 0.8).
 		Move(20, 100).
 		// SetDecorated(false).
-		LoadHTML(`<body style="color:#dddddd; background: rgba(244,150,0,0.9)">
+		LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Hello world</h1>
       <p>Test test test...</p>
       </body>`, "http://localhost:1015/panel/").
@@ -53,19 +53,19 @@ func main() {
 		SetInvoke(func(msg string) {
 			fmt.Println(":::", msg)
 		}).
-		SkipPager(true).
 		Show()
 
 	go func() {
-		// wv.Eval("document.body.style.background = '#449977'; thisIsError1")
+		// wv.Eval("document.querySelector('html').style.background = 'rgba(0,0,0,0.2)';")
+		// wv2.Eval("document.querySelector('html').style.background = '#0000aa99';")
 		wv.Eval("window.external.invoke('Wow! This is external invoke!')")
 		wv.SetTitle("Новый заголовок")
 		wv.Eval("thisIsError2")
-		// wv.Eval("document.body.style.background = '#994477'")
 		// wv2.Hide()
 		wv3 := app.NewWindow("Modal window", 300, 200).
 			SetBackgroundColor(40, 80, 50, 0.5).
-			LoadHTML(`<body style="color:#ffffff; background: rgba(255,150,0,0.2);">
+			SetDeletable(false).
+			LoadHTML(`<body style="color:#ffffff; background: transparent">
       <h1>Some Dialog 2</h1>
       <p>Modal window...</p>
 	  </body>`, "").
@@ -113,10 +113,13 @@ func main() {
 			go func() {
 				time.Sleep(time.Second * 10)
 				wv2.Show()
-				wv2.SkipPager(false)
+				wv3.SetDeletable(true)
 				wv.SetCenter()
 				wv2.SetCenter()
 				wv3.SetCenter()
+				// wv3.Eval("document.body.style.background = '#ff0000'")
+				// wv2.Eval("document.body.style.background = '#00ff00'")
+				wv.Eval("myfunction();")
 			}()
 		}()
 

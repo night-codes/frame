@@ -7,11 +7,13 @@
 #include "include/capi/cef_app_capi.h"
 #include "include/capi/cef_load_handler_capi.h"
 
+extern void goStateChange(cef_browser_t* browser, int status);
+
 static void CEF_CALLBACK on_loading_state_change(struct _cef_load_handler_t* self,
     struct _cef_browser_t* browser, int isLoading, int canGoBack,
     int canGoForward)
 {
-    goPrint("******* ON_LOADING_STATE_CHANGE");
+    goStateChange(browser, isLoading);
 };
 
 ///
@@ -27,10 +29,7 @@ static void CEF_CALLBACK on_loading_state_change(struct _cef_load_handler_t* sel
 ///
 static void CEF_CALLBACK on_load_start(struct _cef_load_handler_t* self,
     struct _cef_browser_t* browser, struct _cef_frame_t* frame,
-    cef_transition_type_t transition_type)
-{
-    goPrint("******* ON_LOAD_START");
-};
+    cef_transition_type_t transition_type) {};
 
 ///
 // Called when the browser is done loading a frame. The |frame| value will
@@ -43,10 +42,7 @@ static void CEF_CALLBACK on_load_start(struct _cef_load_handler_t* self,
 ///
 static void CEF_CALLBACK on_load_end(struct _cef_load_handler_t* self,
     struct _cef_browser_t* browser, struct _cef_frame_t* frame,
-    int httpStatusCode)
-{
-    goPrint("******* ON_LOAD_END");
-};
+    int httpStatusCode) {};
 
 ///
 // Called when the resource load for a navigation fails or is canceled.
@@ -57,11 +53,9 @@ static void CEF_CALLBACK on_load_end(struct _cef_load_handler_t* self,
 static void CEF_CALLBACK on_load_error(struct _cef_load_handler_t* self,
     struct _cef_browser_t* browser, struct _cef_frame_t* frame,
     cef_errorcode_t errorCode, const cef_string_t* errorText,
-    const cef_string_t* failedUrl)
-{
+    const cef_string_t* failedUrl) {
     // goPrintCef("errorText:", errorText);
     // goPrintCef("failedUrl:", failedUrl);
-    goPrint("******* ON_LOAD_ERROR");
 };
 
 static cef_load_handler_t* initialize_cef_load_handler()
