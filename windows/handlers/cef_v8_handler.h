@@ -13,7 +13,6 @@ static int CEF_CALLBACK execute(struct _cef_v8handler_t* self,
     size_t argumentsCount, struct _cef_v8value_t* const* arguments,
     struct _cef_v8value_t** retval, cef_string_t* exception)
 {
-    goPrint("execute!");
     if (argumentsCount > 1 && arguments[0]->is_string(arguments[0]) && arguments[1]->is_string(arguments[1])) {
         cef_string_userfree_t(CEF_CALLBACK * get_string)(struct _cef_value_t * self);
         goInvokeCallback(arguments[0]->get_string_value(arguments[0]), arguments[1]->get_string_value(arguments[1]));

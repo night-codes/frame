@@ -25,6 +25,30 @@ extern void* goGetLifeSpan(cef_client_t* client);
 // implementation will be used.
 ///
 
+static void CEF_CALLBACK on_fullscreen_mode_change(
+    struct _cef_display_handler_t* self, struct _cef_browser_t* browser, int fullscreen)
+{
+    goPrintInt("fullscreen", fullscreen);
+}
+
+static int CEF_CALLBACK on_console_message(struct _cef_display_handler_t* self,
+    struct _cef_browser_t* browser, const cef_string_t* message,
+    const cef_string_t* source, int line)
+{
+    return 0;
+}
+
+static cef_display_handler_t* initialize_cef_display_handler()
+{
+    cef_display_handler_t* handler = (cef_display_handler_t*)calloc(1, sizeof(cef_display_handler_t));
+    handler->base.size = sizeof(cef_display_handler_t);
+    initialize_cef_base((cef_base_t*)handler);
+
+    // callbacks
+    handler->on_fullscreen_mode_change = on_fullscreen_mode_change;
+    handler->on_console_message = on_console_message;
+}
+
 static struct _cef_context_menu_handler_t* CEF_CALLBACK get_context_menu_handler(struct _cef_client_t* self)
 {
     return NULL;
@@ -44,7 +68,7 @@ static struct _cef_dialog_handler_t* CEF_CALLBACK get_dialog_handler(struct _cef
 ///
 static struct _cef_display_handler_t* CEF_CALLBACK get_display_handler(struct _cef_client_t* self)
 {
-    return NULL;
+    return initialize_cef_display_handler();
 }
 
 ///

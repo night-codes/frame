@@ -197,6 +197,9 @@ var (
 	winSetParent                  = user32.NewProc("SetParent")
 	winGetSystemMenu              = user32.NewProc("GetSystemMenu")
 	winEnableMenuItem             = user32.NewProc("EnableMenuItem")
+	winIsIconic                   = user32.NewProc("IsIconic")
+	winIsZoomed                   = user32.NewProc("IsZoomed")
+	winGetForegroundWindow        = user32.NewProc("GetForegroundWindow")
 
 	gdiCreateSolidBrush = gdi32.NewProc("CreateSolidBrush")
 
@@ -491,10 +494,20 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 		go func() {
 			time.Sleep(time.Second / 2)
 			for {
-				time.Sleep(time.Second / 10)
+				time.Sleep(time.Second / 25)
+				ic, _, _ := winIsIconic.Call(uintptr(wind.window))
+				wind.state.Iconified = int(ic) != 0
+				z, _, _ := winIsZoomed.Call(uintptr(wind.window))
+				wind.state.Maximized = int(z) != 0
+				hwnd, _, _ := winGetForegroundWindow.Call()
+				wind.state.Focused = wind.window == unsafe.Pointer(hwnd)
 
 				if wind.StateEvent != nil {
-					if state.Hidden != wind.state.Hidden || state.Fullscreen != wind.state.Fullscreen {
+					if state.Hidden != wind.state.Hidden ||
+						state.Fullscreen != wind.state.Fullscreen ||
+						state.Maximized != wind.state.Maximized ||
+						state.Focused != wind.state.Focused ||
+						state.Iconified != wind.state.Iconified {
 						go wind.StateEvent(wind.state)
 					}
 				}
@@ -560,9 +573,6 @@ func cefString(s string) ceString {
 
 //export goContextCreate
 func goContextCreate(global *C.cef_v8value_t) {
-	// window := C.GetWindowHandle(browser)
-
-	fmt.Println("goContextCreate")
 	object, _, _ := cefCreateObject.Call(uintptr(unsafe.Pointer(C.initialize_cef_v8accessor())))
 	fn, _, _ := cefCreateFunction.Call(uintptr(unsafe.Pointer(cefString("extinvoke"))), uintptr(unsafe.Pointer(C.initialize_cef_v8handler())))
 	C.SetValue(global, cefString("extinvoke"), (*C.cef_v8value_t)(unsafe.Pointer(fn)))
@@ -649,6 +659,7 @@ func goStateChange(browser ceBrowser, status C.int) {
 				for _, js := range f.evals {
 					evalJS(f.browser, js, "")
 				}
+				f.evals = []string{}
 			}
 			f.evalsLock.Unlock()
 		}

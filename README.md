@@ -97,7 +97,7 @@ go build -ldflags="-H windowsgui -s -w" -o example.exe
 | `Window.SetOpacity`              |       ✅     |         ✅       |    ✅   |
 | `Window.SetResizeble`            |       ✅     |         ✅       |    ✅   |
 | `Window.SetSize`                 |       ✅     |         ✅       |    ✅   |
-| `Window.SetStateEvent`           |       ✅     |         ✅       |         |
+| `Window.SetStateEvent`           |       ✅     |         ✅       |    ✅   |
 | `Window.SetTitle`                |       ✅     |         ✅       |    ✅   |
 | `Window.Show`                    |       ✅     |         ✅       |    ✅   |
 | `Window.SkipPager`               |       ✅     |         ✅       |    ✅   |
