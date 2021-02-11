@@ -8,7 +8,7 @@
 #include "include/capi/cef_life_span_handler_capi.h"
 
 extern void goBrowserCreate(cef_browser_t* browser);
-extern int goBrowserDoClose(cef_browser_t* browser);
+extern int goBrowserDoClose(cef_window_handle_t window);
 extern void goBrowserBeforeClose(cef_browser_t* browser);
 
 // ----------------------------------------------------------------------------
@@ -43,7 +43,8 @@ static void CEF_CALLBACK on_after_created(struct _cef_life_span_handler_t* self,
 
 static int CEF_CALLBACK do_close(struct _cef_life_span_handler_t* self, struct _cef_browser_t* browser)
 {
-    return goBrowserDoClose(browser);
+    cef_browser_host_t* host = browser->get_host(browser);
+    return goBrowserDoClose(host->get_window_handle(host));
 };
 
 static void* initialize_cef_life_span_handler()

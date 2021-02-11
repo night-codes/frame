@@ -74,6 +74,69 @@ package frame
 		context->set_value_bykey(context, key, value, V8_PROPERTY_ATTRIBUTE_NONE);
 	}
 
+	typedef struct _Sizr {
+		int maxWidth;
+		int minWidth;
+		int maxHeight;
+		int minHeight;
+	} SIZR;
+
+	extern SIZR getWinLimits(HWND hwnd);
+
+	static LRESULT CALLBACK hwndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		switch(message)
+		{
+			case WM_GETMINMAXINFO:
+			{
+				MINMAXINFO *pInfo = (MINMAXINFO *)lParam;
+				SIZR sizes = getWinLimits(hwnd);
+
+				if (sizes.minWidth > 0 || sizes.minHeight > 0) {
+					if (sizes.minWidth <= 0) {
+						sizes.minWidth = GetSystemMetrics(SM_CXMINTRACK);
+					}
+					if (sizes.minHeight <= 0) {
+						sizes.minHeight = GetSystemMetrics(SM_CYMINTRACK);
+					}
+					POINT ptMin = { sizes.minWidth, sizes.minHeight };
+					pInfo->ptMinTrackSize = ptMin;
+				}
+
+				if (sizes.maxWidth > 0 || sizes.maxHeight > 0) {
+					if (sizes.maxWidth <= 0) {
+						sizes.maxWidth = GetSystemMetrics(SM_CXMAXTRACK);
+					}
+					if (sizes.maxHeight <= 0) {
+						sizes.maxHeight = GetSystemMetrics(SM_CYMAXTRACK);
+					}
+					POINT ptMax = { sizes.maxWidth, sizes.maxHeight };
+					pInfo->ptMaxSize = ptMax;
+					pInfo->ptMaxTrackSize = ptMax;
+				}
+
+				return 0;
+			}
+			case WM_CLOSE:
+			{
+				ShowWindow(hwnd, SW_HIDE);
+				return 0;
+			}
+			case WM_DESTROY:
+			{
+				PostQuitMessage(0);
+				break;
+			}
+			default:
+            	return DefWindowProc(hwnd, message, wParam, lParam);
+		}
+		return 1;
+	}
+
+	static void SetProc (HWND window) {
+		SetWindowLongPtr(window, -4, (LONG_PTR)&hwndProc);
+	}
+
 	static int IsSameBrowser(cef_browser_t* browser, cef_browser_t* browser2) {
 		return browser->is_same(browser, browser2);
 	}
@@ -103,7 +166,7 @@ type (
 	App struct {
 		WindowClose  *Window
 		AllClose     bool
-		Test         bool
+		Test43456    bool
 		app          interface{} // *C.GtkApplication
 		openedWns    sync.WaitGroup
 		shown        chan bool
@@ -115,6 +178,7 @@ type (
 
 	ceString      *C.cef_string_t
 	ceBrowser     *C.cef_browser_t
+	ceWindow      C.cef_window_handle_t
 	C_MONITORINFO C.MONITORINFO
 	C_RECT        C.RECT
 )
@@ -264,6 +328,7 @@ const (
 	GWL_STYLE             = -16
 	GWL_EXSTYLE           = -20
 	GWLP_HWNDPARENT       = -8
+	GWL_WNDPROC           = -4
 	GCLP_HBRBACKGROUND    = -10
 	HWND_NOTOPMOST        = -2
 	HWND_TOPMOST          = -1
@@ -453,6 +518,7 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 
 	if browser, ok := cRet.(ceBrowser); ok {
 		window := C.GetWindowHandle(browser)
+		C.SetProc(C.HWND(window))
 		dpi, _, _ := winGetDpiForWindow.Call(uintptr(unsafe.Pointer(window)))
 		monitor, _, _ := winMonitorFromWindow.Call(uintptr(unsafe.Pointer(window)), uintptr(MONITOR_DEFAULTTOPRIMARY))
 		info := C.MONITORINFO{cbSize: monitorinfoSizeof}
@@ -480,13 +546,14 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 			state:     State{Hidden: true},
 			evals:     []string{},
 			evalsLoad: true,
+			resizeble: true,
 			MainMenu: &Menu{
 				menu: nil, //ret.menubar,
 			},
 			app: a,
-			r:   230,
-			g:   230,
-			b:   230,
+			r:   255,
+			g:   255,
+			b:   255,
 		}
 		winds = append(winds, wind)
 
@@ -494,13 +561,41 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 		go func() {
 			time.Sleep(time.Second / 2)
 			for {
-				time.Sleep(time.Second / 25)
+				time.Sleep(time.Second / 20)
+				runtime.Gosched()
+				/* if wind.resizeble && (wind.minHeight > 0 || wind.maxHeight > 0 || wind.minWidth > 0 || wind.maxWidth > 0) {
+					w, h := wind.GetSize()
+					ch := false
+					if wind.minWidth > 0 && w < wind.minWidth {
+						w = wind.minWidth
+						ch = true
+					}
+					if wind.maxWidth > 0 && w > wind.maxWidth {
+						w = wind.maxWidth
+						ch = true
+					}
+					if wind.minHeight > 0 && h < wind.minHeight {
+						h = wind.minHeight
+						ch = true
+					}
+					if wind.maxHeight > 0 && h > wind.maxHeight {
+						h = wind.maxHeight
+						ch = true
+					}
+					if ch {
+						wind.SetSize(w, h)
+					}
+				} */
+
 				ic, _, _ := winIsIconic.Call(uintptr(wind.window))
 				wind.state.Iconified = int(ic) != 0
 				z, _, _ := winIsZoomed.Call(uintptr(wind.window))
 				wind.state.Maximized = int(z) != 0
 				hwnd, _, _ := winGetForegroundWindow.Call()
 				wind.state.Focused = wind.window == unsafe.Pointer(hwnd)
+				if wind.state.Fullscreen {
+					wind.state.Maximized = false
+				}
 
 				if wind.StateEvent != nil {
 					if state.Hidden != wind.state.Hidden ||
@@ -573,10 +668,25 @@ func cefString(s string) ceString {
 
 //export goContextCreate
 func goContextCreate(global *C.cef_v8value_t) {
-	object, _, _ := cefCreateObject.Call(uintptr(unsafe.Pointer(C.initialize_cef_v8accessor())))
 	fn, _, _ := cefCreateFunction.Call(uintptr(unsafe.Pointer(cefString("extinvoke"))), uintptr(unsafe.Pointer(C.initialize_cef_v8handler())))
 	C.SetValue(global, cefString("extinvoke"), (*C.cef_v8value_t)(unsafe.Pointer(fn)))
-	C.SetValue(global, cefString("external"), (*C.cef_v8value_t)(unsafe.Pointer(object)))
+}
+
+//export getWinLimits
+func getWinLimits(hwnd C.HWND) C.SIZR {
+	sizes := C.SIZR{}
+	for _, f := range winds {
+		if f.window == unsafe.Pointer(hwnd) {
+			scale := f.GetScreenScaleFactor()
+			sizes = C.SIZR{
+				maxWidth:  C.int(int(float64(f.maxWidth) * scale)),
+				minWidth:  C.int(int(float64(f.minWidth) * scale)),
+				maxHeight: C.int(int(float64(f.maxHeight) * scale)),
+				minHeight: C.int(int(float64(f.minHeight) * scale)),
+			}
+		}
+	}
+	return sizes
 }
 
 //export goInvokeCallback
@@ -655,7 +765,7 @@ func goStateChange(browser ceBrowser, status C.int) {
 
 			if !f.evalsLoad {
 				evalJS(f.browser, fmt.Sprintf("document.querySelector('html').style.background = 'rgba(%d,%d,%d,1)';", f.r, f.g, f.b), "")
-				evalJS(f.browser, fmt.Sprintf("window.external.invoke = function(arg){window.extinvoke(arg, \"%d\")};", uint64(uintptr(f.window))), "")
+				evalJS(f.browser, fmt.Sprintf("if (!window.external){window.external={};}; window.external.invoke = function(arg){window.extinvoke(arg, \"%d\")};", uint64(uintptr(f.window))), "")
 				for _, js := range f.evals {
 					evalJS(f.browser, js, "")
 				}
@@ -694,8 +804,8 @@ func goNop() {
 }
 
 //export goBrowserDoClose
-func goBrowserDoClose(browser ceBrowser) C.int {
-	window := C.GetWindowHandle(browser)
+func goBrowserDoClose(window C.cef_window_handle_t) C.int {
+	fmt.Println("goBrowserDoClose... ... ...")
 	winShowWindow.Call(uintptr(unsafe.Pointer(window)), uintptr(windows.SW_HIDE))
 
 	for _, f := range winds {

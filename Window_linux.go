@@ -142,7 +142,7 @@ func idle(fn C.GSourceFunc, data C.idleData) {
 }
 
 // SetBackgroundColor of the window
-func (f *Window) SetBackgroundColor(r, g, b int, alfa float64) *Window {
+func (f *Window) SetBackgroundColor(r, g, b byte, alfa float64) *Window {
 	idle(C.fn.windowSetBackgroundColor, C.idleData{
 		window:  f.window,
 		webview: f.webview,
@@ -164,8 +164,8 @@ func (f *Window) SetMinSize(width, height int) *Window {
 	return f
 }
 
-// GetWebviewSize returns width and height of window webview content
-func (f *Window) GetWebviewSize() (width, height int) {
+// GetInnerSize returns width and height of window webview content
+func (f *Window) GetInnerSize() (width, height int) {
 	return f.GetSize()
 }
 
@@ -329,8 +329,8 @@ func (f *Window) SetSize(width, height int) *Window {
 	return f
 }
 
-// SetWebviewSize sets size of webview (without titlebar)
-func (f *Window) SetWebviewSize(width, height int) *Window {
+// SetInnerSize sets size of webview (without titlebar)
+func (f *Window) SetInnerSize(width, height int) *Window {
 	return f.SetSize(width, height)
 }
 

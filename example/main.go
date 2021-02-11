@@ -18,6 +18,8 @@ func main() {
 	wv := app.NewWindow("Simple program!", 500, 400).
 		SetBackgroundColor(50, 50, 50, 0.8).
 		Move(20, 100).
+		SetMinSize(500, 400).
+		SetMaxSize(800, 700).
 		// SetDecorated(false).
 		LoadHTML(`<body style="color:#dddddd; background: transparent">
       <h1>Hello world</h1>
@@ -102,7 +104,7 @@ func main() {
 		go func() {
 			time.Sleep(time.Second * 5)
 			// wv3.Hide()
-			wv3.Load("https://google.com/")
+			wv3.Load("https://html5test.com/")
 			// wv3.SetSize(1000, 700)
 			// wv3.Iconify(true)
 			wv3.Fullscreen(true)
@@ -152,7 +154,7 @@ func main() {
 		go func() {
 			fmt.Println("~~~~~~=========<<<<<< + >>>>>=========~~~~~~~")
 			fmt.Println(wv.GetSize())
-			fmt.Println(wv.GetWebviewSize())
+			fmt.Println(wv.GetInnerSize())
 			fmt.Println(wv.GetPosition())
 			fmt.Println(wv.GetScreenSize())
 			fmt.Println(wv.GetScreenScaleFactor())
