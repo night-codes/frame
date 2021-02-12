@@ -8,6 +8,7 @@
 #include "include/capi/cef_life_span_handler_capi.h"
 
 extern void goBrowserCreate(cef_browser_t* browser);
+extern cef_browser_t* goGetBrowser(cef_window_handle_t window);
 extern int goBrowserDoClose(cef_window_handle_t window);
 extern void goBrowserBeforeClose(cef_browser_t* browser);
 

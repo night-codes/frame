@@ -50,6 +50,7 @@ type (
 		app       *App
 		state     State
 		r, g, b   byte
+		a         float64
 
 		minWidth, minHeight, maxWidth, maxHeight int
 		resizeble                                bool
@@ -502,7 +503,7 @@ func (f *Window) Show() *Window {
 
 // Hide window
 func (f *Window) Hide() *Window {
-	goBrowserDoClose(ceWindow(f.window))
+	goBrowserDoClose(C_HWND(f.window))
 	return f
 }
 
@@ -517,12 +518,10 @@ func (f *Window) SetOpacity(opacity float64) *Window {
 
 // SetBackgroundColor of Window
 func (f *Window) SetBackgroundColor(r, g, b byte, alfa float64) *Window {
-	gclp_hbrbackground := GCLP_HBRBACKGROUND
-	brush, _, _ := gdiCreateSolidBrush.Call(uintptr(0xff000000 | uint32(r)<<16 | uint32(g)<<8 | uint32(b)))
-	winSetClassLongPtr.Call(uintptr(f.window), uintptr(gclp_hbrbackground), brush)
 	f.r = r
 	f.g = g
 	f.b = b
+	f.a = alfa
 	return f
 }
 

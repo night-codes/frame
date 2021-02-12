@@ -111,8 +111,8 @@ go build -ldflags="-H windowsgui -s -w" -o example.exe
 | `Window.SetDeletable`            |       ✅     |         ✅       |    ✅   |
 | `Window.SetIconFromFile`         |       ✅     |         ✅       |         |
 | `Window.SetInvoke`               |       ✅     |         ✅       |    ✅   |
-| `Window.SetMaxSize`              |       ✅     |         ✅       |         |
-| `Window.SetMinSize`              |       ✅     |         ✅       |         |
+| `Window.SetMaxSize`              |       ✅     |         ✅       |    ✅   |
+| `Window.SetMinSize`              |       ✅     |         ✅       |    ✅   |
 | `Window.SetModal`                |       ✅     |         ✅       |    ✅   |
 | `Window.SetOpacity`              |       ✅     |         ✅       |    ✅   |
 | `Window.SetResizeble`            |       ✅     |         ✅       |    ✅   |

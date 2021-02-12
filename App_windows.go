@@ -8,6 +8,7 @@ package frame
 	#include "string.h"
 	#include "windows.h"
 	#include "winuser.h"
+	#include "wingdi.h"
 	#include "include/capi/cef_app_capi.h"
 	#include "handlers/cef_app.h"
 	#include "handlers/cef_client.h"
@@ -82,6 +83,9 @@ package frame
 	} SIZR;
 
 	extern SIZR getWinLimits(HWND hwnd);
+	extern void goSaveProc(HWND hwnd, LONG_PTR proc);
+	extern LONG_PTR goLoadProc(HWND hwnd);
+	extern HBRUSH goCreateSolidBrush(HWND hwnd);
 
 	static LRESULT CALLBACK hwndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
@@ -120,6 +124,7 @@ package frame
 			case WM_CLOSE:
 			{
 				ShowWindow(hwnd, SW_HIDE);
+				goBrowserDoClose(hwnd);
 				return 0;
 			}
 			case WM_DESTROY:
@@ -127,13 +132,25 @@ package frame
 				PostQuitMessage(0);
 				break;
 			}
+			case WM_ERASEBKGND:
+			{
+				// RECT rect = {};
+				// GetClientRect(hwnd, &rect);
+				// FillRect((HDC)wParam, &rect, goCreateSolidBrush(hwnd));
+				break;
+			}
 			default:
-            	return DefWindowProc(hwnd, message, wParam, lParam);
+			{
+				LONG_PTR proc = (LONG_PTR)goLoadProc(hwnd);
+				return CallWindowProc((WNDPROC)proc, hwnd, message, wParam, lParam);
+			}
 		}
-		return 1;
+		return 0;
 	}
 
-	static void SetProc (HWND window) {
+	static void SetProc(HWND window) {
+		LONG_PTR proc = GetWindowLongPtr(window, -4);
+		goSaveProc(window, proc);
 		SetWindowLongPtr(window, -4, (LONG_PTR)&hwndProc);
 	}
 
@@ -166,7 +183,7 @@ type (
 	App struct {
 		WindowClose  *Window
 		AllClose     bool
-		Test43456    bool
+		Test         bool
 		app          interface{} // *C.GtkApplication
 		openedWns    sync.WaitGroup
 		shown        chan bool
@@ -181,6 +198,7 @@ type (
 	ceWindow      C.cef_window_handle_t
 	C_MONITORINFO C.MONITORINFO
 	C_RECT        C.RECT
+	C_HWND        C.HWND
 )
 
 var (
@@ -319,6 +337,7 @@ const (
 	WS_CHILDWINDOW      = WS_CHILD
 	WS_EX_LAYERED       = 0x00080000
 	WS_EX_COMPOSITED    = 0x02000000
+	WS_EX_TRANSPARENT   = 0x00000020
 	WS_EX_TOOLWINDOW    = 0x00000080
 
 	MAX_PATH              = 260
@@ -408,7 +427,7 @@ func MakeApp(appName string) *App {
 	cefSettings.log_file = *cefString(filepath.Join(resDir, "log.txt"))
 	cefSettings.resources_dir_path = *cefString(resDir)
 	cefSettings.locales_dir_path = *cefString(resDir)
-	cefSettings.background_color = 0xff999999
+	// cefSettings.background_color = 0xff999999
 
 	cefInitialize.Call(
 		uintptr(unsafe.Pointer(&app.mainArgs)),
@@ -504,7 +523,7 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 		settings.text_area_resize = C.STATE_DISABLED
 		settings.plugins = C.STATE_DISABLED
 		settings.webgl = C.STATE_ENABLED
-		settings.background_color = 0xff999999
+		// settings.background_color = 0xff999999
 		// settings.default_encoding = "UTF-8"
 
 		cefCreateBrowser.Call(
@@ -518,6 +537,11 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 
 	if browser, ok := cRet.(ceBrowser); ok {
 		window := C.GetWindowHandle(browser)
+		// COMPOSITE
+		// gwl_exstyle := GWL_EXSTYLE
+		// t, _, _ := winGetWindowLong.Call(uintptr(unsafe.Pointer(window)), uintptr(uint64(gwl_exstyle)))
+		// winSetWindowLong.Call(uintptr(unsafe.Pointer(window)), uintptr(uint64(gwl_exstyle)), uintptr(int64(t)|WS_EX_COMPOSITED|WS_EX_LAYERED))
+
 		C.SetProc(C.HWND(window))
 		dpi, _, _ := winGetDpiForWindow.Call(uintptr(unsafe.Pointer(window)))
 		monitor, _, _ := winMonitorFromWindow.Call(uintptr(unsafe.Pointer(window)), uintptr(MONITOR_DEFAULTTOPRIMARY))
@@ -554,6 +578,7 @@ func (a *App) NewWindow(title string, sizes ...int) *Window {
 			r:   255,
 			g:   255,
 			b:   255,
+			a:   1.0,
 		}
 		winds = append(winds, wind)
 
@@ -672,6 +697,29 @@ func goContextCreate(global *C.cef_v8value_t) {
 	C.SetValue(global, cefString("extinvoke"), (*C.cef_v8value_t)(unsafe.Pointer(fn)))
 }
 
+var defprocs = map[uintptr]uintptr{}
+
+//export goLoadProc
+func goLoadProc(hwnd C.HWND) C.LONG_PTR {
+	return C.LONG_PTR(defprocs[uintptr(unsafe.Pointer(hwnd))])
+}
+
+//export goCreateSolidBrush
+func goCreateSolidBrush(hwnd C.HWND) C.HBRUSH {
+	brush, _, _ := gdiCreateSolidBrush.Call(uintptr(0xffffffff))
+	for _, f := range winds {
+		if f.window == unsafe.Pointer(hwnd) {
+			brush, _, _ = gdiCreateSolidBrush.Call(uintptr(0xff000000 | uint32(f.r)<<16 | uint32(f.g)<<8 | uint32(f.b)))
+		}
+	}
+	return C.HBRUSH(unsafe.Pointer(brush))
+}
+
+//export goSaveProc
+func goSaveProc(hwnd C.HWND, proc C.LONG_PTR) {
+	defprocs[uintptr(unsafe.Pointer(hwnd))] = uintptr(proc)
+}
+
 //export getWinLimits
 func getWinLimits(hwnd C.HWND) C.SIZR {
 	sizes := C.SIZR{}
@@ -764,7 +812,7 @@ func goStateChange(browser ceBrowser, status C.int) {
 			f.evalsLoad = int(status) == 1
 
 			if !f.evalsLoad {
-				evalJS(f.browser, fmt.Sprintf("document.querySelector('html').style.background = 'rgba(%d,%d,%d,1)';", f.r, f.g, f.b), "")
+				evalJS(f.browser, fmt.Sprintf("document.querySelector('html').style.background = 'rgba(%d,%d,%d,%.2f)';", f.r, f.g, f.b, f.a), "")
 				evalJS(f.browser, fmt.Sprintf("if (!window.external){window.external={};}; window.external.invoke = function(arg){window.extinvoke(arg, \"%d\")};", uint64(uintptr(f.window))), "")
 				for _, js := range f.evals {
 					evalJS(f.browser, js, "")
@@ -803,9 +851,18 @@ func goNop() {
 	runtime.Gosched()
 }
 
+//export goGetBrowser
+func goGetBrowser(window C_HWND) *C.cef_browser_t {
+	for _, f := range winds {
+		if f.window == unsafe.Pointer(window) {
+			return (*C.cef_browser_t)(f.browser)
+		}
+	}
+	return nil
+}
+
 //export goBrowserDoClose
-func goBrowserDoClose(window C.cef_window_handle_t) C.int {
-	fmt.Println("goBrowserDoClose... ... ...")
+func goBrowserDoClose(window C_HWND) C.int {
 	winShowWindow.Call(uintptr(unsafe.Pointer(window)), uintptr(windows.SW_HIDE))
 
 	for _, f := range winds {
