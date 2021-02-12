@@ -18,7 +18,6 @@ typedef struct WindowObj {
     GtkWidget* menubar;
 } WindowObj;
 
-
 typedef struct MenuObj {
     char* title;
     char* key;
@@ -207,7 +206,26 @@ static gboolean windowSetTitle(gpointer arg) // title string
 static gboolean windowSetSize(gpointer arg) // width, height int
 {
     idleData* data = (idleData*)arg;
+
+    gint x;
+    gint y;
+    gtk_window_get_position(GTK_WINDOW(data->window), &x, &y);
+
+    gint pWidth;
+    gint pHeight;
+    gtk_window_get_size(GTK_WINDOW(data->window), &pWidth, &pHeight);
+
+    x = x + (pWidth - data->width) / 2;
+    y = y + (pHeight - data->height) / 2;
+    if (x < 0) {
+        x = 0;
+    }
+    if (y < 0) {
+        y = 0;
+    }
+    gtk_window_move(GTK_WINDOW(data->window), x, y);
     gtk_window_resize(GTK_WINDOW(data->window), data->width, data->height);
+
     return FALSE;
 }
 
@@ -449,31 +467,31 @@ static MenuObj addSubMenu(MenuObj mm)
     GtkWidget* aMenu = gtk_menu_new();
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(aMenuItem), aMenu);
     gtk_menu_shell_append(GTK_MENU_SHELL(mm.menu), aMenuItem);
-	gtk_widget_show_all(mm.menu);
+    gtk_widget_show_all(mm.menu);
 
-	mm.menu = aMenu;
-	mm.menuItem = aMenuItem;
-	return mm;
+    mm.menu = aMenu;
+    mm.menuItem = aMenuItem;
+    return mm;
 }
 
 static MenuObj addItem(MenuObj mm)
 {
-	GtkWidget* aMenuItem = gtk_menu_item_new_with_label(gcharptr(mm.title));
+    GtkWidget* aMenuItem = gtk_menu_item_new_with_label(gcharptr(mm.title));
     gtk_menu_shell_append(GTK_MENU_SHELL(mm.menu), aMenuItem);
-	// gtk_accel_label_set_accel(GTK_ACCEL_LABEL(child), GDK_KEY_1, 0);
-	gtk_widget_show_all(mm.menu);
-	g_signal_connect_swapped (aMenuItem, "activate", G_CALLBACK(goMenuFunc), (gpointer)aMenuItem);
-	mm.menuItem = aMenuItem;
-	return mm;
+    // gtk_accel_label_set_accel(GTK_ACCEL_LABEL(child), GDK_KEY_1, 0);
+    gtk_widget_show_all(mm.menu);
+    g_signal_connect_swapped(aMenuItem, "activate", G_CALLBACK(goMenuFunc), (gpointer)aMenuItem);
+    mm.menuItem = aMenuItem;
+    return mm;
 }
 
 static MenuObj addSeparatorItem(MenuObj mm)
 {
-	GtkWidget* aMenuItem = gtk_separator_menu_item_new();
-	gtk_menu_shell_append(GTK_MENU_SHELL(mm.menu), aMenuItem);
-	gtk_widget_show_all(mm.menu);
-	mm.menuItem = aMenuItem;
-	return mm;
+    GtkWidget* aMenuItem = gtk_separator_menu_item_new();
+    gtk_menu_shell_append(GTK_MENU_SHELL(mm.menu), aMenuItem);
+    gtk_widget_show_all(mm.menu);
+    mm.menuItem = aMenuItem;
+    return mm;
 }
 
 static gboolean makeWindow_idle(gpointer arg)

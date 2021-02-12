@@ -18,7 +18,6 @@ static int CEF_CALLBACK execute(struct _cef_v8handler_t* self,
         goInvokeCallback(arguments[0]->get_string_value(arguments[0]), arguments[1]->get_string_value(arguments[1]));
         return 1;
     }
-    *retval = valCreateNull();
     return 1;
 };
 

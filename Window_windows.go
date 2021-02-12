@@ -50,6 +50,10 @@ type (
 		app       *App
 		state     State
 		r, g, b   byte
+		a         float64
+
+		minWidth, minHeight, maxWidth, maxHeight int
+		resizeble                                bool
 	}
 
 	// WindowType struct
@@ -127,9 +131,27 @@ func (f *Window) GetSize() (width, height int) {
 	return
 }
 
+// GetInnerSize returns width and height of window content
+func (f *Window) GetInnerSize() (width, height int) {
+	width, height = f.getClientSize()
+	scale := f.GetScreenScaleFactor()
+	if scale > 0 {
+		width = int(float64(width) / scale)
+		height = int(float64(height) / scale)
+	}
+	return
+}
+
 func (f *Window) getSize() (width, height int) {
 	rect := C_RECT{}
 	winGetWindowRect.Call(uintptr(f.window), uintptr(unsafe.Pointer(&rect)))
+	width, height = int(rect.right-rect.left), int(rect.bottom-rect.top)
+	return
+}
+
+func (f *Window) getClientSize() (width, height int) {
+	rect := C_RECT{}
+	winGetClientRect.Call(uintptr(f.window), uintptr(unsafe.Pointer(&rect)))
 	width, height = int(rect.right-rect.left), int(rect.bottom-rect.top)
 	return
 }
@@ -156,11 +178,6 @@ func (f *Window) getPosition() (x, y int) {
 	winGetWindowRect.Call(uintptr(f.window), uintptr(unsafe.Pointer(&rect)))
 	x, y = int(rect.left), int(rect.top)
 	return
-}
-
-// GetWebviewSize returns width and height of window webview content
-func (f *Window) GetWebviewSize() (width, height int) {
-	return f.GetSize()
 }
 
 // SetIconFromFile for Window
@@ -192,7 +209,7 @@ func (f *Window) KeepAbove(flag bool) *Window {
 		uintptr(0),
 		uintptr(0),
 		uintptr(0),
-		uintptr(SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE),
+		uintptr(SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_ASYNCWINDOWPOS),
 	)
 	return f
 }
@@ -210,7 +227,7 @@ func (f *Window) KeepBelow(flag bool) *Window {
 		uintptr(0),
 		uintptr(0),
 		uintptr(0),
-		uintptr(SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE),
+		uintptr(SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_ASYNCWINDOWPOS),
 	)
 	return f
 }
@@ -322,6 +339,7 @@ func (f *Window) SetResizeble(flag bool) *Window {
 	} else {
 		winSetWindowLong.Call(uintptr(f.window), uintptr(uint64(gwlStyle)), uintptr(int64(style) & ^(WS_MAXIMIZEBOX|WS_SIZEBOX|WS_THICKFRAME)))
 	}
+	f.resizeble = flag
 	return f
 }
 
@@ -388,9 +406,14 @@ func (f *Window) Move(x, y int) *Window {
 	return f
 }
 
-// SetWebviewSize sets size of webview (without titlebar)
-func (f *Window) SetWebviewSize(width, height int) *Window {
-	return f.SetSize(width, height)
+// SetInnerSize sets size of webview (without titlebar)
+func (f *Window) SetInnerSize(width, height int) *Window {
+	w1, h1 := f.GetSize()
+	w2, h2 := f.GetInnerSize()
+	if w2 < 10 || h2 < 10 {
+		f.SetSize(width, height)
+	}
+	return f.SetSize(width+(w1-w2), height+(h1-h2))
 }
 
 // SetCenter of window
@@ -437,7 +460,7 @@ func (f *Window) SetModal(parent *Window) *Window {
 		uintptr(0),
 		uintptr(0),
 		uintptr(0),
-		uintptr(SWP_NOSIZE|SWP_NOMOVE),
+		uintptr(SWP_NOSIZE|SWP_NOMOVE|SWP_ASYNCWINDOWPOS),
 	)
 	return f
 }
@@ -480,7 +503,7 @@ func (f *Window) Show() *Window {
 
 // Hide window
 func (f *Window) Hide() *Window {
-	goBrowserDoClose(ceBrowser(f.browser))
+	goBrowserDoClose(C_HWND(f.window))
 	return f
 }
 
@@ -495,24 +518,22 @@ func (f *Window) SetOpacity(opacity float64) *Window {
 
 // SetBackgroundColor of Window
 func (f *Window) SetBackgroundColor(r, g, b byte, alfa float64) *Window {
-	gclp_hbrbackground := GCLP_HBRBACKGROUND
-	brush, _, _ := gdiCreateSolidBrush.Call(uintptr(0xff000000 | uint32(r)<<16 | uint32(g)<<8 | uint32(b)))
-	winSetClassLongPtr.Call(uintptr(f.window), uintptr(gclp_hbrbackground), brush)
 	f.r = r
 	f.g = g
 	f.b = b
+	f.a = alfa
 	return f
 }
 
 // SetMaxSize of window
 func (f *Window) SetMaxSize(width, height int) *Window {
-	// C.setMaxWindowSize(C.WindowObj(f.window), C.int(width), C.int(height))
+	f.maxWidth, f.maxHeight = width, height
 	return f
 }
 
 // SetMinSize of window
 func (f *Window) SetMinSize(width, height int) *Window {
-	// C.setMinWindowSize(C.WindowObj(f.window), C.int(width), C.int(height))
+	f.minWidth, f.minHeight = width, height
 	return f
 }
 

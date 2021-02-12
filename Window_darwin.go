@@ -109,8 +109,8 @@ func (f *Window) GetSize() (width, height int) {
 	return
 }
 
-// GetWebviewSize returns width and height of window webview content
-func (f *Window) GetWebviewSize() (width, height int) {
+// GetInnerSize returns width and height of window webview content
+func (f *Window) GetInnerSize() (width, height int) {
 	size := C.contentSize(C.WindowObj(f.window))
 	width, height = int(size.width), int(size.height)
 	return
@@ -242,8 +242,8 @@ func (f *Window) SetSize(width, height int) *Window {
 	return f
 }
 
-// SetWebviewSize sets size of webview (without titlebar)
-func (f *Window) SetWebviewSize(width, height int) *Window {
+// SetInnerSize sets size of webview (without titlebar)
+func (f *Window) SetInnerSize(width, height int) *Window {
 	C.resizeContent(C.WindowObj(f.window), C.int(width), C.int(height))
 	return f
 }
@@ -316,7 +316,7 @@ func (f *Window) Hide() *Window {
 }
 
 // SetBackgroundColor of Window
-func (f *Window) SetBackgroundColor(r, g, b int, alfa float64) *Window {
+func (f *Window) SetBackgroundColor(r, g, b byte, alfa float64) *Window {
 	C.setBackgroundColor(C.WindowObj(f.window), C.int8_t(r), C.int8_t(g), C.int8_t(b), C.double(alfa), C.bool(true))
 	return f
 }
