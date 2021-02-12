@@ -85,7 +85,6 @@ package frame
 	extern SIZR getWinLimits(HWND hwnd);
 	extern void goSaveProc(HWND hwnd, LONG_PTR proc);
 	extern LONG_PTR goLoadProc(HWND hwnd);
-	extern HBRUSH goCreateSolidBrush(HWND hwnd);
 
 	static LRESULT CALLBACK hwndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
@@ -121,24 +120,18 @@ package frame
 
 				return 0;
 			}
-			case WM_CLOSE:
-			{
-				ShowWindow(hwnd, SW_HIDE);
-				goBrowserDoClose(hwnd);
-				return 0;
-			}
-			case WM_DESTROY:
-			{
-				PostQuitMessage(0);
-				break;
-			}
-			case WM_ERASEBKGND:
-			{
-				// RECT rect = {};
-				// GetClientRect(hwnd, &rect);
-				// FillRect((HDC)wParam, &rect, goCreateSolidBrush(hwnd));
-				break;
-			}
+			// case WM_CLOSE:
+			// {
+			// 	ShowWindow(hwnd, SW_HIDE);
+			// 	goBrowserDoClose(hwnd);
+			// 	return 0;
+			// }
+			// case WM_DESTROY:
+			// {
+			// 	PostQuitMessage(0);
+			// 	goPrint("DESTROY");
+			// 	break;
+			// }
 			default:
 			{
 				LONG_PTR proc = (LONG_PTR)goLoadProc(hwnd);
@@ -202,14 +195,17 @@ type (
 )
 
 var (
-	cef2destroy = false
-	shutdown    = false
-	mutexNew    sync.Mutex
-	winds       = []*Window{}
-	lock        sync.Mutex
-	appChan     = make(chan *App)
-	idItr       int64
-	app         *App
+	defprocs      = map[uintptr]uintptr{}
+	baseRefs      = map[uintptr]int64{}
+	baseRefsMutex = sync.Mutex{}
+	cef2destroy   = false
+	shutdown      = false
+	mutexNew      sync.Mutex
+	winds         = []*Window{}
+	lock          sync.Mutex
+	appChan       = make(chan *App)
+	idItr         int64
+	app           *App
 
 	resDir   = cefresources.Extract()
 	libcef   = windows.NewLazyDLL(filepath.Join(resDir, "libcef.dll"))
@@ -453,6 +449,12 @@ func (a *App) SetIconFromFile(filename string) {
 
 // WaitAllWindowClose locker
 func (a *App) WaitAllWindowClose() {
+	defer func() {
+		go func() {
+			process, _ := os.FindProcess(int(windows.GetCurrentProcessId()))
+			process.Kill()
+		}()
+	}()
 	a.AllClose = true
 	for {
 		runtime.Gosched()
@@ -461,12 +463,18 @@ func (a *App) WaitAllWindowClose() {
 			break
 		}
 	}
-	process, _ := os.FindProcess(int(windows.GetCurrentProcessId()))
-	process.Kill()
+	// cefShutdown.Call()
+	time.Sleep(time.Second / 5)
 }
 
 // WaitWindowClose locker
 func (a *App) WaitWindowClose(win *Window) {
+	defer func() {
+		go func() {
+			process, _ := os.FindProcess(int(windows.GetCurrentProcessId()))
+			process.Kill()
+		}()
+	}()
 	a.WindowClose = win
 	for {
 		runtime.Gosched()
@@ -475,8 +483,8 @@ func (a *App) WaitWindowClose(win *Window) {
 			break
 		}
 	}
-	process, _ := os.FindProcess(int(windows.GetCurrentProcessId()))
-	process.Kill()
+	// cefShutdown.Call()
+	time.Sleep(time.Second / 5)
 }
 
 // NewWindow returns window with webview
@@ -697,27 +705,43 @@ func goContextCreate(global *C.cef_v8value_t) {
 	C.SetValue(global, cefString("extinvoke"), (*C.cef_v8value_t)(unsafe.Pointer(fn)))
 }
 
-var defprocs = map[uintptr]uintptr{}
-
 //export goLoadProc
 func goLoadProc(hwnd C.HWND) C.LONG_PTR {
 	return C.LONG_PTR(defprocs[uintptr(unsafe.Pointer(hwnd))])
 }
 
-//export goCreateSolidBrush
-func goCreateSolidBrush(hwnd C.HWND) C.HBRUSH {
-	brush, _, _ := gdiCreateSolidBrush.Call(uintptr(0xffffffff))
-	for _, f := range winds {
-		if f.window == unsafe.Pointer(hwnd) {
-			brush, _, _ = gdiCreateSolidBrush.Call(uintptr(0xff000000 | uint32(f.r)<<16 | uint32(f.g)<<8 | uint32(f.b)))
-		}
-	}
-	return C.HBRUSH(unsafe.Pointer(brush))
-}
-
 //export goSaveProc
 func goSaveProc(hwnd C.HWND, proc C.LONG_PTR) {
 	defprocs[uintptr(unsafe.Pointer(hwnd))] = uintptr(proc)
+}
+
+//export goRefsAdd
+func goRefsAdd(base *C.cef_base_t) C.int {
+	baseRefsMutex.Lock()
+	defer baseRefsMutex.Unlock()
+	ptr := uintptr(unsafe.Pointer(base))
+	baseRefs[ptr]++
+	return C.int(baseRefs[ptr])
+}
+
+//export goRefsRelease
+func goRefsRelease(base *C.cef_base_t) C.int {
+	baseRefsMutex.Lock()
+	defer baseRefsMutex.Unlock()
+	ptr := uintptr(unsafe.Pointer(base))
+	baseRefs[ptr]--
+	if baseRefs[ptr] <= 0 {
+		delete(baseRefs, ptr)
+	}
+	return C.int(baseRefs[ptr])
+}
+
+//export goRefsGet
+func goRefsGet(base *C.cef_base_t) C.int {
+	baseRefsMutex.Lock()
+	defer baseRefsMutex.Unlock()
+	ptr := uintptr(unsafe.Pointer(base))
+	return C.int(baseRefs[ptr])
 }
 
 //export getWinLimits
@@ -865,6 +889,10 @@ func goGetBrowser(window C_HWND) *C.cef_browser_t {
 func goBrowserDoClose(window C_HWND) C.int {
 	winShowWindow.Call(uintptr(unsafe.Pointer(window)), uintptr(windows.SW_HIDE))
 
+	if cef2destroy {
+		return C.int(0)
+	}
+
 	for _, f := range winds {
 		if f.window == unsafe.Pointer(window) {
 			f.state.Hidden = true
@@ -878,12 +906,9 @@ func goBrowserDoClose(window C_HWND) C.int {
 			}
 		}
 	}
-
-	if cef2destroy {
-		return C.int(0)
+	if checkExit(unsafe.Pointer(window)) {
+		go closeCef()
 	}
-	//check
-	// go closeCef()
 	return C.int(1)
 }
 
@@ -892,19 +917,27 @@ func closeCef() {
 	var win *Window
 	for _, win = range winds {
 		C.CloseBrowser(ceBrowser(win.browser))
-		// winDestroyWindow.Call(uintptr(unsafe.Pointer(win.window)))
 	}
-	go func() {
-		time.Sleep(time.Second / 2)
-		shutdown = true
-	}()
+	shutdown = true
+}
+
+func checkExit(window unsafe.Pointer) bool {
+	allClose := false
+	shown := false
+	for _, win := range winds {
+		if win.window == window {
+			if win.app.WindowClose == win {
+				return true
+			}
+			allClose = win.app.AllClose
+		}
+		if !win.state.Hidden {
+			shown = true
+		}
+	}
+	return !shown && allClose
 }
 
 //export goBrowserBeforeClose
 func goBrowserBeforeClose(browser ceBrowser) {
-	// frame := C.GetMainFrame(browser)
-	// win := C.GetWindowHandle(browser)
-	fmt.Println("~~~ goBrowserBeforeClose ~~~")
-	// cefQuitMessageLoop.Call()
-	// cefShutdown.Call()
 }

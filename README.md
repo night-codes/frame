@@ -87,8 +87,8 @@ go build -ldflags="-H windowsgui -s -w" -o example.exe
 | -------------------------------- |:------------:|:----------------:|:-------:|
 | `App.NewWindow`                  |       ✅     |         ✅       |    ✅   |
 | `App.SetIconFromFile`            |       ✅     |         ✅       |         |
-| `App.WaitAllWindowClose`         |       ✅     |         ✅       |         |
-| `App.WaitWindowClose`            |       ✅     |         ✅       |         |
+| `App.WaitAllWindowClose`         |       ✅     |         ✅       |    ✅   |
+| `App.WaitWindowClose`            |       ✅     |         ✅       |    ✅   |
 | `Menu.AddSubMenu`                |       ✅     |         ✅       |         |
 | `Menu.AddItem`                   |       ✅     |         ✅       |         |
 | `Menu.AddSeparatorItem`          |       ✅     |         ✅       |         |
@@ -109,7 +109,6 @@ go build -ldflags="-H windowsgui -s -w" -o example.exe
 | `Window.SetCenter`               |       ✅     |         ✅       |    ✅   |
 | `Window.SetDecorated`            |       ✅     |         ✅       |    ✅   |
 | `Window.SetDeletable`            |       ✅     |         ✅       |    ✅   |
-| `Window.SetIconFromFile`         |       ✅     |         ✅       |         |
 | `Window.SetInvoke`               |       ✅     |         ✅       |    ✅   |
 | `Window.SetMaxSize`              |       ✅     |         ✅       |    ✅   |
 | `Window.SetMinSize`              |       ✅     |         ✅       |    ✅   |
@@ -127,8 +126,6 @@ go build -ldflags="-H windowsgui -s -w" -o example.exe
 | `Window.GetInnerSize`            |       ✅     |         🆗       |    ✅   |
 | `Window.SetInnerSize`            |       ✅     |         🆗       |    ✅   |
 | `Window.SetBackgroundColor`      |       ✅     |         ✅       |    🆗   |
-| `Window.Strut`                   |              |         ✅       |         |
-| `Window.SetType`                 |              |         ✅       |         |
 
 
 # License

@@ -485,6 +485,9 @@ func (f *Window) UnsetModal() *Window {
 
 // Show window
 func (f *Window) Show() *Window {
+	if cef2destroy {
+		return f
+	}
 	if f.parent != nil && f.parent.state.Hidden {
 		f.parent.Show()
 	}

@@ -36,9 +36,9 @@ func main() {
 		Show()
 
 	wv2 := app.NewWindow(dir, 400, 300).
-		SetBackgroundColor(80, 50, 50, 0.9).
+		// SetBackgroundColor(80, 50, 50, 0.9).
 		LoadHTML(`
-		<html>
+		<html style="color:#cccccc; background: transparent">
 			<head><script type="text/javascript">setTimeout(function(){document.body.requestFullscreen();}, 1000);</script></head>
 		<body style="color:#cccccc; background: transparent">
       <h1>Some Dialog</h1>

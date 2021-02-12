@@ -12,7 +12,13 @@ extern char* cefToString(cef_string_t* source);
 extern cef_string_t* cefFromString(char* source);
 extern int goBrowserDestroyed(cef_browser_t* browser);
 
+extern int goRefsAdd(cef_base_t* base);
+extern int goRefsRelease(cef_base_t* base);
+extern int goRefsGet(cef_base_t* base);
+
 #pragma once
+
+static int _refs;
 
 #include "include/capi/cef_base_capi.h"
 #include <stdio.h>
@@ -47,15 +53,29 @@ extern int goBrowserDestroyed(cef_browser_t* browser);
 ///
 static void CEF_CALLBACK add_ref(cef_base_t* self)
 {
+    if (self == NULL)
+        return;
+    int ret = goRefsAdd(self);
 }
 
 ///
-// Decrement the reference count.  Delete this object when no references
+// Decrement the reference count. Delete this object when no references
 // remain.
 ///
 static int CEF_CALLBACK release(cef_base_t* self)
 {
-    return 1;
+    if (self == NULL)
+        return 1;
+
+    int ret = goRefsRelease(self);
+    if (ret < 0) {
+        free(self);
+        return 1;
+    }
+    if (ret == 0) {
+        return 1;
+    }
+    return 0;
 }
 
 ///
@@ -63,7 +83,15 @@ static int CEF_CALLBACK release(cef_base_t* self)
 ///
 static int CEF_CALLBACK has_one_ref(cef_base_t* self)
 {
-    return 1;
+    if (self == NULL)
+        return 0;
+
+    int ret = goRefsGet(self);
+    if (ret == 0) {
+        free(self);
+        return 0;
+    }
+    return ret;
 }
 
 static void initialize_cef_base(cef_base_t* base)
@@ -73,7 +101,8 @@ static void initialize_cef_base(cef_base_t* base)
         printf("FATAL: initialize_cef_base failed, size member not set\n");
         return;
     }
-    /* base->add_ref = add_ref;
+    /*
+    base->add_ref = add_ref;
     base->release = release;
     base->has_one_ref = has_one_ref; */
 }
