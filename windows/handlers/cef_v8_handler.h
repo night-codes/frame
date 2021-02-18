@@ -29,11 +29,3 @@ static cef_v8handler_t* initialize_cef_v8handler()
     handler->execute = execute;
     return handler;
 }
-
-static cef_v8accessor_t* initialize_cef_v8accessor()
-{
-    cef_v8accessor_t* handler = (cef_v8accessor_t*)calloc(1, sizeof(cef_v8accessor_t));
-    handler->base.size = sizeof(cef_v8accessor_t);
-    initialize_cef_base((cef_base_t*)handler);
-    return handler;
-}

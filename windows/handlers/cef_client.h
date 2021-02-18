@@ -7,7 +7,6 @@
 #include "handlers/cef_base.h"
 #include "handlers/cef_life_span_handler.h"
 #include "handlers/cef_load_handler.h"
-#include "handlers/cef_request_handler.h"
 #include "include/capi/cef_client_capi.h"
 
 extern void* goGetLifeSpan(cef_client_t* client);
@@ -151,7 +150,7 @@ static struct _cef_render_handler_t* CEF_CALLBACK get_render_handler(struct _cef
 ///
 static struct _cef_request_handler_t* CEF_CALLBACK get_request_handler(struct _cef_client_t* self)
 {
-    return NULL; // initialize_request_handler();
+    return NULL;
 }
 
 ///
@@ -180,7 +179,7 @@ static void initialize_cef_client(struct _cef_client_t* client)
     client->get_keyboard_handler = get_keyboard_handler;
     client->get_life_span_handler = get_life_span_handler;
     client->get_load_handler = get_load_handler;
-    client->get_render_handler = get_render_handler;
-    client->get_request_handler = get_request_handler;
+    // client->get_render_handler = get_render_handler;
+    // client->get_request_handler = get_request_handler;
     // client->on_process_message_received = on_process_message_received;
 }

@@ -120,18 +120,6 @@ package frame
 
 				return 0;
 			}
-			// case WM_CLOSE:
-			// {
-			// 	ShowWindow(hwnd, SW_HIDE);
-			// 	goBrowserDoClose(hwnd);
-			// 	return 0;
-			// }
-			// case WM_DESTROY:
-			// {
-			// 	PostQuitMessage(0);
-			// 	goPrint("DESTROY");
-			// 	break;
-			// }
 			default:
 			{
 				LONG_PTR proc = (LONG_PTR)goLoadProc(hwnd);
@@ -176,7 +164,6 @@ type (
 	App struct {
 		WindowClose  *Window
 		AllClose     bool
-		Test         bool
 		app          interface{} // *C.GtkApplication
 		openedWns    sync.WaitGroup
 		shown        chan bool
@@ -774,16 +761,6 @@ func goInvokeCallback(value ceString, value2 ceString) {
 			f.Invoke(arg)
 		}
 	}
-}
-
-//export goRegExtension
-func goRegExtension() {
-	/* handler := C.initialize_cef_v8handler()
-	cefRegisterExtension.Call(
-		uintptr(unsafe.Pointer(cefString("name"))),
-		uintptr(unsafe.Pointer(cefString(`(function() {});`))),
-		uintptr(unsafe.Pointer(handler)),
-	) */
 }
 
 //export cefToString
