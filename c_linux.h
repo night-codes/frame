@@ -406,12 +406,15 @@ static int getMonitorScaleFactor(GtkWidget* window)
 
 static void setSizes(GtkWidget* window, gint max_width, gint max_height, gint min_width, gint min_height)
 {
-    GdkGeometry geometry;
-    geometry.max_width = max_width;
-    geometry.max_height = max_height;
-    geometry.min_width = min_width;
-    geometry.min_height = min_height;
-    gtk_window_set_geometry_hints(GTK_WINDOW(window), NULL, &geometry, GDK_HINT_MIN_SIZE | GDK_HINT_MAX_SIZE);
+    if (min_width>0 || min_height > 0) {
+        gtk_widget_set_size_request(window, min_width, min_height);
+    }
+    if (max_width>0 || max_height > 0) {
+        GdkGeometry geometry;
+        geometry.max_width = max_width;
+        geometry.max_height = max_height;
+        gtk_window_set_geometry_hints(GTK_WINDOW(window), NULL, &geometry, GDK_HINT_MAX_SIZE);
+    }
 }
 
 /* panel_window_reset_strut */
