@@ -69,6 +69,7 @@ static GtkWindow* to_GtkWindow(GtkWidget* w) { return GTK_WINDOW(w); }
 static GtkContainer* to_GtkContainer(GtkWidget* w) { return GTK_CONTAINER(w); }
 static GtkBox* to_GtkBox(GtkWidget* w) { return GTK_BOX(w); }
 static WebKitWebView* to_WebKitWebView(GtkWidget* w) { return WEBKIT_WEB_VIEW(w); }
+static char* applicationName = "";
 
 static void stateEvent(GtkWidget* c, GdkEventWindowState* event, gpointer arg)
 {
@@ -121,6 +122,7 @@ static void started(GtkApplication* app, gpointer user_data)
 // The application is started.
 static void makeApp(char* appName)
 {
+    applicationName = appName;
     XInitThreads();
     gtk_init(0, NULL);
     GtkApplication* app = gtk_application_new(NULL, 0);
@@ -494,7 +496,59 @@ static MenuObj addSeparatorItem(MenuObj mm)
     return mm;
 }
 
-static gboolean makeWindow_idle(gpointer arg)
+static int initCookieManager(WebKitSettings* webkitSettings)
+{
+    if (!webkitSettings)
+        return 0;
+
+    WebKitCookieManager* cookiemanager = webkit_web_context_get_cookie_manager(webkit_web_context_get_default());
+    int error = 0;
+    gchar* home = getenv("HOME");
+    gchar cookieDatabasePath[2048];
+    g_sprintf(cookieDatabasePath, "%s/.%s/cookies", applicationName, home);
+    if (!g_file_test(cookieDatabasePath, G_FILE_TEST_IS_DIR) || !g_access(cookieDatabasePath, /*S_IWUSR|S_IRUSR*/ 0755)) {
+        error = g_mkdir_with_parents(cookieDatabasePath, 0755);
+    }
+    if (!error) {
+        gchar cookieDatabase[2048];
+        g_sprintf(cookieDatabase, "%s/cookie_database", cookieDatabasePath);
+        g_printf("cookiedatabase path is %s\n", cookieDatabase);
+        webkit_cookie_manager_set_persistent_storage(cookiemanager, cookieDatabase, WEBKIT_COOKIE_PERSISTENT_STORAGE_SQLITE);
+    } else {
+        g_printerr("LOG-> Init: Failed to init cookie database\n");
+        return 0;
+    }
+
+    WebKitCookieAcceptPolicy cookiePolicy = WEBKIT_COOKIE_POLICY_ACCEPT_ALWAYS;
+    int cookieSetting;
+    error = 0;
+    g_object_get(webkitSettings,
+        key[PROP_COOKIE_SETTING], &cookieSetting,
+        NULL);
+    switch (cookieSetting) {
+    case 0:
+        cookiePolicy = WEBKIT_COOKIE_POLICY_ACCEPT_ALWAYS;
+        break;
+    case 1:
+        cookiePolicy = WEBKIT_COOKIE_POLICY_ACCEPT_NO_THIRD_PARTY;
+        break;
+    case 2:
+        cookiePolicy = WEBKIT_COOKIE_POLICY_ACCEPT_NEVER;
+        break;
+    default:
+        error = 1;
+        g_printerr("LOG-> Settings: Failed to get the correct cookie setting policy\n");
+        break;
+    }
+    if (error)
+        return 0;
+    else {
+        webkit_cookie_manager_set_accept_policy(cookiemanager, cookiePolicy);
+        return 1;
+    }
+}
+
+static gboolean makeWindow_idle(gpointer arg, const char* appName)
 {
     idleData* data = (idleData*)arg;
     WindowObj* ret = (WindowObj*)malloc(sizeof(WindowObj));
@@ -552,6 +606,7 @@ static gboolean makeWindow_idle(gpointer arg)
     // webkit_settings_set_enable_developer_extras(settings, TRUE);
     webkit_web_view_set_zoom_level(WEBKIT_WEB_VIEW(webview), 1.0);
     webkit_web_view_set_settings(WEBKIT_WEB_VIEW(webview), settings);
+    initCookieManager(settings);
     g_signal_connect(webview, "context-menu", G_CALLBACK(contextMenuEvent), ret);
 
     gtk_box_pack_end(GTK_BOX(box), webview, 1, 1, 0);
