@@ -61,71 +61,74 @@ func main() {
 ## Building example:
 To build the app use the following commands:
 
+### Macos
 ```bash
-# Macos
 $ mkdir -p Example.app/Contents/MacOS
 $ go build -o Example.app/Contents/MacOS/example
 $ open example.app # Or click on the app in Finder
+```
 
-# Linux
+#### Linux
+```bash
 sudo apt install build-essential
 sudo apt install libwebkit2gtk-4.0-dev
 
 go build -o example
 ./example # run example
+```
 
 # Windows
-# OS requires special linker flags for GUI apps.
-# It's also recommended to use TDM-GCC-64 compiler for CGo.
-# http://tdm-gcc.tdragon.net/download
+ * OS requires special linker flags for GUI apps.
+ * Before compiling, install TDM-GCC-64 compiler for CGo: http://tdm-gcc.tdragon.net/download
+```bash
 go build -ldflags="-H windowsgui -s -w" -o example.exe
 ```
 
 ## Implementation
 
-| Function                         | MacOS (Cocoa)| Linux (WebKitGTK)| Windows |
-| -------------------------------- |:------------:|:----------------:|:-------:|
-| `App.NewWindow`                  |       ✅     |         ✅       |    ✅   |
-| `App.SetIconFromFile`            |       ✅     |         ✅       |         |
-| `App.WaitAllWindowClose`         |       ✅     |         ✅       |    ✅   |
-| `App.WaitWindowClose`            |       ✅     |         ✅       |    ✅   |
-| `Menu.AddSubMenu`                |       ✅     |         ✅       |         |
-| `Menu.AddItem`                   |       ✅     |         ✅       |         |
-| `Menu.AddSeparatorItem`          |       ✅     |         ✅       |         |
-| `Window.Eval`                    |       ✅     |         ✅       |    ✅   |
-| `Window.Fullscreen`              |       ✅     |         ✅       |    ✅   |
-| `Window.GetScreenSize`           |       ✅     |         ✅       |    ✅   |
-| `Window.GetScreenScaleFactor`    |       ✅     |         ✅       |    ✅   |
-| `Window.GetSize`                 |       ✅     |         ✅       |    ✅   |
-| `Window.GetPosition`             |       ✅     |         ✅       |    ✅   |
-| `Window.Hide`                    |       ✅     |         ✅       |    ✅   |
-| `Window.Iconify`                 |       ✅     |         ✅       |    ✅   |
-| `Window.KeepAbove`               |       ✅     |         ✅       |    ✅   |
-| `Window.KeepBelow`               |       ✅     |         ✅       |         |
-| `Window.Load`                    |       ✅     |         ✅       |    ✅   |
-| `Window.LoadHTML`                |       ✅     |         ✅       |    ✅   |
-| `Window.Maximize`                |       ✅     |         ✅       |    ✅   |
-| `Window.Move`                    |       ✅     |         ✅       |    ✅   |
-| `Window.SetCenter`               |       ✅     |         ✅       |    ✅   |
-| `Window.SetDecorated`            |       ✅     |         ✅       |    ✅   |
-| `Window.SetDeletable`            |       ✅     |         ✅       |    ✅   |
-| `Window.SetInvoke`               |       ✅     |         ✅       |    ✅   |
-| `Window.SetMaxSize`              |       ✅     |         ✅       |    ✅   |
-| `Window.SetMinSize`              |       ✅     |         ✅       |    ✅   |
-| `Window.SetModal`                |       ✅     |         ✅       |    ✅   |
-| `Window.SetOpacity`              |       ✅     |         ✅       |    ✅   |
-| `Window.SetResizeble`            |       ✅     |         ✅       |    ✅   |
-| `Window.SetSize`                 |       ✅     |         ✅       |    ✅   |
-| `Window.SetStateEvent`           |       ✅     |         ✅       |    ✅   |
-| `Window.SetTitle`                |       ✅     |         ✅       |    ✅   |
-| `Window.Show`                    |       ✅     |         ✅       |    ✅   |
-| `Window.SkipPager`               |       ✅     |         ✅       |    ✅   |
-| `Window.SkipTaskbar`             |       ✅     |         ✅       |    ✅   |
-| `Window.Stick`                   |       ✅     |         ✅       |         |
-| `Window.UnsetModal`              |       ✅     |         ✅       |    ✅   |
-| `Window.GetInnerSize`            |       ✅     |         🆗       |    ✅   |
-| `Window.SetInnerSize`            |       ✅     |         🆗       |    ✅   |
-| `Window.SetBackgroundColor`      |       ✅     |         ✅       |    🆗   |
+| Function                         | MacOS (Cocoa)| Linux (WebKitGTK)| Windows (CEF) |
+| -------------------------------- |:------------:|:----------------:|:-------------:|
+| `App.NewWindow`                  |       ✅     |         ✅       |       ✅     |
+| `App.SetIconFromFile`            |       ✅     |         ✅       |              |
+| `App.WaitAllWindowClose`         |       ✅     |         ✅       |       ✅     |
+| `App.WaitWindowClose`            |       ✅     |         ✅       |       ✅     |
+| `Menu.AddSubMenu`                |       ✅     |         ✅       |              |
+| `Menu.AddItem`                   |       ✅     |         ✅       |              |
+| `Menu.AddSeparatorItem`          |       ✅     |         ✅       |              |
+| `Window.Eval`                    |       ✅     |         ✅       |       ✅     |
+| `Window.Fullscreen`              |       ✅     |         ✅       |       ✅     |
+| `Window.GetScreenSize`           |       ✅     |         ✅       |       ✅     |
+| `Window.GetScreenScaleFactor`    |       ✅     |         ✅       |       ✅     |
+| `Window.GetSize`                 |       ✅     |         ✅       |       ✅     |
+| `Window.GetPosition`             |       ✅     |         ✅       |       ✅     |
+| `Window.Hide`                    |       ✅     |         ✅       |       ✅     |
+| `Window.Iconify`                 |       ✅     |         ✅       |       ✅     |
+| `Window.KeepAbove`               |       ✅     |         ✅       |       ✅     |
+| `Window.KeepBelow`               |       ✅     |         ✅       |              |
+| `Window.Load`                    |       ✅     |         ✅       |       ✅     |
+| `Window.LoadHTML`                |       ✅     |         ✅       |       ✅     |
+| `Window.Maximize`                |       ✅     |         ✅       |       ✅     |
+| `Window.Move`                    |       ✅     |         ✅       |       ✅     |
+| `Window.SetCenter`               |       ✅     |         ✅       |       ✅     |
+| `Window.SetDecorated`            |       ✅     |         ✅       |       ✅     |
+| `Window.SetDeletable`            |       ✅     |         ✅       |       ✅     |
+| `Window.SetInvoke`               |       ✅     |         ✅       |       ✅     |
+| `Window.SetMaxSize`              |       ✅     |         ✅       |       ✅     |
+| `Window.SetMinSize`              |       ✅     |         ✅       |       ✅     |
+| `Window.SetModal`                |       ✅     |         ✅       |       ✅     |
+| `Window.SetOpacity`              |       ✅     |         ✅       |       ✅     |
+| `Window.SetResizeble`            |       ✅     |         ✅       |       ✅     |
+| `Window.SetSize`                 |       ✅     |         ✅       |       ✅     |
+| `Window.SetStateEvent`           |       ✅     |         ✅       |       ✅     |
+| `Window.SetTitle`                |       ✅     |         ✅       |       ✅     |
+| `Window.Show`                    |       ✅     |         ✅       |       ✅     |
+| `Window.SkipPager`               |       ✅     |         ✅       |       ✅     |
+| `Window.SkipTaskbar`             |       ✅     |         ✅       |       ✅     |
+| `Window.Stick`                   |       ✅     |         ✅       |              |
+| `Window.UnsetModal`              |       ✅     |         ✅       |       ✅     |
+| `Window.GetInnerSize`            |       ✅     |         🆗       |       ✅     |
+| `Window.SetInnerSize`            |       ✅     |         🆗       |       ✅     |
+| `Window.SetBackgroundColor`      |       ✅     |         ✅       |       🆗     |
 
 
 # License
