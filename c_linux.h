@@ -5,6 +5,8 @@
 #include <JavaScriptCore/JavaScript.h>
 #include <X11/Xlib.h>
 #include <stdlib.h>
+#include <glib.h>
+#include <glib/gstdio.h>
 #include <string.h>
 #include <webkit2/webkit2.h>
 
@@ -505,14 +507,13 @@ static int initCookieManager(WebKitSettings* webkitSettings)
     int error = 0;
     gchar* home = getenv("HOME");
     gchar cookieDatabasePath[2048];
-    g_sprintf(cookieDatabasePath, "%s/.%s/cookies", applicationName, home);
+    g_snprintf(cookieDatabasePath, 2048, "%s/.config/%s", home, applicationName);
     if (!g_file_test(cookieDatabasePath, G_FILE_TEST_IS_DIR) || !g_access(cookieDatabasePath, /*S_IWUSR|S_IRUSR*/ 0755)) {
         error = g_mkdir_with_parents(cookieDatabasePath, 0755);
     }
     if (!error) {
         gchar cookieDatabase[2048];
-        g_sprintf(cookieDatabase, "%s/cookie_database", cookieDatabasePath);
-        g_printf("cookiedatabase path is %s\n", cookieDatabase);
+        g_sprintf(cookieDatabase, "%s/cdb", cookieDatabasePath);
         webkit_cookie_manager_set_persistent_storage(cookiemanager, cookieDatabase, WEBKIT_COOKIE_PERSISTENT_STORAGE_SQLITE);
     } else {
         g_printerr("LOG-> Init: Failed to init cookie database\n");
@@ -520,35 +521,10 @@ static int initCookieManager(WebKitSettings* webkitSettings)
     }
 
     WebKitCookieAcceptPolicy cookiePolicy = WEBKIT_COOKIE_POLICY_ACCEPT_ALWAYS;
-    int cookieSetting;
-    error = 0;
-    g_object_get(webkitSettings,
-        key[PROP_COOKIE_SETTING], &cookieSetting,
-        NULL);
-    switch (cookieSetting) {
-    case 0:
-        cookiePolicy = WEBKIT_COOKIE_POLICY_ACCEPT_ALWAYS;
-        break;
-    case 1:
-        cookiePolicy = WEBKIT_COOKIE_POLICY_ACCEPT_NO_THIRD_PARTY;
-        break;
-    case 2:
-        cookiePolicy = WEBKIT_COOKIE_POLICY_ACCEPT_NEVER;
-        break;
-    default:
-        error = 1;
-        g_printerr("LOG-> Settings: Failed to get the correct cookie setting policy\n");
-        break;
-    }
-    if (error)
-        return 0;
-    else {
-        webkit_cookie_manager_set_accept_policy(cookiemanager, cookiePolicy);
-        return 1;
-    }
+    webkit_cookie_manager_set_accept_policy(cookiemanager, cookiePolicy);
 }
 
-static gboolean makeWindow_idle(gpointer arg, const char* appName)
+static gboolean makeWindow_idle(gpointer arg)
 {
     idleData* data = (idleData*)arg;
     WindowObj* ret = (WindowObj*)malloc(sizeof(WindowObj));
