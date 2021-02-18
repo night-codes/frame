@@ -68,7 +68,7 @@ $ go build -o Example.app/Contents/MacOS/example
 $ open example.app # Or click on the app in Finder
 ```
 
-#### Linux
+### Linux
 ```bash
 sudo apt install build-essential
 sudo apt install libwebkit2gtk-4.0-dev
@@ -77,7 +77,7 @@ go build -o example
 ./example # run example
 ```
 
-# Windows
+### Windows
  * OS requires special linker flags for GUI apps.
  * Before compiling, install TDM-GCC-64 compiler for CGo: http://tdm-gcc.tdragon.net/download
 ```bash
