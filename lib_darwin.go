@@ -53,10 +53,7 @@ func goPrintInt(t C.int) {
 }
 
 func goBool(b C.BOOL) bool {
-	if b != 0 {
-		return true
-	}
-	return false
+	return C.bool(true) == b
 }
 
 func stateSender(win *Window, newState State) {
