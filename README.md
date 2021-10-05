@@ -1,4 +1,4 @@
-# frame - simple golang GUI toolkit (gtk-webkit)
+# Frame - simple golang GUI toolkit (WebKitGTK/cocoa/CEF)
 ## Install
 
 `go get github.com/night-codes/frame`
