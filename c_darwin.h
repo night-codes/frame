@@ -27,7 +27,7 @@
 typedef struct WindowObj {
     int id;
     long long unsigned int req_id;
-    BOOL created;
+    bool created;
     NSWindow* window;
     WKWebView* webview;
     // GtkWidget* menubar;
@@ -45,11 +45,11 @@ typedef struct AppMenu {
     NSMenu* appMenu;
 } AppMenu;
 
-BOOL isFocused(WindowObj ww);
-BOOL isVisible(WindowObj ww);
-BOOL isZoomed(WindowObj ww);
-BOOL isMiniaturized(WindowObj ww);
-BOOL isFullscreen(WindowObj ww);
+bool isFocused(WindowObj ww);
+bool isVisible(WindowObj ww);
+bool isZoomed(WindowObj ww);
+bool isMiniaturized(WindowObj ww);
+bool isFullscreen(WindowObj ww);
 void makeApp(char* appName);
 void makeWindow(char* title, int width, int height, long long unsigned int req_id, int id);
 void evalJS(WindowObj ww, const char* js, long long unsigned int reqid);

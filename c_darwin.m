@@ -305,27 +305,27 @@ void windowKeepBelow(WindowObj ww, bool flag)
     });
 }
 
-BOOL isFocused(WindowObj ww)
+bool isFocused(WindowObj ww)
 {
     return [ww.window isKeyWindow];
 }
 
-BOOL isVisible(WindowObj ww)
+bool isVisible(WindowObj ww)
 {
     return [ww.window isVisible];
 }
 
-BOOL isZoomed(WindowObj ww)
+bool isZoomed(WindowObj ww)
 {
     return [ww.window isZoomed];
 }
 
-BOOL isMiniaturized(WindowObj ww)
+bool isMiniaturized(WindowObj ww)
 {
     return [ww.window isMiniaturized];
 }
 
-BOOL isFullscreen(WindowObj ww)
+bool isFullscreen(WindowObj ww)
 {
     return ([ww.window styleMask] & NSWindowStyleMaskFullScreen) == NSWindowStyleMaskFullScreen;
 }

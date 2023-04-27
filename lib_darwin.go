@@ -1,3 +1,4 @@
+//go:build darwin
 // +build darwin
 
 package frame
@@ -52,7 +53,7 @@ func goPrintInt(t C.int) {
 	fmt.Println(int(t))
 }
 
-func goBool(b C.BOOL) bool {
+func goBool(b C.bool) bool {
 	return C.bool(true) == b
 }
 
